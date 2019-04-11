@@ -15,5 +15,11 @@ include_directories(include
         lib/multirotor_sim/lib/lin_alg_tools/include
 	${EIGEN3_INCLUDE_DIRS})
 
-add_executable(lqr_example_waypoints src/examples/lqr_example_waypoints.cpp)
-target_link_libraries(lqr_example_waypoints lqr multirotor_sim)
+#add_executable(lqr_example_waypoints src/examples/lqr_example_waypoints.cpp)
+#target_link_libraries(lqr_example_waypoints lqr multirotor_sim)
+
+add_executable(basic_example src/basic_example.cpp)
+target_link_libraries(basic_example multirotor_sim)
+
+add_executable(estimator src/estimator_example.cpp)
+target_link_libraries(estimator multirotor_sim)
