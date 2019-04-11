@@ -26,7 +26,8 @@ int main()
   sim.load(sim_params_yaml_file);
   Logger log("/tmp/landing_sim.bin");
 
-  Estimator estimator;
+  std::string est_param_file = "../params/estimator_params.yaml";
+  Estimator estimator(est_param_file);
   sim.register_estimator(&estimator);
 
   std::string veh_param_file = "../params/unicycle_params.yaml";

@@ -1,0 +1,7 @@
+# Estimator Params
+draw_feature_img: True
+x0: [0., 0.,    # POS
+     0.6, 0.,    # VEL
+     0., 0.1]    # ATT, OMEGA
+
+
