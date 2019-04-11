@@ -11,6 +11,7 @@
 #include "multirotor_sim/utils.h"
 
 #include "estimator.h"
+#include "landing_sim/static_vehicle.h"
 
 using namespace Eigen;
 using namespace xform;
@@ -27,6 +28,9 @@ int main()
 
   Estimator estimator;
   sim.register_estimator(&estimator);
+
+  StaticVehicle veh;
+  sim.use_custom_vehicle(&veh);
 
   // Reference Trajectory
   //double x_width, y_width, z_width, period, throttle_eq;
