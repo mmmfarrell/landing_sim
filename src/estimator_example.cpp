@@ -11,7 +11,7 @@
 #include "multirotor_sim/utils.h"
 
 #include "estimator.h"
-#include "landing_sim/static_vehicle.h"
+#include "landing_sim/unicycle_vehicle.h"
 
 using namespace Eigen;
 using namespace xform;
@@ -29,7 +29,8 @@ int main()
   Estimator estimator;
   sim.register_estimator(&estimator);
 
-  StaticVehicle veh;
+  std::string veh_param_file = "../params/unicycle_params.yaml";
+  UnicycleVehicle veh(veh_param_file);
   sim.use_custom_vehicle(&veh);
 
   // Reference Trajectory

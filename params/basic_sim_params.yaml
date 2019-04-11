@@ -37,8 +37,8 @@ traj_heading_straight_gain: 0.01
 # Follow the carrot trajectory parameters
 #traj_delta_north: 10
 #traj_delta_east: 10
-traj_delta_north: 1.
-traj_delta_east: 1.
+traj_delta_north: 0.
+traj_delta_east: 0.
 traj_delta_alt: -0
 traj_delta_yaw: 0.
 traj_nom_north: 0
@@ -97,7 +97,7 @@ max_tau_z: 1.0
 inertia: [0.1, 0.1, 0.1]
 
 
-x0: [0, 0, -3,   # POS
+x0: [0, 0, -10,   # POS
      1, 0, 0, 0, # ATT 
      0, 0, 0,    # VEL
      0, 0, 0]    # OMEGA

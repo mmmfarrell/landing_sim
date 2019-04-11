@@ -1,0 +1,10 @@
+# Vehicle Params
+x0: [0., 0.,    # POS
+     0.6, 0.,    # VEL
+     0., 0.1]    # ATT, OMEGA
+
+landmarks_body_frame: [0., 0., 0.,
+                       2., 0., 0.,
+                       1., 0., 0.,
+                       0., 2., 0.,
+                       -3., 3., 0.]
