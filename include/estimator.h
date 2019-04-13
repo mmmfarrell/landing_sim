@@ -33,8 +33,11 @@ public:
   Estimator(std::string filename);
   virtual ~Estimator();
 
-  void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
-  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R);
+  // t - current time (seconds)
+  // z - imu measurement [acc, gyro]
+  // R - imu covariance
+  void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
+  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R) {}
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
 
   void simpleCamCallback(const double& t, const ImageFeat& z,
@@ -43,11 +46,20 @@ public:
   // t - current time (seconds)
   // z - gnss measurement [p_{b/ECEF}^ECEF, v_{b/ECEF}^ECEF]
   // R - gnss covariance
-  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R);
+  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
+
+  // Kalman Filter
+  void propagate(const double& dt);
+
+  void updateGoal(const Vector2d& goal_pix);
+  void updateGoalDepth(const double& goal_depth);
+  void updateLandmark(const int& id, const Vector2d& lm_pix);
 
   bool draw_feats_;
   StateVec xhat_;
   StateMat P_;
+
+  double last_time_;
 };
 
 #endif /* ESTIMATOR_H */

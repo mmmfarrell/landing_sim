@@ -16,23 +16,14 @@ Estimator::Estimator(std::string filename)
   StateVec P_diag;
   get_yaml_eigen("P0", filename, P_diag);
   P_ = P_diag.asDiagonal();
+
+  last_time_ = -1;
 }
 
 Estimator::~Estimator()
 {
 }
 
-// t - current time (seconds)
-// z - imu measurement [acc, gyro]
-// R - imu covariance
-void Estimator::imuCallback(const double& t, const Vector6d& z, const Matrix6d& R)
-{
-  // std::cout << "imu callback" << std::endl;
-}
-
-void Estimator::altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
-{
-}
 void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& R)
 {
 }
@@ -40,18 +31,39 @@ void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& 
 void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                        const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
-  // std::cout << "simple cam callback" << std::endl;
   if (draw_feats_)
     drawImageFeatures(z.pixs);
-  // std::cout << "pix: " << z.pixs[0] << std::endl;
-  // std::vector<Vector2d, aligned_allocator<Vector2d>> pixs; // pixel
-  // measurements in this image
+
+  if (last_time_ < 0)
+  {
+    last_time_ = t;
+    return;
+  }
+
+  const double dt = t - last_time_;
+  propagate(dt);
+
+  // updateGoal
+  // updateGoalDepth
+  // updateLandmarks
 }
 
-// t - current time (seconds)
-// z - gnss measurement [p_{b/ECEF}^ECEF, v_{b/ECEF}^ECEF]
-// R - gnss covariance
-void Estimator::gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R)
+void Estimator::propagate(const double& dt)
 {
+
 }
 
+void Estimator::updateGoal(const Vector2d& goal_pix)
+{
+
+}
+
+void Estimator::updateGoalDepth(const double& goal_depth)
+{
+
+}
+
+void Estimator::updateLandmark(const int& id, const Vector2d& lm_pix)
+{
+
+}
