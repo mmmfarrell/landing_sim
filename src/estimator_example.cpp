@@ -34,33 +34,22 @@ int main()
   UnicycleVehicle veh(veh_param_file);
   sim.use_custom_vehicle(&veh);
 
-  // Reference Trajectory
-  //double x_width, y_width, z_width, period, throttle_eq;
-  //get_yaml_node("x_width", sim_params_yaml_file, x_width);
-  //get_yaml_node("y_width", sim_params_yaml_file, y_width);
-  //get_yaml_node("z_width", sim_params_yaml_file, z_width);
-  //get_yaml_node("period", sim_params_yaml_file, period);
-  //get_yaml_node("throttle_eq", sim_params_yaml_file, throttle_eq);
-
-  //Figure8 figure8(x_width, y_width, z_width, period, sim.state(),
-                  //throttle_eq);
-  //sim.use_custom_trajectory(&figure8);
-
-  //// LQR Controller
-  //std::string lqr_params_yaml_file = "../params/lqr/lqr_params_figure8.yaml";
-  //LQRController lqr_controller(lqr_params_yaml_file);
-  //sim.use_custom_controller(&lqr_controller);
-
-  // Initialize uav to first commanded state
-//  sim.run();
-//  sim.state().arr = sim.commanded_state().arr;
-
   // Run sim until done and log data
   while (sim.run())
   {
+    // time
     log.log(sim.t_);
+
+    // Uav States
     log.logVectors(sim.state().arr, sim.input(), sim.commanded_state().arr,
                    sim.reference_input());
+
+    // Landing vehicle states
+    // TODO dont need to log the landmarks each step
+    log.logVectors(veh.x_, veh.landmarks_body_);
+
+    // Estimator states
+    log.logVectors(estimator.xhat_, estimator.P_.diagonal());
   }
   return 0;
 }

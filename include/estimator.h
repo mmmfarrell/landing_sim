@@ -8,11 +8,31 @@
 
 class Estimator : public multirotor_sim::EstimatorBase
 {
-private:
 public:
+  enum
+  {
+    xPOS = 0,
+    xVEL = 2,
+    xATT = 4,
+    xOMEGA = 5,
+    xZ = 6
+  };
+
+  enum
+  {
+    SIZE = 5
+  };
+
+  typedef Eigen::Matrix<double, xZ, 1> StateVec;
+  typedef Eigen::Matrix<double, xZ, xZ> StateMat;
+  typedef Eigen::Matrix<double, SIZE, 3> LandmarkVec;
+
   Estimator(std::string filename)
   {
     get_yaml_node("draw_feature_img", filename, draw_feats_);
+
+    xhat_.setZero();
+    P_.setZero();
   }
 
   virtual ~Estimator()
@@ -53,6 +73,8 @@ public:
   }
 
   bool draw_feats_;
+  StateVec xhat_;
+  StateMat P_;
 };
 
 #endif /* ESTIMATOR_H */

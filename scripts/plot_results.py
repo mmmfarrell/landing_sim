@@ -10,14 +10,25 @@ np.set_printoptions(linewidth=150)
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-LOG_WIDTH = 1 + 13 + 4 + 13 + 4
+UAV_STATE = 13
+COMMAND = 4
+VEH_STATE = 6
+VEH_LMS = 15
+EST_STATE = 6
+LOG_WIDTH = 1 + UAV_STATE + COMMAND + UAV_STATE + COMMAND + VEH_STATE \
+        + VEH_LMS + EST_STATE + EST_STATE
 
 data = np.reshape(np.fromfile("/tmp/landing_sim.bin", dtype=np.float64), (-1, LOG_WIDTH)).T
 t = data[0,:]
 x = data[1:14,:]
 u = data[14:18,:]
-xc = data[18:32, :]
-ur = data[32:36, :]
+xc = data[18:31, :]
+ur = data[31:35, :]
+
+x_veh = data[35:41, :]
+x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
+xhat_veh = data[56:62, :]
+phat_veh = data[62:68, :]
 
 pw = plotWindow()
 
