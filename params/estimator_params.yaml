@@ -1,7 +1,23 @@
 # Estimator Params
 draw_feature_img: False
+
+# Initial estimates
 x0: [0., 0.,    # POS
+     0.,         # RHO
      0.6, 0.,    # VEL
-     0., 0.1]    # ATT, OMEGA
+     0., 0.1,    # ATT, OMEGA
+     0., 0., 0.,     # r1, rho1
+     0., 0., 0.,     # r2, rho2
+     0., 0., 0.,     # r3, rho3
+     0., 0., 0.]     # r4, rho4
+
+P0: [0., 0.,    # POS
+     0.,         # RHO
+     0., 0.,    # VEL
+     0., 0.,    # ATT, OMEGA
+     0., 0., 0.,     # r1, rho1
+     0., 0., 0.,     # r2, rho2
+     0., 0., 0.,     # r3, rho3
+     0., 0., 0.]     # r4, rho4
 
 

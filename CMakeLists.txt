@@ -23,5 +23,5 @@ include_directories(include
 add_executable(basic_example src/basic_example.cpp)
 target_link_libraries(basic_example multirotor_sim)
 
-add_executable(estimator src/estimator_example.cpp)
+add_executable(estimator src/estimator.cpp src/estimator_example.cpp)
 target_link_libraries(estimator ${OpenCV_LIBS} multirotor_sim)

@@ -3,6 +3,8 @@
 #include <Eigen/Core>
 #include <opencv2/opencv.hpp>
 
+using namespace Eigen;
+
 void drawImageFeatures(
     const std::vector<Eigen::Vector2d,
                       Eigen::aligned_allocator<Eigen::Vector2d>>& pixs)
