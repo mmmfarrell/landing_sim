@@ -11,13 +11,32 @@ x0: [0., 0.,    # POS
      0., 0., 0.,     # r3, rho3
      0., 0., 0.]     # r4, rho4
 
-P0: [0., 0.,    # POS
-     0.,         # RHO
-     0., 0.,    # VEL
-     0., 0.,    # ATT, OMEGA
-     0., 0., 0.,     # r1, rho1
-     0., 0., 0.,     # r2, rho2
-     0., 0., 0.,     # r3, rho3
-     0., 0., 0.]     # r4, rho4
+P0_diag:  [1., 1.,    # POS
+           0.2,         # RHO
+           1., 1.,    # VEL
+           1., 1.,    # ATT, OMEGA
+           1., 1., 0.2,     # r1, rho1
+           1., 1., 0.2,     # r2, rho2
+           1., 1., 0.2,     # r3, rho3
+           1., 1., 0.2]     # r4, rho4
 
+# Prop params
+Q_diag:  [0.001, 0.001,    # POS
+           0.001,         # RHO
+           0.001, 0.001,    # VEL
+           0.001, 0.001,    # ATT, OMEGA
+           0.001, 0.001, 0.001,     # r1, rho1
+           0.001, 0.001, 0.001,     # r2, rho2
+           0.001, 0.001, 0.001,     # r3, rho3
+           0.001, 0.001, 0.001]     # r4, rho4
 
+num_prop_steps: 10
+
+# update params
+pix_R_diag: [1., 1.]
+depth_R: [1.]
+
+# Camera Params        
+cam_center: [320, 240]
+focal_len: [410., 410.]
+q_b_c: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame

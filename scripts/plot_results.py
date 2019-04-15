@@ -19,6 +19,11 @@ LOG_WIDTH = 1 + UAV_STATE + COMMAND + UAV_STATE + COMMAND + VEH_STATE \
         + VEH_LMS + EST_STATE + EST_STATE
 
 data = np.reshape(np.fromfile("/tmp/landing_sim.bin", dtype=np.float64), (-1, LOG_WIDTH)).T
+
+# check for NAns
+if (np.any(np.isnan(data))):
+    print("Uh Oh.... We've got NaNs")
+
 t = data[0,:]
 x = data[1:14,:]
 u = data[14:18,:]
@@ -27,8 +32,8 @@ ur = data[31:35, :]
 
 x_veh = data[35:41, :]
 x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
-xhat_veh = data[56:62, :]
-phat_veh = data[62:68, :]
+xhat_veh = data[56:75, :]
+phat_veh = data[75:94, :]
 
 pw = plotWindow()
 
@@ -100,6 +105,60 @@ for i in range(4):
     plt.plot(t, u[i, :], label='u')
     plt.ylabel(ulabel[i])
 pw.addPlot("Input", f)
+
+# vehicle Estimates
+# x_veh = data[35:41, :]
+# x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
+# xhat_veh = data[56:62, :]
+# phat_veh = data[62:68, :]
+
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Vehicle Pos UAV Veh Frame")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x_veh[i,:], label="x")
+    plt.plot(t, xhat_veh[i,:], '--', label=r"$\hat{x}$")
+    # plt.ylabel(xlabel[i])
+    pos_cov = xhat_veh[i,:] + 2. * phat_veh[i, :]
+    neg_cov = xhat_veh[i,:] - 2. * phat_veh[i, :]
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+pw.addPlot("Veh Pos", f)
+
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Vehicle Vel, Veh Body Frame")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x_veh[2 + i,:], label="x")
+    plt.plot(t, xhat_veh[3 + i,:], '--', label=r"$\hat{x}$")
+    # plt.ylabel(xlabel[i])
+    pos_cov = xhat_veh[3 + i,:] + 2. * phat_veh[2 + i, :]
+    neg_cov = xhat_veh[3 + i,:] - 2. * phat_veh[2 + i, :]
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+pw.addPlot("Veh Vel", f)
+
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Vehicle Attitude")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x_veh[4 + i,:], label="x")
+    plt.plot(t, xhat_veh[5 + i,:], '--', label=r"$\hat{x}$")
+    # plt.ylabel(xlabel[i])
+    pos_cov = xhat_veh[5 + i,:] + 2. * phat_veh[5 + i, :]
+    neg_cov = xhat_veh[5 + i,:] - 2. * phat_veh[5 + i, :]
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+pw.addPlot("Veh Att", f)
 
 pw.show()
 

@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include "multirotor_sim/estimator_base.h"
+#include "geometry/quat.h"
+
+#define PRINTMAT(x) std::cout << #x << std::endl << x << std::endl;
 
 using namespace Eigen;
 using namespace multirotor_sim;
@@ -48,8 +51,11 @@ public:
   // R - gnss covariance
   void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
 
+  void toRot(const double theta, Matrix2d& R);
+  Matrix2d dtheta_R(const double theta);
+
   // Kalman Filter
-  void propagate(const double& dt);
+  void propagate(const double& time_step);
 
   void updateGoal(const Vector2d& goal_pix);
   void updateGoalDepth(const double& goal_depth);
@@ -59,6 +65,29 @@ public:
   StateVec xhat_;
   StateMat P_;
 
+  // Prop
+  StateVec xdot_;
+  StateMat A_;
+  StateMat Q_;
+
+  // Update
+  const StateMat I_ = StateMat::Identity();
+  Vector2d pix_residual_;
+  Matrix2d pix_R_;
+  Eigen::Matrix<double, 2, xZ> pix_H_;
+  Eigen::Matrix<double, xZ, 2> K_;
+
+  Matrix1d depth_R_;
+  Eigen::Matrix<double, 1, xZ> depth_H_;
+
+  // Camera params
+  double fx_;
+  double fy_;
+  double cx_;
+  double cy_;
+  quat::Quatd q_b_c_;
+
+  int num_prop_steps_;
   double last_time_;
 };
 
