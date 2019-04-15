@@ -160,6 +160,22 @@ for i in range(2):
         plt.legend()
 pw.addPlot("Veh Att", f)
 
+# f = plt.figure(dpi=150)
+# plt.plot()
+# for i in range(2):
+    # plt.suptitle("Vehicle Points Inverse Depth")
+    # plt.subplot(2, 1, i+1)
+    # plt.plot(t, x_veh[4 + i,:], label="x")
+    # plt.plot(t, xhat_veh[5 + i,:], '--', label=r"$\hat{x}$")
+    # # plt.ylabel(xlabel[i])
+    # pos_cov = xhat_veh[5 + i,:] + 2. * phat_veh[5 + i, :]
+    # neg_cov = xhat_veh[5 + i,:] - 2. * phat_veh[5 + i, :]
+    # plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    # plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    # if i == 0:
+        # plt.legend()
+# pw.addPlot("Veh Inv Depth", f)
+
 pw.show()
 
 

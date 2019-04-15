@@ -23,8 +23,7 @@ Estimator::Estimator(std::string filename)
   get_yaml_node("num_prop_steps", filename, num_prop_steps_);
   StateVec Q_diag;
   get_yaml_eigen("Q_diag", filename, Q_diag);
-  Q_ = Q_diag.asDiagonal();
-  Q_.setZero();
+  Q_ = (1. / num_prop_steps_) * Q_diag.asDiagonal();
 
   // Update vars
   Vector2d pix_R_diag;
@@ -76,15 +75,15 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   const double dt = t - last_time_;
   propagate(dt);
 
-  //updateGoal(z.pixs[0]);
-  //updateGoalDepth(z.depths[0]);
+  updateGoal(z.pixs[0]);
+  updateGoalDepth(z.depths[0]);
 
-  //for (unsigned int i = 0; i < SIZE; i++)
-  //{
-    //unsigned int lm_id = i;
-    //unsigned int lm_idx = i + 1;
-    //updateLandmark(lm_id, z.pixs[lm_idx]);
-  //}
+  for (unsigned int i = 0; i < SIZE; i++)
+  {
+    unsigned int lm_id = i;
+    unsigned int lm_idx = i + 1;
+    updateLandmark(lm_id, z.pixs[lm_idx]);
+  }
 
   last_time_ = t;
 }
@@ -124,7 +123,7 @@ void Estimator::propagate(const double& time_step)
     // Vehicle state dynamics and jacobians
     xdot_.block<2, 1>(xPOS, 0) = R_I_b.transpose() * vel_b; // - uav_vel(x, y);
     //xdot_(xRHO) = rho0 * rho0 * uav_vel_z;
-    xdot_(xOMEGA) = omega;
+    xdot_(xATT) = omega;
 
     A_.block<2, 2>(xPOS, xVEL) = R_I_b.transpose();
     A_.block<2, 1>(xPOS, xATT) = dtheta_R(theta).transpose() * vel_b;
