@@ -51,6 +51,7 @@ public:
   // R - gnss covariance
   void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
 
+  void setInverseDepth(const double min_depth);
   void toRot(const double theta, Matrix2d& R);
   Matrix2d dtheta_R(const double theta);
 

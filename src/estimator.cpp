@@ -46,6 +46,10 @@ Estimator::Estimator(std::string filename)
   get_yaml_eigen("q_b_c", filename, q_b_c_eig);
   q_b_c_ = quat::Quatd(q_b_c_eig);
 
+  double min_depth;
+  get_yaml_node("min_feat_depth", filename, min_depth);
+  setInverseDepth(min_depth);
+
   last_time_ = -1;
   PRINTMAT(xhat_);
   PRINTMAT(P_);
@@ -86,6 +90,22 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   }
 
   last_time_ = t;
+}
+
+void Estimator::setInverseDepth(const double min_depth)
+{
+  double rho_init = 1. / (2. * min_depth);
+  double cov_init = 1. / (16. * min_depth * min_depth);
+
+  xhat_(xRHO) = rho_init;
+  P_(xRHO, xRHO) = cov_init;
+
+  for (unsigned int i = 0; i < SIZE; i++)
+  {
+    unsigned int rho_idx = xLM + 2 + 3 * i;
+    xhat_(rho_idx) = rho_init;
+    P_(rho_idx,  rho_idx) = cov_init;
+  }
 }
 
 void Estimator::toRot(const double theta, Matrix2d& R)
