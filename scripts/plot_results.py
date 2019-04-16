@@ -112,6 +112,55 @@ pw.addPlot("Input", f)
 # xhat_veh = data[56:62, :]
 # phat_veh = data[62:68, :]
 
+# Create velocities in inertial frame
+num_steps = len(t)
+veh_v_I = np.zeros((2, num_steps));
+est_v_I = np.zeros((2, num_steps));
+
+true_r1_I = np.zeros((2, num_steps));
+true_r2_I = np.zeros((2, num_steps));
+true_r3_I = np.zeros((2, num_steps));
+true_r4_I = np.zeros((2, num_steps));
+est_r1_I = np.zeros((2, num_steps));
+est_r2_I = np.zeros((2, num_steps));
+est_r3_I = np.zeros((2, num_steps));
+est_r4_I = np.zeros((2, num_steps));
+
+for i in range(num_steps):
+    true_theta = x_veh[4, i]
+    true_R_I_b = np.array([[np.cos(true_theta), np.sin(true_theta)],
+                 [-np.sin(true_theta), np.cos(true_theta)]])
+    true_veh_I = np.matmul(true_R_I_b.transpose(), np.array([x_veh[2, i],
+        x_veh[3, i]]))
+    veh_v_I[0, i] = true_veh_I[0]
+    veh_v_I[1, i] = true_veh_I[1]
+
+    true_r1_I[:, i] = np.matmul(true_R_I_b.transpose(),
+            np.array([x_veh_lms[0, 1, i], x_veh_lms[1, 1, i]]))
+    true_r2_I[:, i] = np.matmul(true_R_I_b.transpose(),
+            np.array([x_veh_lms[0, 2, i], x_veh_lms[1, 2, i]]))
+    true_r3_I[:, i] = np.matmul(true_R_I_b.transpose(),
+            np.array([x_veh_lms[0, 3, i], x_veh_lms[1, 3, i]]))
+    true_r4_I[:, i] = np.matmul(true_R_I_b.transpose(),
+            np.array([x_veh_lms[0, 4, i], x_veh_lms[1, 4, i]]))
+
+    est_theta = xhat_veh[5, i]
+    est_R_I_b = np.array([[np.cos(est_theta), np.sin(est_theta)],
+                 [-np.sin(est_theta), np.cos(est_theta)]])
+    est_veh_I = np.matmul(est_R_I_b.transpose(), np.array([xhat_veh[3, i],
+            xhat_veh[4, i]]))
+    est_v_I[0, i] = est_veh_I[0]
+    est_v_I[1, i] = est_veh_I[1]
+
+    est_r1_I[:, i] = np.matmul(est_R_I_b.transpose(),
+            np.array([xhat_veh[7, i], xhat_veh[8, i]]))
+    est_r2_I[:, i] = np.matmul(est_R_I_b.transpose(),
+            np.array([xhat_veh[10, i], xhat_veh[11, i]]))
+    est_r3_I[:, i] = np.matmul(est_R_I_b.transpose(),
+            np.array([xhat_veh[13, i], xhat_veh[14, i]]))
+    est_r4_I[:, i] = np.matmul(est_R_I_b.transpose(),
+            np.array([xhat_veh[16, i], xhat_veh[17, i]]))
+
 f = plt.figure(dpi=150)
 plt.plot()
 ylabel = [r"$p_x$", r"$p_y$", r"$\rho$"]
@@ -148,7 +197,24 @@ for i in range(2):
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
-pw.addPlot("Veh Vel", f)
+pw.addPlot("Veh Vel Body", f)
+
+f = plt.figure(dpi=150)
+plt.plot()
+ylabel = [r"$v_x$", r"$v_y$"]
+for i in range(2):
+    plt.suptitle("Vehicle Vel, Veh Inertial Frame")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, veh_v_I[i,:], label="x")
+    plt.plot(t, est_v_I[i,:], '--', label=r"$\hat{x}$")
+    pos_cov = est_v_I[i,:] + 2. * np.sqrt(phat_veh[3 + i, :])
+    neg_cov = est_v_I[i,:] - 2. * np.sqrt(phat_veh[3 + i, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("Veh Vel Inertial", f)
 
 f = plt.figure(dpi=150)
 plt.plot()
@@ -176,7 +242,7 @@ f = plt.figure(dpi=150)
 plt.plot()
 ylabel = [r"$LM 1$", r"$LM 2$", r"$LM 3$"]
 for i in range(3):
-    plt.suptitle("Landmark Points")
+    plt.suptitle("Landmark Points, Veh Body Frame")
     plt.subplot(3, 3, 3*i+1)
     lm_idx = i + 1
     plt.plot(t, x_veh_lms[0, lm_idx, :], label=r"$r_x$")
@@ -212,7 +278,51 @@ for i in range(3):
     plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
     if i == 0:
         plt.legend()
-pw.addPlot("Landmarks", f)
+pw.addPlot("Landmarks Body", f)
+
+f = plt.figure(dpi=150)
+plt.plot()
+true_r = [true_r1_I, true_r2_I, true_r3_I, true_r4_I]
+est_r = [est_r1_I, est_r2_I, est_r3_I, est_r4_I]
+ylabel = [r"$LM 1$", r"$LM 2$", r"$LM 3$"]
+for i in range(3):
+    plt.suptitle("Landmark Points, Veh Inertial Frame")
+    plt.subplot(3, 3, 3*i+1)
+    lm_idx = i + 1
+    plt.plot(t, true_r[i][0, :], label=r"$r_x$")
+    rx_idx = 7 + 3 * i
+    plt.plot(t, est_r[i][0, :], '--', label=r"$\hat{r}_x$")
+    pos_cov = est_r[i][0, :] + 2. * np.sqrt(phat_veh[rx_idx, :])
+    neg_cov = est_r[i][0, :] - 2. * np.sqrt(phat_veh[rx_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+
+    plt.subplot(3, 3, 3*i+2)
+    plt.plot(t, true_r[i][1, :], label=r"$r_y$")
+    ry_idx = 8 + 3 * i
+    plt.plot(t, est_r[i][1, :], '--', label=r"$\hat{r}_y$")
+    pos_cov = est_r[i][1, :] + 2. * np.sqrt(phat_veh[ry_idx, :])
+    neg_cov = est_r[i][1, :] - 2. * np.sqrt(phat_veh[ry_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+
+    plt.subplot(3, 3, 3*i+3)
+    true_rho = -1. / (x[2, :] + x_veh_lms[2, lm_idx, :])
+    plt.plot(t, true_rho, label=r"$\rho$")
+    rhohat_idx = 9 + 3 * i
+    plt.plot(t, xhat_veh[rhohat_idx,:], '--', label=r"$\hat{\rho}$")
+    pos_cov = xhat_veh[rhohat_idx,:] + 2. * np.sqrt(phat_veh[rhohat_idx, :])
+    neg_cov = xhat_veh[rhohat_idx,:] - 2. * np.sqrt(phat_veh[rhohat_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+pw.addPlot("Landmarks Inertial", f)
 
 pw.show()
 

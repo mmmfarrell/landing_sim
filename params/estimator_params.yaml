@@ -19,7 +19,7 @@ P0_diag:  [1., 1.,    # POS
            2., 2., 0.2,     # r2, rho2
            2., 2., 0.2,     # r3, rho3
            2., 2., 0.2]     # r4, rho4
-min_feat_depth: 5.
+min_feat_depth: 1.
 
 # Prop params
 Q_diag:  [0.0001, 0.0001,    # POS
