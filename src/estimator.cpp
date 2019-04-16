@@ -257,11 +257,13 @@ void Estimator::updateLandmark(const int& id, const Vector2d& lm_pix)
 
   // dpix / dr
   pix_H_.block<1, 2>(0, rx_idx) = fx_ * rhoi * e_1.transpose() * R_v_c * R_I_b.transpose();
-  pix_H_.block<1, 2>(1, rx_idx) = fx_ * rhoi * e_2.transpose() * R_v_c * R_I_b.transpose();
+  pix_H_.block<1, 2>(1, rx_idx) = fy_ * rhoi * e_2.transpose() * R_v_c * R_I_b.transpose();
 
   // dpix / drho
   pix_H_(0, rho_idx) = fx_ * e_1.transpose() * R_v_c * posi_v;
   pix_H_(1, rho_idx) = fy_ * e_2.transpose() * R_v_c * posi_v;
+
+  //PRINTMAT(pix_H_);
 
   K_ = P_ * pix_H_.transpose() * (pix_H_ * P_ * pix_H_.transpose() + pix_R_).inverse();
 

@@ -15,10 +15,10 @@ P0_diag:  [0., 0.,    # POS
            0.2,         # RHO
            1., 1.,    # VEL
            1., 1.,    # ATT, OMEGA
-           1., 1., 0.2,     # r1, rho1
-           1., 1., 0.2,     # r2, rho2
-           1., 1., 0.2,     # r3, rho3
-           1., 1., 0.2]     # r4, rho4
+           2., 2., 0.2,     # r1, rho1
+           2., 2., 0.2,     # r2, rho2
+           2., 2., 0.2,     # r3, rho3
+           2., 2., 0.2]     # r4, rho4
 min_feat_depth: 2.
 
 # Prop params

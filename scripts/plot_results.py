@@ -114,14 +114,18 @@ pw.addPlot("Input", f)
 
 f = plt.figure(dpi=150)
 plt.plot()
-ylabel = [r"$p_x$", r"$p_y$"]
-for i in range(2):
+ylabel = [r"$p_x$", r"$p_y$", r"$\rho$"]
+for i in range(3):
     plt.suptitle("Vehicle Pos UAV Veh Frame")
-    plt.subplot(2, 1, i+1)
-    plt.plot(t, x_veh[i,:], label="x")
+    plt.subplot(3, 1, i+1)
+    if i == 2:
+        true_rho = -1. / x[2, :]
+        plt.plot(t, true_rho, label="x")
+    else:
+        plt.plot(t, x_veh[i,:], label="x")
     plt.plot(t, xhat_veh[i,:], '--', label=r"$\hat{x}$")
-    pos_cov = xhat_veh[i,:] + 2. * phat_veh[i, :]
-    neg_cov = xhat_veh[i,:] - 2. * phat_veh[i, :]
+    pos_cov = xhat_veh[i,:] + 2. * np.sqrt(phat_veh[i, :])
+    neg_cov = xhat_veh[i,:] - 2. * np.sqrt(phat_veh[i, :])
     plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
     plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
     plt.ylabel(ylabel[i])
@@ -137,8 +141,8 @@ for i in range(2):
     plt.subplot(2, 1, i+1)
     plt.plot(t, x_veh[2 + i,:], label="x")
     plt.plot(t, xhat_veh[3 + i,:], '--', label=r"$\hat{x}$")
-    pos_cov = xhat_veh[3 + i,:] + 2. * phat_veh[3 + i, :]
-    neg_cov = xhat_veh[3 + i,:] - 2. * phat_veh[3 + i, :]
+    pos_cov = xhat_veh[3 + i,:] + 2. * np.sqrt(phat_veh[3 + i, :])
+    neg_cov = xhat_veh[3 + i,:] - 2. * np.sqrt(phat_veh[3 + i, :])
     plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
     plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
     plt.ylabel(ylabel[i])
@@ -154,8 +158,8 @@ for i in range(2):
     plt.subplot(2, 1, i+1)
     plt.plot(t, x_veh[4 + i,:], label="x")
     plt.plot(t, xhat_veh[5 + i,:], '--', label=r"$\hat{x}$")
-    pos_cov = xhat_veh[5 + i,:] + 2. * phat_veh[5 + i, :]
-    neg_cov = xhat_veh[5 + i,:] - 2. * phat_veh[5 + i, :]
+    pos_cov = xhat_veh[5 + i,:] + 2. * np.sqrt(phat_veh[5 + i, :])
+    neg_cov = xhat_veh[5 + i,:] - 2. * np.sqrt(phat_veh[5 + i, :])
     plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
     plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
     plt.ylabel(ylabel[i])
@@ -163,21 +167,52 @@ for i in range(2):
         plt.legend()
 pw.addPlot("Veh Att", f)
 
-# f = plt.figure(dpi=150)
-# plt.plot()
-# for i in range(2):
-    # plt.suptitle("Vehicle Points Inverse Depth")
-    # plt.subplot(2, 1, i+1)
-    # plt.plot(t, x_veh[4 + i,:], label="x")
-    # plt.plot(t, xhat_veh[5 + i,:], '--', label=r"$\hat{x}$")
-    # # plt.ylabel(xlabel[i])
-    # pos_cov = xhat_veh[5 + i,:] + 2. * phat_veh[5 + i, :]
-    # neg_cov = xhat_veh[5 + i,:] - 2. * phat_veh[5 + i, :]
-    # plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
-    # plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
-    # if i == 0:
-        # plt.legend()
-# pw.addPlot("Veh Inv Depth", f)
+# x_veh = data[35:41, :]
+# x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
+# xhat_veh = data[56:75, :]
+# phat_veh = data[75:94, :]
+
+f = plt.figure(dpi=150)
+plt.plot()
+ylabel = [r"$LM 1$", r"$LM 2$", r"$LM 3$"]
+for i in range(3):
+    plt.suptitle("Landmark Points")
+    plt.subplot(3, 3, 3*i+1)
+    lm_idx = i + 1
+    plt.plot(t, x_veh_lms[0, lm_idx, :], label=r"$r_x$")
+    rx_idx = 7 + 3 * i
+    plt.plot(t, xhat_veh[rx_idx, :], '--', label=r"$\hat{r}_x$")
+    pos_cov = xhat_veh[rx_idx, :] + 2. * np.sqrt(phat_veh[rx_idx, :])
+    neg_cov = xhat_veh[rx_idx, :] - 2. * np.sqrt(phat_veh[rx_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+
+    plt.subplot(3, 3, 3*i+2)
+    plt.plot(t, x_veh_lms[1, lm_idx, :], label=r"$r_y$")
+    ry_idx = 8 + 3 * i
+    plt.plot(t, xhat_veh[ry_idx, :], '--', label=r"$\hat{r}_y$")
+    pos_cov = xhat_veh[ry_idx, :] + 2. * np.sqrt(phat_veh[ry_idx, :])
+    neg_cov = xhat_veh[ry_idx, :] - 2. * np.sqrt(phat_veh[ry_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+
+    plt.subplot(3, 3, 3*i+3)
+    true_rho = -1. / (x[2, :] + x_veh_lms[2, lm_idx, :])
+    plt.plot(t, true_rho, label=r"$\rho$")
+    rhohat_idx = 9 + 3 * i
+    plt.plot(t, xhat_veh[rhohat_idx,:], '--', label=r"$\hat{\rho}$")
+    pos_cov = xhat_veh[rhohat_idx,:] + 2. * np.sqrt(phat_veh[rhohat_idx, :])
+    neg_cov = xhat_veh[rhohat_idx,:] - 2. * np.sqrt(phat_veh[rhohat_idx, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+    if i == 0:
+        plt.legend()
+pw.addPlot("Landmarks", f)
 
 pw.show()
 
