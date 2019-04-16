@@ -63,6 +63,11 @@ void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& 
 {
 }
 
+void Estimator::velocityCallback(const double& t, const Vector3d& z, const Matrix3d& R)
+{
+
+}
+
 void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                        const Matrix2d& R_pix, const Matrix1d& R_depth)
 {

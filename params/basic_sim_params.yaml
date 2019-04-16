@@ -141,6 +141,7 @@ imu_enabled: true
 alt_enabled: true
 baro_enabled: true
 mocap_enabled: true
+velocity_sensor_enabled: true
 vo_enabled: false
 simple_cam_enabled: true
 camera_enabled: false
@@ -214,6 +215,10 @@ position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
 mocap_transmission_time: 0
+
+## Velocity Sensor
+velocity_update_rate: 250
+velocity_noise_stdev: 0.00
 
 
 ## GNSS
