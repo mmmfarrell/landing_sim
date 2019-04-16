@@ -1,13 +1,13 @@
 TODO
-- Account for UAV motion
-  - UAV velocity sensor
-  - use UAV attitude to rotate pixels to virtual image plane
 - Add noise
 
 
 DONE
 - plot r vecs
 - plot everything in inertial frame
+- Account for UAV motion
+  - UAV velocity sensor
+  - use UAV attitude to rotate pixels to virtual image plane
 
 
 BACKLOG

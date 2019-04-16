@@ -165,16 +165,18 @@ f = plt.figure(dpi=150)
 plt.plot()
 ylabel = [r"$p_x$", r"$p_y$", r"$\rho$"]
 for i in range(3):
-    plt.suptitle("Vehicle Pos UAV Veh Frame")
+    plt.suptitle("Vehicle Pos Inertial Frame")
     plt.subplot(3, 1, i+1)
     if i == 2:
         true_rho = -1. / x[2, :]
         plt.plot(t, true_rho, label="x")
+        pos_I = xhat_veh[i, :]
     else:
         plt.plot(t, x_veh[i,:], label="x")
-    plt.plot(t, xhat_veh[i,:], '--', label=r"$\hat{x}$")
-    pos_cov = xhat_veh[i,:] + 2. * np.sqrt(phat_veh[i, :])
-    neg_cov = xhat_veh[i,:] - 2. * np.sqrt(phat_veh[i, :])
+        pos_I = xhat_veh[i, :] + x[i, :]
+    plt.plot(t, pos_I, '--', label=r"$\hat{x}$")
+    pos_cov = pos_I + 2. * np.sqrt(phat_veh[i, :])
+    neg_cov = pos_I - 2. * np.sqrt(phat_veh[i, :])
     plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
     plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
     plt.ylabel(ylabel[i])

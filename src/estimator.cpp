@@ -97,23 +97,16 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     return;
   }
 
-  //const double dt = t - last_time_;
-  //propagate(dt);
-
-  updateGoal(z.pixs[0]);
+  //updateGoal(z.pixs[0]);
+  updateGoal(virtualImagePixels(z.pixs[0]));
   updateGoalDepth(z.depths[0]);
 
   for (unsigned int i = 0; i < SIZE; i++)
   {
     unsigned int lm_id = i;
     unsigned int lm_idx = i + 1;
-    updateLandmark(lm_id, z.pixs[lm_idx]);
-    //updateLandmarkDepth(lm_id, z.depths[lm_idx]);
-
-    //double rho_true = 0.1;
-    //Vector2d r_b = invserseMeasurementModelLandmark(z.pixs[lm_idx], rho_true);
-    //std::cout << "lm idx: " << lm_idx << std::endl;
-    //PRINTMAT(r_b);
+    //updateLandmark(lm_id, z.pixs[lm_idx]);
+    updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
   }
 }
 
@@ -361,4 +354,25 @@ Vector2d Estimator::invserseMeasurementModelLandmark(const Vector2d& lm_pix,
   Vector2d r_b = R_I_b * ((1. / rho) * R_v_c.transpose() * posi_c - pos_v);
 
   return r_b;
+}
+
+Vector2d Estimator::virtualImagePixels(const Vector2d& pix)
+{
+  Vector3d pix_vec(pix(0), pix(1), 1.);
+
+  Matrix3d K;
+  K << fx_, 0., cx_,
+        0., fy_, cy_,
+        0., 0., 1.;
+
+  pix_vec = K.inverse() * pix_vec;
+
+  static const Matrix3d R_b_c = q_b_c_.R();
+
+  Vector3d virtual_vec;
+  virtual_vec = K * R_b_c * q_I_b_.R().transpose() * R_b_c.transpose() * pix_vec;
+
+  Vector2d virtual_pix;
+  virtual_pix = virtual_vec.block<2, 1>(0, 0) / virtual_vec(2);
+  return virtual_pix;
 }

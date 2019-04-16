@@ -69,6 +69,7 @@ public:
 
   Vector2d invserseMeasurementModelLandmark(const Vector2d& lm_pix,
                                             const double rho);
+  Vector2d virtualImagePixels(const Vector2d& pix);
 
   bool draw_feats_;
   StateVec xhat_;
