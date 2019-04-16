@@ -1,0 +1,1154 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\begin_preamble
+% vectors, quaternions, etc.
+\newcommand*{\vect}[1]{\boldsymbol{\mathrm{#1}}}
+\newcommand*{\quat}[1]{\boldsymbol{\mathrm{#1}}}
+
+\newcommand*{\x}{\vect{x}}
+\newcommand*{\xt}{\tilde{\vect{x}}}
+\newcommand*{\xhat}{\hat{\vect{x}}}
+\newcommand*{\xbar}{\bar{\vect{x}}}
+
+\newcommand*{\z}{\vect{z}}
+\newcommand*{\zhat}{\hat{\vect{z}}}
+\newcommand*{\zbar}{\bar{\vect{z}}}
+
+\newcommand*{\q}{\quat{q}}
+\newcommand*{\e}{\vect{e}}
+\newcommand*{\qt}{\tilde{\quat{q}}}
+\newcommand*{\drag}{c_d}
+
+% modifiers
+% \newcommand*{\desired}[1]{\accentset{\circ}{#1}}
+\newcommand*{\des}[1]{\check{#1}}
+
+% norms, transpose, etc.
+\newcommand*{\transpose}{\mathsf{T}}
+\newcommand*{\skewmat}[1]{\left[ #1 \right]_{\times}}
+\newcommand*{\norm}[1]{\left\Vert #1\right\Vert }
+\newcommand*{\abs}[1]{\left\vert #1\right\vert }
+
+% group/algebra names
+\newcommand*{\SO}{\ensuremath{\mathit{SO}}}
+\newcommand*{\so}{\ensuremath{\mathfrak{so}}}
+\newcommand*{\SE}{\ensuremath{\mathit{SE}}}
+\newcommand*{\se}{\ensuremath{\mathfrak{se}}}
+
+% operators
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Exp}{Exp}
+\DeclareMathOperator*{\Log}{Log}
+
+% reference commands
+\renewcommand*{\eqref}[1]{Eq.~\ref{#1}}
+\newcommand*{\tabref}[1]{Table~\ref{#1}}
+\newcommand*{\secref}[1]{Sec.~\ref{#1}}
+\newcommand*{\appxref}[1]{Appx.~\ref{#1}}
+
+% comments
+\definecolor{orange}{rgb}{1,0.5,0}
+\definecolor{darkgreen}{rgb}{0,0.6,0}
+\newcommand{\JJ}[1]{{\color{orange}{JJ: #1}}}
+\newcommand{\RB}[1]{{\color{teal}{RB: #1}}}
+\newcommand{\TM}[1]{{\color{purple}{TM: #1}}}
+\newcommand{\DK}[1]{{\color{darkgreen}{DK: #1}}}
+\newcommand{\JN}[1]{{\color{red}{JN: #1}}}
+\newcommand{\MF}[1]{{\color{red}{MF: #1}}}
+
+% theorem environments
+\newtheorem{theorem}{Theorem}[subsection]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\end_preamble
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Estimating 2D Vehicle Motion With RGBD Point Cloud
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\vect}[1]{\boldsymbol{\mathrel{#1}}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\quat}[1]{\boldsymbol{\mathrm{#1}}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\x}{\vect x}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\xt}{\tilde{\x}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\xhat}{\hat{\x}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\q}{\quat q}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\e}{\vect e}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\transpose}{\mathsf{T}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\skewmat}[1]{\left[#1\right]_{\times}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\norm}[1]{\parallel#1\parallel}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Simulating the Landing Vehicle
+\end_layout
+
+\begin_layout Section
+Unicycle Model
+\end_layout
+
+\begin_layout Standard
+We assume that our landing vehicle moves according to a unicycle model with
+ a constant velocity ang angular rotation such that the state of the vehicle
+ can be expressed as
+\begin_inset Formula 
+\begin{equation}
+\x=\begin{bmatrix}x^{I} & y^{I} & v_{x}^{b} & v_{y}^{b} & \theta_{I}^{b} & \omega^{b}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+We assume that the inertial frame and the body frame represent NED (forward-righ
+t-down) coordinate systems and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ represents the rotation from the inertial frame to the body frame such
+ that when 
+\begin_inset Formula $\theta$
+\end_inset
+
+ equals zero, the vehicle is pointing perfectly in the inertial x (north)
+ direction and when 
+\begin_inset Formula $\theta$
+\end_inset
+
+ equal 
+\begin_inset Formula $\frac{\pi}{2}$
+\end_inset
+
+ the vehicle is pointing perfectly in the inertial y (east) direction.
+ With these definitions, the dynamics are given by
+\begin_inset Formula 
+\begin{equation}
+\dot{\x}=f\left(\x\right)
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $f\left(\x\right)$
+\end_inset
+
+ is defined piecewise as
+\begin_inset Formula 
+\begin{align}
+\dot{x}^{I} & =\cos\left(\theta\right)v_{x}^{b}-\sin\left(\theta\right)v_{y}^{b}\\
+\dot{y}^{I} & =\sin\left(\theta\right)v_{x}^{b}+\cos\left(\theta\right)v_{y}^{b}\\
+\dot{v}_{x}^{I} & =0\\
+\dot{v}_{y}^{I} & =0\\
+\dot{\theta}_{I}^{b} & =\omega^{b}\\
+\dot{\omega}^{b} & =0.
+\end{align}
+
+\end_inset
+
+Or similarly
+\begin_inset Formula 
+\begin{align}
+\dot{\vect p}^{I} & =\left(R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\dot{\vect v} & =\vect 0\\
+\dot{\theta} & =\omega^{b}\\
+\dot{\omega} & =0.
+\end{align}
+
+\end_inset
+
+We also note that the 2d rotation matrix from the inertial frame to the
+ body frame can be expressed as
+\begin_inset Formula 
+\begin{equation}
+R_{I}^{b}=\begin{bmatrix}\cos\left(\theta\right) & \sin\left(\theta\right)\\
+-\sin\left(\theta\right) & \cos\left(\theta\right)
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Simulating Feature Points
+\end_layout
+
+\begin_layout Standard
+The easiest way to simulate feature points on the landing vehicle are first
+ to declare them in the vehicle's body frame.
+ Given a location of a feature point on the landing vehicle, 
+\begin_inset Formula $\vect p_{i}^{b}$
+\end_inset
+
+, we can express its location in the inertial frame with
+\begin_inset Formula 
+\begin{equation}
+\vect p_{i}^{I}=\vect p^{I}+\left(R_{I}^{b}\right)^{\transpose}\vect p_{i}^{b}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Part
+Estimating the Landing Vehicle Motion
+\end_layout
+
+\begin_layout Section
+Constant Velocity, No rotation
+\end_layout
+
+\begin_layout Subsection
+Estimated State
+\end_layout
+
+\begin_layout Standard
+If we want to estimate the velocity of a 2d vehicle that is moving with
+ constant velocity and is not rotating, we can use the estimated state
+\begin_inset Formula 
+\begin{equation}
+\x=\begin{bmatrix}v_{x} & v_{y} & x_{1} & y_{1} & \dots & x_{n} & y_{n}\end{bmatrix}^{\transpose}
+\end{equation}
+
+\end_inset
+
+for 
+\begin_inset Formula $n$
+\end_inset
+
+ landmarks being tracked on the vehicle.
+\end_layout
+
+\begin_layout Subsection
+Motion Equation
+\end_layout
+
+\begin_layout Standard
+The dynamics of the system are very straight forward and linear.
+ Assuming a constant velocity we have the discrete dynamics
+\begin_inset Formula 
+\begin{equation}
+\x_{t+1}=\x_{t}+\begin{bmatrix}0\\
+0\\
+v_{x}\\
+v_{y}\\
+\vdots\\
+v_{x}\\
+v_{y}
+\end{bmatrix}\Delta t.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Estimation
+\end_layout
+
+\begin_layout Subsubsection
+Propagation
+\end_layout
+
+\begin_layout Standard
+For the Kalman Filter propagation, we additionally need the jacobian of
+ the dynamics w.r.t.
+ the state.
+ This is very easy with linear, discrete dynamics
+\begin_inset Formula 
+\begin{equation}
+A=\begin{bmatrix}1 & 0 & 0 & 0 & \dots & 0 & 0\\
+0 & 1 & 0 & 0 & \dots & 0 & 0\\
+\Delta t & 0 & 1 & 0 & \dots & 0 & 0\\
+0 & \Delta t & 0 & 1 & \dots & 0 & 0\\
+\vdots & \vdots & \vdots & \vdots & \ddots & 0 & 0\\
+\Delta t & 0 & 0 & 0 & \dots & 1 & 0\\
+0 & \Delta t & 0 & 0 & \dots & 0 & 1
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Measurement Update
+\end_layout
+
+\begin_layout Standard
+We assume that we measure a point cloud of the landmarks in the inertial
+ frame, or that
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}x_{1} & y_{1} & \dots & x_{n} & y_{n}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}0 & 0 & 1 & 0 & \dots & 0 & 0\\
+0 & 0 & 0 & 1 & \dots & 0 & 0\\
+\vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \vdots\\
+0 & 0 & 0 & 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 1
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Constant Velocity with Rotation
+\end_layout
+
+\begin_layout Subsection
+Estimated State
+\end_layout
+
+\begin_layout Standard
+If we want to estimate the velocity of a 2d vehicle that is moving with
+ constant velocity and is also rotating at a constant rate, we can use the
+ estimated state
+\begin_inset Formula 
+\begin{equation}
+\x=\begin{bmatrix}p_{x}^{I} & p_{y}^{I} & v_{x}^{b} & v_{y}^{b} & \theta_{I}^{b} & \omega^{b} & rx_{1}^{b} & ry_{1}^{b} & \dots & rx_{n}^{b} & ry_{n}^{b}\end{bmatrix}^{\transpose}
+\end{equation}
+
+\end_inset
+
+for 
+\begin_inset Formula $n$
+\end_inset
+
+ landmarks being tracked on the vehicle where 
+\begin_inset Formula $v_{x}^{b},v_{y}^{b}$
+\end_inset
+
+ are the velocities of the vehicle in its body frame and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the angle from the inertial frame to the body frame.
+ We define the body frame of the vehicle to be located at the 1st point
+ and estimate the rotation about that body frame.
+\end_layout
+
+\begin_layout Subsection
+Motion Equation
+\end_layout
+
+\begin_layout Standard
+The dynamics of the system are a little more complicated than the non rotating
+ case.
+ We define them piecewise here
+\begin_inset Formula 
+\begin{align}
+\dot{\vect p} & =\left(R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\dot{\vect v}^{b} & =\vect 0\\
+\dot{\theta}_{I}^{b} & =\omega\\
+\dot{\omega}^{b} & =0\\
+\dot{\vect r}_{i}^{b} & =\vect 0.
+\end{align}
+
+\end_inset
+
+The motion of the position of each feature is dependent on its location
+ with respect to the body frame.
+ For this we define
+\begin_inset Formula 
+\begin{equation}
+\vect r_{i}^{I}=\begin{bmatrix}x_{i}^{I}-p_{x}^{I}\\
+y_{i}^{I}-p_{y}^{I}
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Estimation
+\end_layout
+
+\begin_layout Subsubsection
+Propagation
+\end_layout
+
+\begin_layout Standard
+For the Kalman Filter propagation, we need the jacobian of the dynamics
+ w.r.t.
+ the state.
+ This jacobian can be shown to equal
+\begin_inset Formula 
+\begin{equation}
+\frac{df}{d\x}=\begin{bmatrix}\vect 0 & \frac{\partial\dot{\vect p}}{\partial\vect v} & \frac{\partial\dot{\vect p}}{\partial\theta} & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & 0 & \frac{d\dot{\theta}}{d\omega} & 0 & 0 & \dots & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+where the components are equal to
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\vect p}}{\partial\vect v} & =\left(R_{I}^{b}\right)^{\transpose}\\
+\frac{\partial\dot{\vect p}}{\partial\theta} & =\left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\frac{d\dot{\theta}}{d\omega} & =1
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Measurement Update
+\end_layout
+
+\begin_layout Standard
+We assume that we measure a point cloud of the landmarks in the inertial
+ frame, with one of the points corresponding to the location of the body
+ frame of the vehicle such that
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}p_{x} & p_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}1 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+0 & 1 & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+The other landmark locations are functions of the position of the vehicle
+ and the offset vector, 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}\vect p_{\text{veh}}^{I}+\left(R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H_{i}\left(\x\right)=\begin{bmatrix}I_{2\times2} & 0 & \left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & \left(R_{I}^{b}\right)^{\transpose} & \dots & 0\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Constant Velocity with Rotation and Moving Camera and Known Depth
+\end_layout
+
+\begin_layout Subsection
+Estimated State
+\end_layout
+
+\begin_layout Standard
+If we want to estimate the velocity of a 2d vehicle that is moving with
+ constant velocity and is also rotating at a constant rate from a rotating
+ camera, we can do all of the estimation in the vehicle frame of the UAV
+ carrying the camera.
+ The vehicle frame of the UAV is defined to be co-located with the body
+ frame of the UAV, but oriented with the inertial North-East-Down frame.
+ We do not want to be dependent on the position of the UAV, because this
+ would provide too much uncertainty in the features.
+ If we do everything in the vehicle frame, we can use the estimated state
+\begin_inset Formula 
+\begin{align}
+\x & =\begin{bmatrix}p_{x}^{v} & p_{y}^{v} & v_{x}^{b} & v_{y}^{b} & \theta_{I}^{b} & \omega^{b} & rx_{1}^{b} & ry_{1}^{b} & \dots & rx_{n}^{b} & ry_{n}^{b}\end{bmatrix}^{\transpose}\\
+\x & =\begin{bmatrix}\vect p^{v} & \vect v^{b} & \theta_{v}^{b} & \omega^{b} & \vect r_{1}^{b} & \dots & \vect r_{n}^{b}\end{bmatrix}^{\transpose}
+\end{align}
+
+\end_inset
+
+for 
+\begin_inset Formula $n$
+\end_inset
+
+ landmarks being tracked on the vehicle where 
+\begin_inset Formula $\vect v^{b}$
+\end_inset
+
+ is the velocities of the landing vehicle in its body frame and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the angle from the inertial frame to the body frame.
+ We define the body frame of the vehicle to be located at the 1st point
+ and estimate the rotation about that body frame.
+ If the camera is moving, but not rotating, then we can use the motion of
+ the camera as an input to the system such that
+\begin_inset Formula 
+\begin{equation}
+\vect u=\begin{bmatrix}\vect v_{c}^{v}\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Motion Equation
+\end_layout
+
+\begin_layout Standard
+The dynamics of the system are a little more complicated than the non rotating
+ case.
+ We define them piecewise here
+\begin_inset Formula 
+\begin{align}
+\dot{\vect p} & =\left(R_{I}^{b}\right)^{\transpose}\vect v^{b}-\vect v_{c}^{v}\\
+\dot{\vect v}^{b} & =\vect 0\\
+\dot{\theta}_{I}^{b} & =\omega\\
+\dot{\omega}^{b} & =0\\
+\dot{\vect r}_{i}^{b} & =\vect 0.
+\end{align}
+
+\end_inset
+
+The motion of the position of each feature is dependent on its location
+ with respect to the body frame.
+ For this we define
+\begin_inset Formula 
+\begin{equation}
+\vect r_{i}^{v}=\begin{bmatrix}x_{i}^{v}-p_{x}^{v}\\
+y_{i}^{v}-p_{y}^{v}
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+d
+\end_layout
+
+\begin_layout Subsection
+Estimation
+\end_layout
+
+\begin_layout Subsubsection
+Propagation
+\end_layout
+
+\begin_layout Standard
+For the Kalman Filter propagation, we need the jacobian of the dynamics
+ w.r.t.
+ the state.
+ This jacobian can be shown to equal
+\begin_inset Formula 
+\begin{equation}
+\frac{df}{d\x}=\begin{bmatrix}\vect 0 & \frac{\partial\dot{\vect p}}{\partial\vect v} & \frac{\partial\dot{\vect p}}{\partial\theta} & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & 0 & \frac{d\dot{\theta}}{d\omega} & 0 & 0 & \dots & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+where the components are equal to
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\vect p}}{\partial\vect v} & =\left(R_{I}^{b}\right)^{\transpose}\\
+\frac{\partial\dot{\vect p}}{\partial\theta} & =\left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\frac{d\dot{\theta}}{d\omega} & =1
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Measurement Update
+\end_layout
+
+\begin_layout Standard
+We assume that we measure a point cloud of the landmarks in the inertial
+ frame, with one of the points corresponding to the location of the body
+ frame of the vehicle such that
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}p_{x} & p_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}1 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+0 & 1 & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+The other landmark locations are functions of the position of the vehicle
+ and the offset vector, 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}\vect p_{\text{veh}}^{I}+\left(R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H_{i}\left(\x\right)=\begin{bmatrix}I_{2\times2} & 0 & \left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & \left(R_{I}^{b}\right)^{\transpose} & \dots & 0\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Pixel Measurement Update
+\end_layout
+
+\begin_layout Standard
+If we only measure the pixel locations of the body and landmarks, the measuremen
+t model changes.
+ The measurement model can be written as
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}f_{x}\frac{\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v}}{\vect e_{3}^{\transpose}R_{v}^{c}\vect p^{v}}+c_{x} & f_{y}\frac{\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v}}{\vect e_{3}^{\transpose}R_{v}^{c}\vect p^{v}}+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+Note that we do not specifically know 
+\begin_inset Formula $\vect e_{3}R_{v}^{c}\vect p^{v}$
+\end_inset
+
+ since it is the z distance in the camera frame from the camera to the point.
+ Let us just simplify this for now as
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}f_{x}\frac{\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v}}{h}+c_{x} & f_{y}\frac{\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v}}{h}+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}\frac{f_{x}}{h}\vect e_{1}^{\transpose}R_{v}^{c} & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\frac{f_{x}}{h}\vect e_{2}^{\transpose}R_{v}^{c} & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+The other landmark locations are functions of the position of the vehicle
+ and the offset vector, 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}f_{x}\frac{\vect e_{1}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)}{h}+c_{x} & f_{y}\frac{\vect e_{2}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)}{h}+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H_{i}\left(\x\right)=\begin{bmatrix}\frac{f_{x}}{h}\vect e_{1}^{\transpose}R_{v}^{c} & 0 & \frac{f_{x}}{h}\vect e_{1}^{\transpose}R_{v}^{c}\left(\frac{\partial}{\partial\theta}R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & \frac{f_{x}}{h}\vect e_{1}^{\transpose}R_{v}^{c}\left(R_{v}^{b}\right)^{\transpose} & 0 & \dots & 0 & 0\\
+\frac{f_{x}}{h}\vect e_{2}^{\transpose}R_{v}^{c} & 0 & \frac{f_{x}}{h}\vect e_{2}^{\transpose}R_{v}^{c}\left(\frac{\partial}{\partial\theta}R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & \frac{f_{x}}{h}\vect e_{2}^{\transpose}R_{v}^{c}\left(R_{v}^{b}\right)^{\transpose} & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Constant Velocity with Rotation and Moving Camera and unknown Depth
+\end_layout
+
+\begin_layout Subsection
+Estimated State
+\end_layout
+
+\begin_layout Standard
+If we want to estimate the velocity of a 2d vehicle that is moving with
+ constant velocity and is also rotating at a constant rate from a rotating
+ camera, we can do all of the estimation in the vehicle frame of the UAV
+ carrying the camera.
+ The vehicle frame of the UAV is defined to be co-located with the body
+ frame of the UAV, but oriented with the inertial North-East-Down frame.
+ We do not want to be dependent on the position of the UAV, because this
+ would provide too much uncertainty in the features.
+ If we do everything in the vehicle frame, we can use the estimated state
+\begin_inset Formula 
+\begin{align}
+\x & =\begin{bmatrix}\vect p^{v} & \rho & \vect v^{b} & \theta_{v}^{b} & \omega^{b} & \vect r_{1}^{b} & \rho_{1} & \dots & \vect r_{n}^{b} & \rho_{n}\end{bmatrix}^{\transpose}
+\end{align}
+
+\end_inset
+
+for 
+\begin_inset Formula $n$
+\end_inset
+
+ landmarks being tracked on the vehicle where 
+\begin_inset Formula $\vect v^{b}$
+\end_inset
+
+ is the velocities of the landing vehicle in its body frame and 
+\begin_inset Formula $\theta$
+\end_inset
+
+ is the angle from the inertial frame to the body frame.
+ We define the body frame of the vehicle to be located at the 1st point
+ and estimate the rotation about that body frame.
+ If the camera is moving, but not rotating, then we can use the motion of
+ the camera as an input to the system such that
+\begin_inset Formula 
+\begin{equation}
+\vect u=\begin{bmatrix}\vect v_{c}^{v}\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+We do not pretend to know the height from the camera to the features.
+ These parameters are separetely estimated as 
+\begin_inset Formula $\rho=\frac{1}{h}$
+\end_inset
+
+.
+ Note that this is a good choice only because the rotational motion of the
+ features is not dependent on the relative z height between them.
+\end_layout
+
+\begin_layout Subsection
+Motion Equation
+\end_layout
+
+\begin_layout Standard
+The dynamics of the system are a little more complicated than the non rotating
+ case.
+ We define them piecewise here
+\begin_inset Formula 
+\begin{align}
+\dot{\vect p} & =\left(R_{I}^{b}\right)^{\transpose}\vect v^{b}-\vect v_{c}^{v}\\
+\dot{\rho} & =\rho^{2}\left(\vect e_{3}^{\transpose}\vect v_{cam}^{v}\right)\\
+\dot{\vect v}^{b} & =\vect 0\\
+\dot{\theta}_{I}^{b} & =\omega\\
+\dot{\omega}^{b} & =0\\
+\dot{\vect r}_{i}^{b} & =\vect 0\\
+\dot{\rho}_{i} & =\rho_{i}^{2}\left(\vect e_{3}^{\transpose}\vect v_{c}^{v}\right)
+\end{align}
+
+\end_inset
+
+The motion of the position of each feature is dependent on its location
+ with respect to the body frame.
+ For this we define
+\begin_inset Formula 
+\begin{equation}
+\vect r_{i}^{v}=\begin{bmatrix}x_{i}^{v}-p_{x}^{v}\\
+y_{i}^{v}-p_{y}^{v}
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Estimation
+\end_layout
+
+\begin_layout Subsubsection
+Propagation
+\end_layout
+
+\begin_layout Standard
+For the Kalman Filter propagation, we need the jacobian of the dynamics
+ w.r.t.
+ the state.
+ This jacobian can be shown to equal
+\begin_inset Formula 
+\begin{equation}
+\frac{df}{d\x}=\begin{bmatrix}\vect 0 & \vect 0 & \frac{\partial\dot{\vect p}}{\partial\vect v} & \frac{\partial\dot{\vect p}}{\partial\theta} & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & \frac{\partial\dot{\rho}}{\partial\rho} & \frac{\partial\dot{\rho}}{\partial\vect v} & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & 0 & 0 & \frac{d\dot{\theta}}{d\omega} & 0 & 0 & \dots & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & \frac{\partial\dot{\rho}_{i}}{\partial\vect v} & 0 & 0 & 0 & \frac{\partial\dot{\rho}_{i}}{\partial\rho_{i}} & \dots & 0 & 0
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+where the components are equal to
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\vect p}}{\partial\vect v} & =\left(R_{I}^{b}\right)^{\transpose}\\
+\frac{\partial\dot{\vect p}}{\partial\theta} & =\left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\frac{d\dot{\theta}}{d\omega} & =1
+\end{align}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\rho}}{\partial\rho} & =2\rho\left(\vect e_{3}^{\transpose}\vect v_{c}^{v}\right)\\
+\frac{\partial\dot{\rho}}{\partial\vect v} & =0
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Measurement Update
+\end_layout
+
+\begin_layout Standard
+We assume that we measure a point cloud of the landmarks in the inertial
+ frame, with one of the points corresponding to the location of the body
+ frame of the vehicle such that
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}p_{x} & p_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}1 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+0 & 1 & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+The other landmark locations are functions of the position of the vehicle
+ and the offset vector, 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}\vect p_{\text{veh}}^{I}+\left(R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H_{i}\left(\x\right)=\begin{bmatrix}I_{2\times2} & 0 & \left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & \left(R_{I}^{b}\right)^{\transpose} & \dots & 0\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Pixel Measurement Update
+\end_layout
+
+\begin_layout Standard
+If we only measure the pixel locations of the body and landmarks, the measuremen
+t model changes.
+ The measurement model can be written as
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}f_{x}\rho\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v}+c_{x} & f_{y}\rho\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v}+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}f_{x}\rho\vect e_{1}^{\transpose}R_{v}^{c} & f_{x}\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+f_{y}\rho\vect e_{2}^{\transpose}R_{v}^{c} & f_{y}\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+The other landmark locations are functions of the position of the vehicle
+ and the offset vector, 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{x} & f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H_{i}\left(\x\right)=\begin{bmatrix}f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c} & 0 & 0 & f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c}\left(\frac{\partial}{\partial\theta}R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c}\left(R_{v}^{b}\right)^{\transpose} & f_{x}\vect e_{1}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right) & \dots & 0 & 0\\
+f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c} & 0 & 0 & f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c}\left(\frac{\partial}{\partial\theta}R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b} & 0 & f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c}\left(R_{v}^{b}\right)^{\transpose} & f_{y}\vect e_{2}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right) & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Invserse Measurement model
+\end_layout
+
+\begin_layout Standard
+When we first see a new landmark, we want to initialize it to an appropriate
+ location.
+ This is given by the inverse measurement model.
+ If
+\begin_inset Formula 
+\begin{equation}
+h_{i}\left(\x\right)=\begin{bmatrix}f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{x} & f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{x}\end{bmatrix}^{\transpose}
+\end{equation}
+
+\end_inset
+
+and
+\begin_inset Formula 
+\begin{align}
+h_{i}\left(\x\right) & =\begin{bmatrix}u\\
+v
+\end{bmatrix}\\
+\begin{bmatrix}u\\
+v
+\end{bmatrix} & =\begin{bmatrix}f_{x}\rho_{i}\vect e_{1}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{x}\\
+f_{y}\rho_{i}\vect e_{2}^{\transpose}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)+c_{y}
+\end{bmatrix}.
+\end{align}
+
+\end_inset
+
+Then we can solve for the vector 
+\begin_inset Formula $\vect r_{i}^{b}$
+\end_inset
+
+as
+\begin_inset Formula 
+\begin{align}
+\begin{bmatrix}\frac{1}{f_{x}}\left(u-c_{x}\right)\\
+\frac{1}{f_{y}}\left(v-c_{y}\right)
+\end{bmatrix} & =\rho_{i}R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right)\\
+R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right) & =\frac{1}{\rho_{i}}\begin{bmatrix}\frac{1}{f_{x}}\left(u-c_{x}\right)\\
+\frac{1}{f_{y}}\left(v-c_{y}\right)
+\end{bmatrix}\\
+\left(\left(R_{v}^{b}\right)^{\transpose}\vect r_{i}^{b}\right) & =\frac{1}{\rho_{i}}\left(R_{v}^{c}\right)^{\transpose}\begin{bmatrix}\frac{1}{f_{x}}\left(u-c_{x}\right)\\
+\frac{1}{f_{y}}\left(v-c_{y}\right)
+\end{bmatrix}-\vect p_{\text{veh}}^{v}\\
+\vect r_{i}^{b} & =R_{v}^{b}\left(\frac{1}{\rho_{i}}\left(R_{v}^{c}\right)^{\transpose}\begin{bmatrix}\frac{1}{f_{x}}\left(u-c_{x}\right)\\
+\frac{1}{f_{y}}\left(v-c_{y}\right)
+\end{bmatrix}-\vect p_{\text{veh}}^{v}\right)
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document

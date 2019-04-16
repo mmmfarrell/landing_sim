@@ -51,7 +51,10 @@ public:
   // R - gnss covariance
   void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
 
-  void setInverseDepth(const double min_depth);
+  void initLandmarks(
+      const std::vector<Eigen::Vector2d,
+                        Eigen::aligned_allocator<Eigen::Vector2d>>& pixs);
+  void setInverseDepth();
   void toRot(const double theta, Matrix2d& R);
   Matrix2d dtheta_R(const double theta);
 
@@ -61,6 +64,10 @@ public:
   void updateGoal(const Vector2d& goal_pix);
   void updateGoalDepth(const double& goal_depth);
   void updateLandmark(const int& id, const Vector2d& lm_pix);
+  void updateLandmarkDepth(const int& id, const double& lm_depth);
+
+  Vector2d invserseMeasurementModelLandmark(const Vector2d& lm_pix,
+                                            const double rho);
 
   bool draw_feats_;
   StateVec xhat_;
@@ -87,6 +94,7 @@ public:
   double cx_;
   double cy_;
   quat::Quatd q_b_c_;
+  double min_depth_;
 
   int num_prop_steps_;
   double last_time_;

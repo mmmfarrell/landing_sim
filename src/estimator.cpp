@@ -46,9 +46,8 @@ Estimator::Estimator(std::string filename)
   get_yaml_eigen("q_b_c", filename, q_b_c_eig);
   q_b_c_ = quat::Quatd(q_b_c_eig);
 
-  double min_depth;
-  get_yaml_node("min_feat_depth", filename, min_depth);
-  setInverseDepth(min_depth);
+  get_yaml_node("min_feat_depth", filename, min_depth_);
+  setInverseDepth();
 
   last_time_ = -1;
   PRINTMAT(xhat_);
@@ -73,6 +72,7 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   if (last_time_ < 0)
   {
     last_time_ = t;
+    initLandmarks(z.pixs);
     return;
   }
 
@@ -87,15 +87,41 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     unsigned int lm_id = i;
     unsigned int lm_idx = i + 1;
     updateLandmark(lm_id, z.pixs[lm_idx]);
+    //updateLandmarkDepth(lm_id, z.depths[lm_idx]);
+
+    //double rho_true = 0.1;
+    //Vector2d r_b = invserseMeasurementModelLandmark(z.pixs[lm_idx], rho_true);
+    //std::cout << "lm idx: " << lm_idx << std::endl;
+    //PRINTMAT(r_b);
   }
 
   last_time_ = t;
 }
 
-void Estimator::setInverseDepth(const double min_depth)
+void Estimator::initLandmarks(
+    const std::vector<Eigen::Vector2d,
+                      Eigen::aligned_allocator<Eigen::Vector2d>>& pixs)
 {
-  double rho_init = 1. / (2. * min_depth);
-  double cov_init = 1. / (16. * min_depth * min_depth);
+  // Init Landmarks
+  for (unsigned int i = 0; i < SIZE; i++)
+  {
+    unsigned int lm_id = i;
+    unsigned int lm_idx = i + 1;
+
+    double rho_init = 1. / (2. * min_depth_);
+    Vector2d r_b = invserseMeasurementModelLandmark(pixs[lm_idx], rho_init);
+
+    unsigned int rx_idx = xLM + 0 + 3 * i;
+    xhat_.block<2, 1>(rx_idx, 0) = r_b;
+  }
+
+  setInverseDepth();
+}
+
+void Estimator::setInverseDepth()
+{
+  double rho_init = 1. / (2. * min_depth_);
+  double cov_init = 1. / (16. * min_depth_ * min_depth_);
 
   xhat_(xRHO) = rho_init;
   P_(xRHO, xRHO) = cov_init;
@@ -271,4 +297,45 @@ void Estimator::updateLandmark(const int& id, const Vector2d& lm_pix)
   // just reuse A_ to save memory
   A_ = I_ - K_ * pix_H_;
   P_ = A_ * P_ * A_.transpose() + K_ * pix_R_ * K_.transpose();
+}
+
+void Estimator::updateLandmarkDepth(const int& id, const double& lm_depth)
+{
+  const unsigned int rho_idx = xLM + 2 + 3 * id;
+
+  const double rhoi = xhat_(rho_idx);
+  Matrix1d depth_residual;
+  depth_residual(0) = lm_depth - (1. / rhoi);
+
+  depth_H_.setZero();
+  depth_H_(0, rho_idx) = -1. / (rhoi * rhoi);
+
+  K_.leftCols(1) = P_ * depth_H_.transpose() *
+                   (depth_H_ * P_ * depth_H_.transpose() + depth_R_).inverse();
+
+  xhat_ += K_.leftCols(1) * depth_residual;
+  // just reuse A_ to save memory
+  A_ = I_ - K_.leftCols(1) * depth_H_;
+  P_ = A_ * P_ * A_.transpose() +
+       K_.leftCols(1) * depth_R_ * K_.leftCols(1).transpose();
+}
+
+Vector2d Estimator::invserseMeasurementModelLandmark(const Vector2d& lm_pix,
+                                                     const double rho)
+{
+  static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
+
+  const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
+  const double theta = xhat_(xATT);
+
+  Matrix2d R_I_b;
+  toRot(theta, R_I_b);
+
+  Vector2d posi_c;
+  posi_c(0) = (1. / fx_) * (lm_pix(0) - cx_);
+  posi_c(1) = (1. / fy_) * (lm_pix(1) - cy_);
+
+  Vector2d r_b = R_I_b * ((1. / rho) * R_v_c.transpose() * posi_c - pos_v);
+
+  return r_b;
 }

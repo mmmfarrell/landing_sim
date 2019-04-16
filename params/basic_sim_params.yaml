@@ -1,4 +1,4 @@
-tmax: 60.0 # Simulation total time, time step is determined by IMU rate
+tmax: 20.0 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
 seed: 15 # 0 initializes seed with time
