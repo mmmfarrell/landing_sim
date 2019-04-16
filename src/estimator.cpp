@@ -50,6 +50,10 @@ Estimator::Estimator(std::string filename)
   setInverseDepth();
 
   last_time_ = -1;
+  feats_initialized_ = false;
+
+  q_I_b_ = quat::Quatd::Identity();
+
   PRINTMAT(xhat_);
   PRINTMAT(P_);
   PRINTMAT(Q_);
@@ -61,11 +65,23 @@ Estimator::~Estimator()
 
 void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& R)
 {
+  q_I_b_ = z.q();
 }
 
-void Estimator::velocityCallback(const double& t, const Vector3d& z, const Matrix3d& R)
+void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R)
 {
+  if (last_time_ < 0)
+  {
+    last_time_ = t;
+    return;
+  }
 
+  Vector3d vel_I = q_I_b_.R().transpose() * vel_b;
+
+  const double dt = t - last_time_;
+  propagate(dt, vel_I);
+
+  last_time_ = t;
 }
 
 void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
@@ -74,15 +90,15 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   if (draw_feats_)
     drawImageFeatures(z.pixs);
 
-  if (last_time_ < 0)
+  if (!feats_initialized_)
   {
-    last_time_ = t;
     initLandmarks(z.pixs);
+    feats_initialized_ = true;
     return;
   }
 
-  const double dt = t - last_time_;
-  propagate(dt);
+  //const double dt = t - last_time_;
+  //propagate(dt);
 
   updateGoal(z.pixs[0]);
   updateGoalDepth(z.depths[0]);
@@ -99,8 +115,6 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     //std::cout << "lm idx: " << lm_idx << std::endl;
     //PRINTMAT(r_b);
   }
-
-  last_time_ = t;
 }
 
 void Estimator::initLandmarks(
@@ -154,7 +168,7 @@ Matrix2d Estimator::dtheta_R(const double theta)
   return dR;
 }
 
-void Estimator::propagate(const double& time_step)
+void Estimator::propagate(const double& time_step, const Vector3d& vel_c_I)
 {
   const double dt = time_step / num_prop_steps_;
   
@@ -168,17 +182,21 @@ void Estimator::propagate(const double& time_step)
     const double theta = xhat_(xATT);
     const double omega = xhat_(xOMEGA);
 
+    const Vector2d vel_c_I_xy = vel_c_I.block<2, 1>(0, 0);
+    const double vel_c_I_z = vel_c_I(2);
+
     Matrix2d R_I_b;
     toRot(theta, R_I_b);
 
     // Vehicle state dynamics and jacobians
-    xdot_.block<2, 1>(xPOS, 0) = R_I_b.transpose() * vel_b; // - uav_vel(x, y);
-    //xdot_(xRHO) = rho0 * rho0 * uav_vel_z;
+    //xdot_.block<2, 1>(xPOS, 0) = R_I_b.transpose() * vel_b; // - uav_vel(x, y);
+    xdot_.block<2, 1>(xPOS, 0) = R_I_b.transpose() * vel_b - vel_c_I_xy;
+    xdot_(xRHO) = rho0 * rho0 * vel_c_I_z;
     xdot_(xATT) = omega;
 
     A_.block<2, 2>(xPOS, xVEL) = R_I_b.transpose();
     A_.block<2, 1>(xPOS, xATT) = dtheta_R(theta).transpose() * vel_b;
-    //A_(xRHO, xRHO) = 2. * rho0 * uav_vel_z;
+    A_(xRHO, xRHO) = 2. * rho0 * vel_c_I_z;
     A_(xATT, xOMEGA) = 1.;
 
     // Landmark state dynamics and jacobians
@@ -187,8 +205,8 @@ void Estimator::propagate(const double& time_step)
       // Note, landmark offset vector r has 0 dynamics and 0 jacobians
       unsigned int rho_idx = xLM + 2 + 3 * i;
       double rhoi = xhat_(rho_idx);
-      //xdot_(rho_idx) = rhoi * rhoi * uav_vel_z;
-      //A_(rho_idx, rho_idx) = 2. * rhoi * uav_vel_z;
+      xdot_(rho_idx) = rhoi * rhoi * vel_c_I_z;
+      A_(rho_idx, rho_idx) = 2. * rhoi * vel_c_I_z;
     }
 
     xhat_ += xdot_ * dt;

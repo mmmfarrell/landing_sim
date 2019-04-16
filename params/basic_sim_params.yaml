@@ -39,7 +39,7 @@ traj_heading_straight_gain: 0.01
 #traj_delta_east: 10
 traj_delta_north: 0.
 traj_delta_east: 0.
-traj_delta_alt: -0
+traj_delta_alt: -2.
 traj_delta_yaw: 0.
 traj_nom_north: 0
 traj_nom_east: 0
@@ -47,7 +47,7 @@ traj_nom_alt: 10
 traj_nom_yaw: 0
 traj_north_period: 20
 traj_east_period: 20
-traj_alt_period: 20
+traj_alt_period: 5
 traj_yaw_period: 20
 
 
@@ -97,7 +97,7 @@ max_tau_z: 1.0
 inertia: [0.1, 0.1, 0.1]
 
 
-x0: [0, 0, -10,   # POS
+x0: [0, 0, -5,   # POS
      1, 0, 0, 0, # ATT 
      0, 0, 0,    # VEL
      0, 0, 0]    # OMEGA
@@ -209,7 +209,7 @@ depth_noise_stdev: 0.1
 ## Motion Capture
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
-mocap_update_rate: 10
+mocap_update_rate: 250
 attitude_noise_stdev: 0.01
 position_noise_stdev: 0.01
 mocap_time_offset: 0

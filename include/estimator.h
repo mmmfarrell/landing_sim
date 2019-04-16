@@ -42,7 +42,7 @@ public:
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
   void altCallback(const double& t, const Vector1d& z, const Matrix1d& R) {}
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
-  void velocityCallback(const double& t, const Vector3d& z, const Matrix3d& R);
+  void velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R);
 
   void simpleCamCallback(const double& t, const ImageFeat& z,
                          const Matrix2d& R_pix, const Matrix1d& R_depth);
@@ -60,7 +60,7 @@ public:
   Matrix2d dtheta_R(const double theta);
 
   // Kalman Filter
-  void propagate(const double& time_step);
+  void propagate(const double& time_step, const Vector3d& vel_c_I);
 
   void updateGoal(const Vector2d& goal_pix);
   void updateGoalDepth(const double& goal_depth);
@@ -97,8 +97,12 @@ public:
   quat::Quatd q_b_c_;
   double min_depth_;
 
+  // UAV stuff
+  quat::Quatd q_I_b_;
+
   int num_prop_steps_;
   double last_time_;
+  bool feats_initialized_;
 };
 
 #endif /* ESTIMATOR_H */
