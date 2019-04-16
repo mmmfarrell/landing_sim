@@ -1150,5 +1150,91 @@ R_{v}^{c}\left(\vect p_{\text{veh}}^{v}+\left(R_{v}^{b}\right)^{\transpose}\vect
 
 \end_layout
 
+\begin_layout Subsubsection
+Virtual Image Plane
+\end_layout
+
+\begin_layout Standard
+As a first pass at least, we assume that we perfectly know the attitude
+ of the UAV at each time step.
+ This allows us to project the landmark pixels onto a virtual image plane
+ that is aligned with the inertial frame.
+ The result of this is a virtual camera image as if the UAV were perfectly
+ aligned with the inertial frame.
+ To formulate this transformation, we first start with the camera projection
+ equation
+\begin_inset Formula 
+\begin{equation}
+\begin{bmatrix}u^{c}\\
+v^{c}\\
+1
+\end{bmatrix}=K\begin{bmatrix}X^{c}/Z^{c}\\
+Y^{c}/Z^{c}\\
+1
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+where 
+\begin_inset Formula $K$
+\end_inset
+
+ is the camera intrinsic matrix
+\begin_inset Formula 
+\begin{equation}
+K=\begin{bmatrix}f_{x} & 0 & c_{x}\\
+0 & f_{y} & c_{y}\\
+0 & 0 & 1
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+We can manipulate this equation to get
+\begin_inset Formula 
+\begin{align}
+\begin{bmatrix}X^{c}/Z^{c}\\
+Y^{c}/Z^{c}\\
+1
+\end{bmatrix} & =K^{-1}\begin{bmatrix}u^{c}\\
+v^{c}\\
+1
+\end{bmatrix}\\
+R_{I}^{vc}R_{b}^{I}R_{c}^{b}\begin{bmatrix}X^{c}/Z^{c}\\
+Y^{c}/Z^{c}\\
+1
+\end{bmatrix} & =R_{I}^{vc}R_{b}^{I}R_{c}^{b}\left(K^{-1}\begin{bmatrix}u^{c}\\
+v^{c}\\
+1
+\end{bmatrix}\right)\\
+\begin{bmatrix}X^{vc}/Z^{vc}\\
+Y^{vc}/Z^{vc}\\
+1
+\end{bmatrix} & =R_{I}^{vc}R_{b}^{I}R_{c}^{b}\left(K^{-1}\begin{bmatrix}u^{c}\\
+v^{c}\\
+1
+\end{bmatrix}\right)
+\end{align}
+
+\end_inset
+
+and
+\begin_inset Formula 
+\begin{equation}
+\begin{bmatrix}u^{vc}\\
+v^{vc}\\
+1
+\end{bmatrix}=K\begin{bmatrix}X^{vc}/Z^{vc}\\
+Y^{vc}/Z^{vc}\\
+1
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document
