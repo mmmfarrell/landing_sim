@@ -220,7 +220,7 @@ mocap_transmission_time: 0
 
 ## Velocity Sensor
 velocity_update_rate: 250
-velocity_noise_stdev: 0.00
+velocity_noise_stdev: 2.
 
 
 ## GNSS
