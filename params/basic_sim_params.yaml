@@ -212,7 +212,7 @@ depth_noise_stdev: 0.1
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
 mocap_update_rate: 250
-attitude_noise_stdev: 0.01
+attitude_noise_stdev: 0.0
 position_noise_stdev: 0.0
 mocap_time_offset: 0
 mocap_transmission_noise: 0
@@ -221,7 +221,6 @@ mocap_transmission_time: 0
 ## Velocity Sensor
 velocity_update_rate: 250
 velocity_noise_stdev: 2.
-
 
 ## GNSS
 ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)

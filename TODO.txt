@@ -1,5 +1,4 @@
 TODO
-- Add noise
 
 
 DONE
@@ -8,6 +7,11 @@ DONE
 - Account for UAV motion
   - UAV velocity sensor
   - use UAV attitude to rotate pixels to virtual image plane
+- Add noise
+  - Noise in pixel, depth, velocity are all fine
+  - Noise in UAV attitude
+    - OK with a little ~0.5 deg std dev
+    - Not OK with more
 
 
 BACKLOG

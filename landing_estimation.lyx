@@ -1236,5 +1236,44 @@ Y^{vc}/Z^{vc}\\
 
 \end_layout
 
+\begin_layout Section
+Adding UAV Attitude to the Estimates
+\end_layout
+
+\begin_layout Standard
+The estimation method described in the previous section requires a knowledge
+ of the UAV attitude in order to reproject the image points onto a virtual
+ image plane.
+ This works fine in simulation where we can perfectly know the UAV attitude,
+ however, in real life we may only have an estimate.
+ The attitude estimate is likely not zero mean, but instead has a random-walk
+ offset because it is the output of a separate estimator.
+ We can therefore hope for better performance if we estimate the UAV attitude
+ ourself.
+ A first pass at this might look something like this.
+ The estimated state vector may be 
+\begin_inset Formula 
+\begin{equation}
+\hat{\x}=\begin{bmatrix}\vect v_{\text{uav}}\\
+\text{ATT}_{\text{uav}}\\
+\x_{\text{landing vehicle}}
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+with the known inputs
+\begin_inset Formula 
+\begin{equation}
+\vect u=\begin{bmatrix}\vect a\\
+\vect{\omega}
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+from an IMU.
+\end_layout
+
 \end_body
 \end_document
