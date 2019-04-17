@@ -67,6 +67,7 @@ Estimator::~Estimator()
 void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& R)
 {
   q_I_b_ = z.q();
+  q_I_b_.normalize();
 }
 
 void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R)

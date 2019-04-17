@@ -1,5 +1,5 @@
 # Estimator Params
-draw_feature_img: False
+draw_feature_img: True
 
 # Initial estimates
 x0: [0., 0.,    # POS
