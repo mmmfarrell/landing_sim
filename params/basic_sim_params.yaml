@@ -37,16 +37,16 @@ traj_heading_straight_gain: 0.01
 # Follow the carrot trajectory parameters
 #traj_delta_north: 10
 #traj_delta_east: 10
-traj_delta_north: 2.
-traj_delta_east: 2.
-traj_delta_alt: -2.
-traj_delta_yaw: 0.4
+traj_delta_north: 1.
+traj_delta_east: 1.
+traj_delta_alt: -0.
+traj_delta_yaw: 0
 traj_nom_north: 0
 traj_nom_east: 0
 traj_nom_alt: 10
 traj_nom_yaw: 0
-traj_north_period: 5
-traj_east_period: 5
+traj_north_period: 3
+traj_east_period: 3
 traj_alt_period: 5
 traj_yaw_period: 20
 follow_vehicle: True
