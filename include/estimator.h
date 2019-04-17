@@ -71,7 +71,7 @@ public:
                                             const double rho);
   Vector2d virtualImagePixels(const Vector2d& pix);
 
-  bool draw_feats_;
+  // Kalman filter
   StateVec xhat_;
   StateMat P_;
 
@@ -104,6 +104,8 @@ public:
   int num_prop_steps_;
   double last_time_;
   bool feats_initialized_;
+  bool draw_feats_;
+  bool update_goal_depth_;
 };
 
 #endif /* ESTIMATOR_H */

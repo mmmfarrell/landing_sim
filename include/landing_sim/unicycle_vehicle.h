@@ -96,6 +96,11 @@ public:
     }
   }
 
+  Vector2d getPosition()
+  {
+    return x_.block<2, 1>(0, 0);
+  }
+
   StateVec x_;
   LandmarkVec landmarks_body_;
 };

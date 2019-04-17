@@ -1,7 +1,7 @@
 # Vehicle Params
 x0: [0., 0.,    # POS
-     0.3, 0.2,    # VEL
-     0., 0.4]    # ATT, OMEGA
+     0.5, 0.,    # VEL
+     0., 0.2]    # ATT, OMEGA
 
 landmarks_body_frame: [0., 0., 0.,
                        2., 0., 0.,

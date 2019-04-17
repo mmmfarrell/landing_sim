@@ -47,8 +47,10 @@ ulabel = [r'$F$',
 
 f = plt.figure(dpi=150)
 plt.plot()
-plt.plot(x[1,:], x[0,:], label="x")
-plt.plot(xc[1,:], xc[0,:], label=r"$x_c$")
+plt.plot(x[1,:], x[0,:], label="UAV $x$")
+plt.plot(xc[1,:], xc[0,:], label=r"UAV $x_c$")
+plt.plot(x_veh[1,:], x_veh[0,:], label=r"Veh $x$")
+plt.legend()
 pw.addPlot("2D Position", f)
 
 f = plt.figure(dpi=150)

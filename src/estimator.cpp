@@ -31,6 +31,7 @@ Estimator::Estimator(std::string filename)
   pix_R_ = pix_R_diag.asDiagonal();
 
   get_yaml_eigen("depth_R", filename, depth_R_);
+  get_yaml_node("update_goal_depth", filename, update_goal_depth_);
 
   Vector2d focal_len;
   get_yaml_eigen("focal_len", filename, focal_len);
@@ -99,7 +100,9 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
 
   //updateGoal(z.pixs[0]);
   updateGoal(virtualImagePixels(z.pixs[0]));
-  updateGoalDepth(z.depths[0]);
+
+  if (update_goal_depth_)
+    updateGoalDepth(z.depths[0]);
 
   for (unsigned int i = 0; i < SIZE; i++)
   {
