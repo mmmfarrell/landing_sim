@@ -35,7 +35,7 @@ num_prop_steps: 1
 
 # update params
 pix_R_diag: [9., 9.]
-depth_R: [9.]
+depth_R: [4.]
 update_goal_depth: True
 
 # Camera Params        
