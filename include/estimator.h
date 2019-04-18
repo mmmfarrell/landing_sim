@@ -107,6 +107,8 @@ public:
   bool draw_feats_;
   bool record_vid_;
   bool update_goal_depth_;
+
+  double use_goal_stop_time_;
 };
 
 #endif /* ESTIMATOR_H */

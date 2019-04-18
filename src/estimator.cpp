@@ -12,6 +12,7 @@ Estimator::Estimator(std::string filename)
 {
   get_yaml_node("draw_feature_img", filename, draw_feats_);
   get_yaml_node("record_video", filename, record_vid_);
+  get_yaml_node("use_goal_stop_time", filename, use_goal_stop_time_);
 
   // Filter init
   get_yaml_eigen("x0", filename, xhat_);
@@ -100,11 +101,13 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     return;
   }
 
-  //updateGoal(z.pixs[0]);
-  updateGoal(virtualImagePixels(z.pixs[0]));
+  if (t < use_goal_stop_time_)
+  {
+    updateGoal(virtualImagePixels(z.pixs[0]));
 
-  if (update_goal_depth_)
-    updateGoalDepth(z.depths[0]);
+    if (update_goal_depth_)
+      updateGoalDepth(z.depths[0]);
+  }
 
   for (unsigned int i = 0; i < SIZE; i++)
   {

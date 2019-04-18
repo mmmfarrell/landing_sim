@@ -1,6 +1,7 @@
 # Estimator Params
 draw_feature_img: False
 record_video: False
+use_goal_stop_time: 5.
 
 # Initial estimates
 x0: [0., 0.,    # POS
