@@ -11,6 +11,7 @@ using namespace multirotor_sim;
 Estimator::Estimator(std::string filename)
 {
   get_yaml_node("draw_feature_img", filename, draw_feats_);
+  get_yaml_node("record_video", filename, record_vid_);
 
   // Filter init
   get_yaml_eigen("x0", filename, xhat_);
@@ -90,7 +91,7 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                        const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
   if (draw_feats_)
-    drawImageFeatures(z.pixs);
+    drawImageFeatures(record_vid_, z.pixs);
 
   if (!feats_initialized_)
   {

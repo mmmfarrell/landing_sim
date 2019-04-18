@@ -105,6 +105,7 @@ public:
   double last_time_;
   bool feats_initialized_;
   bool draw_feats_;
+  bool record_vid_;
   bool update_goal_depth_;
 };
 
