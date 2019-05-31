@@ -39,7 +39,7 @@ Q_diag:  [ 0.0001, 0.0001, 0.0001, # UAVATT
 num_prop_steps: 1
 
 # update params
-att_R_diag: [0.1, 0.1, 0.1]
+att_R_diag: [0.001, 0.001, 0.001]
 pix_R_diag: [9., 9.]
 depth_R: [4.]
 update_goal_depth: True

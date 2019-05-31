@@ -82,10 +82,7 @@ void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& 
   q_I_b_.normalize();
 
   const Vector3d mocap_euler = z.q().euler();
-  PRINTMAT(mocap_euler);
   this->updateUAVAttitude(mocap_euler);
-  const Vector3d xhat_euler = xhat_.block<3, 1>(0, 0);
-  PRINTMAT(xhat_euler);
 }
 
 void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R)

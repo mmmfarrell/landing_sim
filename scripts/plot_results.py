@@ -35,7 +35,8 @@ x_veh = data[35:41, :]
 x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
 xhat_uav = data[56:59, :]
 xhat_veh = data[59:78, :]
-phat_veh = data[78:97, :]
+phat_uav = data[78:81, :]
+phat_veh = data[81:100, :]
 
 pw = plotWindow()
 
@@ -132,6 +133,12 @@ for i in range(3):
     plt.subplot(3, 1, i+1)
     plt.plot(t, true_uav_euler[i, :], label='UAV Attitude')
     plt.plot(t, xhat_uav[i, :], label='UAV Attitude Estimate')
+
+    pos_cov = xhat_uav[i, :] + 2. * np.sqrt(phat_uav[i, :])
+    neg_cov = xhat_uav[i, :] - 2. * np.sqrt(phat_uav[i, :])
+    plt.plot(t, pos_cov, 'r--', label=r"$2\sigma bound$")
+    plt.plot(t, neg_cov, 'r--', label=r"$2\sigma bound$")
+
     plt.ylabel(euler_label[i])
     if i == 0:
         plt.legend()
