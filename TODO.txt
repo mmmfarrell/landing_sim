@@ -1,5 +1,7 @@
 TODO
-
+  - Estimate attitude
+  - Lyx
+  - code: using pixels, UAV velocity, angular rates, estimate landing vehicle
 
 DONE
 - plot r vecs
@@ -15,4 +17,4 @@ DONE
 
 
 BACKLOG
-- Estimate UAV attitude & velocity as well
+- Estimate UAV velocity as well

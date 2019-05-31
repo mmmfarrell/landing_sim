@@ -1,4 +1,5 @@
 import numpy as np
+from math import *
 import os,sys,inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
@@ -14,7 +15,7 @@ UAV_STATE = 13
 COMMAND = 4
 VEH_STATE = 6
 VEH_LMS = 15
-EST_STATE = 19
+EST_STATE = 22
 LOG_WIDTH = 1 + UAV_STATE + COMMAND + UAV_STATE + COMMAND + VEH_STATE \
         + VEH_LMS + EST_STATE + EST_STATE
 
@@ -32,8 +33,9 @@ ur = data[31:35, :]
 
 x_veh = data[35:41, :]
 x_veh_lms = np.reshape(data[41:56, :], (3, 5, -1))
-xhat_veh = data[56:75, :]
-phat_veh = data[75:94, :]
+xhat_uav = data[56:59, :]
+xhat_veh = data[59:78, :]
+phat_veh = data[78:97, :]
 
 pw = plotWindow()
 
@@ -107,6 +109,33 @@ for i in range(4):
     plt.plot(t, u[i, :], label='u')
     plt.ylabel(ulabel[i])
 pw.addPlot("Input", f)
+
+# UAV Estimates
+def quat_to_euler(quat):
+    w = quat[0]
+    x = quat[1]
+    y = quat[2]
+    z = quat[3]
+
+    roll = atan2(2. * (w*x + y*z), 1. - 2. * (x*x + y*y))
+    pitch = asin(2. * (w*y - x*z))
+    yaw = atan2(2 * (w*z + x*y), 1. - 2. * (y*y + z*z))
+
+    return roll, pitch, yaw
+
+true_uav_euler = np.zeros((3, len(t)))
+for i in range(len(t)):
+    true_uav_euler[:, i] = quat_to_euler(x[3:7, i])
+euler_label = [r'$\phi$', r'$\theta$', r'$\psi$']
+f = plt.figure(dpi=150)
+for i in range(3):
+    plt.subplot(3, 1, i+1)
+    plt.plot(t, true_uav_euler[i, :], label='UAV Attitude')
+    plt.plot(t, xhat_uav[i, :], label='UAV Attitude Estimate')
+    plt.ylabel(euler_label[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("UAV Attitude", f)
 
 # vehicle Estimates
 # x_veh = data[35:41, :]

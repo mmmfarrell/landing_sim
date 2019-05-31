@@ -1254,8 +1254,7 @@ The estimation method described in the previous section requires a knowledge
  The estimated state vector may be 
 \begin_inset Formula 
 \begin{equation}
-\hat{\x}=\begin{bmatrix}\vect v_{\text{uav}}\\
-\text{ATT}_{\text{uav}}\\
+\hat{\x}=\begin{bmatrix}\text{ATT}_{\text{uav}}\\
 \x_{\text{landing vehicle}}
 \end{bmatrix}
 \end{equation}
@@ -1265,7 +1264,7 @@ The estimation method described in the previous section requires a knowledge
 with the known inputs
 \begin_inset Formula 
 \begin{equation}
-\vect u=\begin{bmatrix}\vect a\\
+\vect u=\begin{bmatrix}\vect v_{\text{uav}}\\
 \vect{\omega}
 \end{bmatrix}
 \end{equation}
@@ -1273,6 +1272,175 @@ with the known inputs
 \end_inset
 
 from an IMU.
+ With
+\begin_inset Formula 
+\begin{equation}
+\x_{\text{landing vehicle}}=\begin{bmatrix}\vect p^{v} & \rho & \vect v^{b} & \theta_{v}^{b} & \omega^{b} & \vect r_{1}^{b} & \rho_{1} & \dots & \vect r_{n}^{b} & \rho_{n}\end{bmatrix}^{\transpose}
+\end{equation}
+
+\end_inset
+
+containing all of the states relevant to the landing vehicle and tracked
+ landmarks that are rigidly attached to the landing vehicle.
+ As a first pass, we will still assume that the velocity of the UAV is a
+ known input.
+ Also as a first pass we will use euler angles to represent the attitude
+ of the UAV, though this is not mathematically sound because euler angles
+ are not a vector space.
+\end_layout
+
+\begin_layout Subsection
+Dynamics
+\end_layout
+
+\begin_layout Standard
+The dynamics of the attitude of the UAV are pretty straight forward with
+ euler angles
+\begin_inset Formula 
+\begin{equation}
+\begin{bmatrix}\dot{\phi}\\
+\dot{\theta}\\
+\dot{\psi}
+\end{bmatrix}=\begin{bmatrix}1 & \sin\phi\tan\theta & \cos\phi\tan\theta\\
+0 & \cos\phi & -\sin\phi\\
+0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+\end{bmatrix}\begin{bmatrix}p\\
+q\\
+r
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+Note that these equations are undefined when 
+\begin_inset Formula $\theta=\frac{\pi}{2}$
+\end_inset
+
+.
+ The dynamics of the landing vehicle are also pretty straight forward.
+\begin_inset Formula 
+\begin{align}
+\dot{\vect p} & =\left(R_{I}^{b\text{(landing veh)}}\right)^{\transpose}\vect v^{b\text{(landing veh)}}-\vect v_{cam}^{I}\\
+\dot{\rho} & =\rho^{2}\left(\vect e_{3}^{\transpose}\vect v_{cam}^{I}\right)\\
+\dot{\vect v}^{b} & =\vect 0\\
+\dot{\theta}_{I}^{b} & =\omega\\
+\dot{\omega}^{b} & =0\\
+\dot{\vect r}_{i}^{b} & =\vect 0\\
+\dot{\rho}_{i} & =\rho_{i}^{2}\left(\vect e_{3}^{\transpose}\vect v_{c}^{I}\right)
+\end{align}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Estimation
+\end_layout
+
+\begin_layout Subsubsection
+Propagation
+\end_layout
+
+\begin_layout Standard
+For the Kalman Filter propagation, we need the jacobian of the dynamics
+ w.r.t.
+ the state.
+ This jacobian can be shown to equal
+\begin_inset Formula 
+\begin{equation}
+\frac{df}{d\x}=\begin{bmatrix}\vect 0 & \vect 0 & \frac{\partial\dot{\vect p}}{\partial\vect v} & \frac{\partial\dot{\vect p}}{\partial\theta} & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & \frac{\partial\dot{\rho}}{\partial\rho} & \frac{\partial\dot{\rho}}{\partial\vect v} & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & 0 & 0 & \frac{d\dot{\theta}}{d\omega} & 0 & 0 & \dots & 0 & 0\\
+0 & 0 & 0 & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+\vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \vect 0 & \dots & \vect 0 & \vect 0\\
+0 & 0 & \frac{\partial\dot{\rho}_{i}}{\partial\vect v} & 0 & 0 & 0 & \frac{\partial\dot{\rho}_{i}}{\partial\rho_{i}} & \dots & 0 & 0
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+where the components are equal to
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\vect p}}{\partial\vect v} & =\left(R_{I}^{b}\right)^{\transpose}\\
+\frac{\partial\dot{\vect p}}{\partial\theta} & =\left(\frac{\partial}{\partial\theta}R_{I}^{b}\right)^{\transpose}\vect v^{b}\\
+\frac{d\dot{\theta}}{d\omega} & =1
+\end{align}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{align}
+\frac{\partial\dot{\rho}}{\partial\rho} & =2\rho\left(\vect e_{3}^{\transpose}\vect v_{c}^{v}\right)\\
+\frac{\partial\dot{\rho}}{\partial\vect v} & =0
+\end{align}
+
+\end_inset
+
+For the attitude component, we first expand the dynamics equations
+\begin_inset Formula 
+\begin{align}
+\begin{bmatrix}\dot{\phi}\\
+\dot{\theta}\\
+\dot{\psi}
+\end{bmatrix} & =\begin{bmatrix}1 & \sin\phi\tan\theta & \cos\phi\tan\theta\\
+0 & \cos\phi & -\sin\phi\\
+0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+\end{bmatrix}\begin{bmatrix}p\\
+q\\
+r
+\end{bmatrix}\\
+\dot{\phi} & =p+\left(\sin\phi\tan\theta\right)q+\left(\cos\phi\tan\theta\right)r\\
+\dot{\theta} & =\left(\cos\phi\right)q+\left(-\sin\phi\right)r\\
+\dot{\psi} & =\frac{\sin\phi}{\cos\theta}q+\frac{\cos\phi}{\cos\theta}r
+\end{align}
+
+\end_inset
+
+Now if we take the derivative of these equations w.r.t.
+ each euler angle we get
+\begin_inset Formula 
+\begin{equation}
+\begin{bmatrix}\left(\cos\phi\tan\theta\right)q+\left(-\sin\phi\tan\theta\right)r & \left(\sin\phi\sec^{2}\theta\right)q+\left(\cos\phi\sec^{2}\theta\right)r & 0\\
+\left(-\sin\phi\right)q+\left(-\cos\phi\right)r & 0 & 0\\
+\frac{\cos\phi}{\cos\theta}q+\frac{-\sin\phi}{\cos\theta}r & \frac{\sin\phi}{\cos\theta}\tan\theta q+\frac{\cos\phi}{\cos\theta}\tan\theta r & 0
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Pixel Measurement Update
+\end_layout
+
+\begin_layout Standard
+If we only measure the pixel locations of the body and landmarks, the measuremen
+t model changes.
+ The measurement model can be written as
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}f_{x}\rho\vect e_{1}^{\transpose}R_{b}^{c}R_{I}^{b}\vect p^{v\text{(landing veh)}}+c_{x} & f_{y}\rho\vect e_{2}^{\transpose}R_{b}^{c}R_{I}^{b}\vect p^{v\text{(landing veh)}}+c_{y}\end{bmatrix}^{\transpose}.
+\end{equation}
+
+\end_inset
+
+This gives us the measurement jacobian as
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}f_{x}\rho\vect e_{1}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{b}\right)\vect p^{v\text{(landing veh)}} & f_{x}\rho\vect e_{1}^{\transpose}R_{v}^{c} & f_{x}\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+f_{y}\rho\vect e_{2}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{b}\right)\vect p^{v\text{(landing veh)}} & f_{y}\rho\vect e_{2}^{\transpose}R_{v}^{c} & f_{y}\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+
 \end_layout
 
 \end_body

@@ -4,7 +4,8 @@ record_video: False
 use_goal_stop_time: 5.
 
 # Initial estimates
-x0: [0., 0.,    # POS
+x0: [0., 0., 0., # UAVATT
+     0., 0.,    # POS
      0.,         # RHO
      0., 0.,    # VEL
      0., 0.,    # ATT, OMEGA
@@ -13,7 +14,8 @@ x0: [0., 0.,    # POS
      0., 0., 0.,     # r3, rho3
      0., 0., 0.]     # r4, rho4
 
-P0_diag:  [1., 1.,    # POS
+P0_diag:  [1., 1., 1., # UAVATT
+           1., 1.,    # POS
            0.2,         # RHO
            1., 1.,    # VEL
            1., 1.,    # ATT, OMEGA
@@ -24,7 +26,8 @@ P0_diag:  [1., 1.,    # POS
 min_feat_depth: 1.
 
 # Prop params
-Q_diag:  [0.0001, 0.0001,    # POS
+Q_diag:  [ 0.0001, 0.0001, 0.0001, # UAVATT
+           0.0001, 0.0001,    # POS
            0.000001,         # RHO
            0.0001, 0.0001,    # VEL
            0.0001, 0.0001,    # ATT, OMEGA
@@ -36,6 +39,7 @@ Q_diag:  [0.0001, 0.0001,    # POS
 num_prop_steps: 1
 
 # update params
+att_R_diag: [0.1, 0.1, 0.1]
 pix_R_diag: [9., 9.]
 depth_R: [4.]
 update_goal_depth: True

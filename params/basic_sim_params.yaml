@@ -1,4 +1,4 @@
-tmax: 20.0 # Simulation total time, time step is determined by IMU rate
+tmax: 10.0 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
 seed: 15 # 0 initializes seed with time
@@ -38,7 +38,7 @@ traj_heading_straight_gain: 0.01
 #traj_delta_north: 10
 #traj_delta_east: 10
 traj_delta_north: 1.
-traj_delta_east: 1.
+traj_delta_east: 0.
 traj_delta_alt: -0.
 traj_delta_yaw: 0
 traj_nom_north: 0
@@ -49,7 +49,7 @@ traj_north_period: 3
 traj_east_period: 3
 traj_alt_period: 5
 traj_yaw_period: 20
-follow_vehicle: True
+follow_vehicle: False
 
 
 # Controller Configuration

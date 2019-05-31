@@ -34,7 +34,7 @@ int main()
   UnicycleVehicle veh(veh_param_file);
   sim.use_custom_vehicle(&veh);
 
-  Eigen::Matrix<double, 19, 1> p_diag;
+  Eigen::Matrix<double, 22, 1> p_diag;
   // Run sim until done and log data
   while (sim.run())
   {

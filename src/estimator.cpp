@@ -28,6 +28,10 @@ Estimator::Estimator(std::string filename)
   Q_ = (1. / num_prop_steps_) * Q_diag.asDiagonal();
 
   // Update vars
+  Vector3d att_R_diag;
+  get_yaml_eigen("att_R_diag", filename, att_R_diag);
+  att_R_ = att_R_diag.asDiagonal();
+
   Vector2d pix_R_diag;
   get_yaml_eigen("pix_R_diag", filename, pix_R_diag);
   pix_R_ = pix_R_diag.asDiagonal();
@@ -56,6 +60,7 @@ Estimator::Estimator(std::string filename)
   feats_initialized_ = false;
 
   q_I_b_ = quat::Quatd::Identity();
+  u_in_.setZero();
 
   PRINTMAT(xhat_);
   PRINTMAT(P_);
@@ -66,10 +71,21 @@ Estimator::~Estimator()
 {
 }
 
+void Estimator::imuCallback(const double& t, const Vector6d& z, const Matrix6d& R)
+{
+  u_in_.block<3, 1>(uOMEGA, 0) = z.block<3, 1>(3, 0);
+}
+
 void Estimator::mocapCallback(const double& t, const Xformd& z, const Matrix6d& R)
 {
   q_I_b_ = z.q();
   q_I_b_.normalize();
+
+  const Vector3d mocap_euler = z.q().euler();
+  PRINTMAT(mocap_euler);
+  this->updateUAVAttitude(mocap_euler);
+  const Vector3d xhat_euler = xhat_.block<3, 1>(0, 0);
+  PRINTMAT(xhat_euler);
 }
 
 void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R)
@@ -81,9 +97,10 @@ void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const M
   }
 
   Vector3d vel_I = q_I_b_.R().transpose() * vel_b;
+  u_in_.block<3, 1>(uVEL, 0) = vel_I;
 
   const double dt = t - last_time_;
-  propagate(dt, vel_I);
+  propagate(dt, u_in_);
 
   last_time_ = t;
 }
@@ -91,52 +108,52 @@ void Estimator::velocityCallback(const double& t, const Vector3d& vel_b, const M
 void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                        const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
-  if (draw_feats_)
-    drawImageFeatures(record_vid_, z.pixs);
+  //if (draw_feats_)
+    //drawImageFeatures(record_vid_, z.pixs);
 
-  if (!feats_initialized_)
-  {
-    initLandmarks(z.pixs);
-    feats_initialized_ = true;
-    return;
-  }
+  //if (!feats_initialized_)
+  //{
+    //initLandmarks(z.pixs);
+    //feats_initialized_ = true;
+    //return;
+  //}
 
-  if (t < use_goal_stop_time_)
-  {
-    updateGoal(virtualImagePixels(z.pixs[0]));
+  //if (t < use_goal_stop_time_)
+  //{
+    //updateGoal(virtualImagePixels(z.pixs[0]));
 
-    if (update_goal_depth_)
-      updateGoalDepth(z.depths[0]);
-  }
+    //if (update_goal_depth_)
+      //updateGoalDepth(z.depths[0]);
+  //}
 
-  for (unsigned int i = 0; i < SIZE; i++)
-  {
-    unsigned int lm_id = i;
-    unsigned int lm_idx = i + 1;
-    //updateLandmark(lm_id, z.pixs[lm_idx]);
-    updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
-  }
+  //for (unsigned int i = 0; i < SIZE; i++)
+  //{
+    //unsigned int lm_id = i;
+    //unsigned int lm_idx = i + 1;
+    ////updateLandmark(lm_id, z.pixs[lm_idx]);
+    //updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
+  //}
 }
 
-void Estimator::initLandmarks(
-    const std::vector<Eigen::Vector2d,
-                      Eigen::aligned_allocator<Eigen::Vector2d>>& pixs)
-{
-  // Init Landmarks
-  for (unsigned int i = 0; i < SIZE; i++)
-  {
-    unsigned int lm_id = i;
-    unsigned int lm_idx = i + 1;
+//void Estimator::initLandmarks(
+    //const std::vector<Eigen::Vector2d,
+                      //Eigen::aligned_allocator<Eigen::Vector2d>>& pixs)
+//{
+  //// Init Landmarks
+  //for (unsigned int i = 0; i < SIZE; i++)
+  //{
+    //unsigned int lm_id = i;
+    //unsigned int lm_idx = i + 1;
 
-    double rho_init = 1. / (2. * min_depth_);
-    Vector2d r_b = invserseMeasurementModelLandmark(pixs[lm_idx], rho_init);
+    //double rho_init = 1. / (2. * min_depth_);
+    //Vector2d r_b = invserseMeasurementModelLandmark(pixs[lm_idx], rho_init);
 
-    unsigned int rx_idx = xLM + 0 + 3 * i;
-    xhat_.block<2, 1>(rx_idx, 0) = r_b;
-  }
+    //unsigned int rx_idx = xLM + 0 + 3 * i;
+    //xhat_.block<2, 1>(rx_idx, 0) = r_b;
+  //}
 
-  setInverseDepth();
-}
+  //setInverseDepth();
+//}
 
 void Estimator::setInverseDepth()
 {
@@ -169,7 +186,7 @@ Matrix2d Estimator::dtheta_R(const double theta)
   return dR;
 }
 
-void Estimator::propagate(const double& time_step, const Vector3d& vel_c_I)
+void Estimator::propagate(const double& time_step, const InputVec& u_in)
 {
   const double dt = time_step / num_prop_steps_;
   
@@ -178,16 +195,47 @@ void Estimator::propagate(const double& time_step, const Vector3d& vel_c_I)
     xdot_.setZero();
     A_.setZero();
 
+    const double uav_phi = xhat_(xUAVATT + 0);
+    const double uav_theta = xhat_(xUAVATT + 1);
+    const double uav_psi = xhat_(xUAVATT + 2);
+
     const double rho0 = xhat_(xRHO, 0);
     const Vector2d vel_b = xhat_.block<2, 1>(xVEL, 0);
     const double theta = xhat_(xATT);
     const double omega = xhat_(xOMEGA);
 
-    const Vector2d vel_c_I_xy = vel_c_I.block<2, 1>(0, 0);
-    const double vel_c_I_z = vel_c_I(2);
+    const Vector2d vel_c_I_xy = u_in.block<2, 1>(uVEL, 0);
+    const double vel_c_I_z = u_in(uVEL + 2);
+
+    const double omega_p = u_in(uOMEGA + 0);
+    const double omega_q = u_in(uOMEGA + 1);
+    const double omega_r = u_in(uOMEGA + 2);
 
     Matrix2d R_I_b;
     toRot(theta, R_I_b);
+
+    // UAV state dynamics and jacobians
+    // phi, theta, psi
+    const double sp = sin(uav_phi);
+    const double cp = cos(uav_phi);
+    const double ct = cos(uav_theta);
+    const double tt = tan(uav_theta);
+
+    xdot_(xUAVATT + 0) = omega_p + (sp * tt) * omega_q + (cp * tt) * omega_r;
+    xdot_(xUAVATT + 1) = cp * omega_q - sp * omega_r;
+    xdot_(xUAVATT + 2) = (sp / ct) * omega_q + (cp / ct) * omega_r;
+
+    A_(xUAVATT + 0, xUAVATT + 0) = (cp * tt) * omega_q - (sp * tt) * omega_r;
+    A_(xUAVATT + 0, xUAVATT + 1) = (sp / ct / ct) * omega_q + (cp / ct / ct) * omega_r;
+    //A_(xUAVATT + 0, xUAVATT + 2) = 0;
+
+    A_(xUAVATT + 1, xUAVATT + 0) = -sp * omega_q - cp * omega_r;
+    //A_(xUAVATT + 1, xUAVATT + 1) = 0;
+    //A_(xUAVATT + 1, xUAVATT + 2) = 0;
+
+    A_(xUAVATT + 2, xUAVATT + 0) = (cp / ct) * omega_q - (sp / ct) * omega_r;
+    A_(xUAVATT + 2, xUAVATT + 1) = (sp / ct) * tt * omega_q + (cp / ct) * tt * omega_r;
+    //A_(xUAVATT + 2, xUAVATT + 2) = 0;
 
     // Vehicle state dynamics and jacobians
     //xdot_.block<2, 1>(xPOS, 0) = R_I_b.transpose() * vel_b; // - uav_vel(x, y);
@@ -217,170 +265,185 @@ void Estimator::propagate(const double& time_step, const Vector3d& vel_c_I)
   }
 }
 
-void Estimator::updateGoal(const Vector2d& goal_pix)
+void Estimator::updateUAVAttitude(const Vector3d& uav_euler)
 {
-  static const Vector2d e_1(1., 0.);
-  static const Vector2d e_2(0., 1.);
+  att_residual_ = uav_euler - xhat_.block<3, 1>(xUAVATT, 0);
 
-  static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
+  att_H_.setZero();
+  att_H_.block<3, 3>(0, xUAVATT).setIdentity();
 
-  const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
-  const double rho0 = xhat_(xRHO);
-  const Vector2d pos_c = R_v_c * pos_v;
+  att_K_ = P_ * att_H_.transpose() * (att_H_ * P_ * att_H_.transpose() + att_R_).inverse();
 
-  Vector2d zhat;
-  zhat(0) = fx_ * rho0 * pos_c(0) + cx_;
-  zhat(1) = fy_ * rho0 * pos_c(1) + cy_;
-
-  pix_residual_ = goal_pix - zhat;
-
-  pix_H_.setZero();
-  pix_H_.block<1, 2>(0, xPOS) = fx_ * rho0 * e_1.transpose() * R_v_c;
-  pix_H_(0, xRHO) = fx_ * e_1.transpose() * R_v_c * pos_v;
-  pix_H_.block<1, 2>(1, xPOS) = fy_ * rho0 * e_2.transpose() * R_v_c;
-  pix_H_(1, xRHO) = fy_ * e_2.transpose() * R_v_c * pos_v;
-
-  K_ = P_ * pix_H_.transpose() * (pix_H_ * P_ * pix_H_.transpose() + pix_R_).inverse();
-
-  xhat_ += K_ * pix_residual_;
+  xhat_ += att_K_ * att_residual_;
   // just reuse A_ to save memory
-  A_ = I_ - K_ * pix_H_;
-  P_ = A_ * P_ * A_.transpose() + K_ * pix_R_ * K_.transpose();
+  A_ = I_ - att_K_ * att_H_;
+  P_ = A_ * P_ * A_.transpose() + att_K_ * att_R_ * att_K_.transpose();
 }
 
-void Estimator::updateGoalDepth(const double& goal_depth)
-{
-  const double rho0 = xhat_(xRHO);
-  Matrix1d depth_residual;
-  depth_residual(0) = goal_depth - (1. / rho0);
+//void Estimator::updateGoal(const Vector2d& goal_pix)
+//{
+  //static const Vector2d e_1(1., 0.);
+  //static const Vector2d e_2(0., 1.);
 
-  depth_H_.setZero();
-  depth_H_(0, xRHO) = -1. / (rho0 * rho0);
+  //static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
 
-  K_.leftCols(1) = P_ * depth_H_.transpose() *
-                   (depth_H_ * P_ * depth_H_.transpose() + depth_R_).inverse();
+  //const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
+  //const double rho0 = xhat_(xRHO);
+  //const Vector2d pos_c = R_v_c * pos_v;
 
-  xhat_ += K_.leftCols(1) * depth_residual;
-  // just reuse A_ to save memory
-  A_ = I_ - K_.leftCols(1) * depth_H_;
-  P_ = A_ * P_ * A_.transpose() +
-       K_.leftCols(1) * depth_R_ * K_.leftCols(1).transpose();
-}
+  //Vector2d zhat;
+  //zhat(0) = fx_ * rho0 * pos_c(0) + cx_;
+  //zhat(1) = fy_ * rho0 * pos_c(1) + cy_;
 
-void Estimator::updateLandmark(const int& id, const Vector2d& lm_pix)
-{
-  static const Vector2d e_1(1., 0.);
-  static const Vector2d e_2(0., 1.);
+  //pix_residual_ = goal_pix - zhat;
 
-  static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
+  //pix_H_.setZero();
+  //pix_H_.block<1, 2>(0, xPOS) = fx_ * rho0 * e_1.transpose() * R_v_c;
+  //pix_H_(0, xRHO) = fx_ * e_1.transpose() * R_v_c * pos_v;
+  //pix_H_.block<1, 2>(1, xPOS) = fy_ * rho0 * e_2.transpose() * R_v_c;
+  //pix_H_(1, xRHO) = fy_ * e_2.transpose() * R_v_c * pos_v;
 
-  // Landmark ids are from 0 -> (SIZE - 1)
-  const unsigned int rx_idx = xLM + 0 + 3 * id;
-  const unsigned int ry_idx = xLM + 1 + 3 * id;
-  const unsigned int rho_idx = xLM + 2 + 3 * id;
+  //K_ = P_ * pix_H_.transpose() * (pix_H_ * P_ * pix_H_.transpose() + pix_R_).inverse();
 
-  const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
-  const double theta = xhat_(xATT);
-  const Vector2d r_b = xhat_.block<2, 1>(rx_idx, 0);
-  const double rhoi = xhat_(rho_idx);
+  //xhat_ += K_ * pix_residual_;
+  //// just reuse A_ to save memory
+  //A_ = I_ - K_ * pix_H_;
+  //P_ = A_ * P_ * A_.transpose() + K_ * pix_R_ * K_.transpose();
+//}
 
-  Matrix2d R_I_b;
-  toRot(theta, R_I_b);
+//void Estimator::updateGoalDepth(const double& goal_depth)
+//{
+  //const double rho0 = xhat_(xRHO);
+  //Matrix1d depth_residual;
+  //depth_residual(0) = goal_depth - (1. / rho0);
 
-  const Vector2d posi_v = pos_v + R_I_b.transpose() * r_b;
-  const Vector2d posi_c = R_v_c * posi_v;
+  //depth_H_.setZero();
+  //depth_H_(0, xRHO) = -1. / (rho0 * rho0);
 
-  Vector2d zhat;
-  zhat(0) = fx_ * rhoi * posi_c(0) + cx_;
-  zhat(1) = fy_ * rhoi * posi_c(1) + cy_;
+  //K_.leftCols(1) = P_ * depth_H_.transpose() *
+                   //(depth_H_ * P_ * depth_H_.transpose() + depth_R_).inverse();
 
-  pix_residual_ = lm_pix - zhat;
+  //xhat_ += K_.leftCols(1) * depth_residual;
+  //// just reuse A_ to save memory
+  //A_ = I_ - K_.leftCols(1) * depth_H_;
+  //P_ = A_ * P_ * A_.transpose() +
+       //K_.leftCols(1) * depth_R_ * K_.leftCols(1).transpose();
+//}
 
-  pix_H_.setZero();
-  // dpix / dpos
-  pix_H_.block<1, 2>(0, xPOS) = fx_ * rhoi * e_1.transpose() * R_v_c;
-  pix_H_.block<1, 2>(1, xPOS) = fy_ * rhoi * e_2.transpose() * R_v_c;
+//void Estimator::updateLandmark(const int& id, const Vector2d& lm_pix)
+//{
+  //static const Vector2d e_1(1., 0.);
+  //static const Vector2d e_2(0., 1.);
 
-  // dpix / dtheta
-  pix_H_(0, xATT) = fx_ * rhoi * e_1.transpose() * R_v_c * dtheta_R(theta).transpose() * r_b;
-  pix_H_(1, xATT) = fy_ * rhoi * e_2.transpose() * R_v_c * dtheta_R(theta).transpose() * r_b;
+  //static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
 
-  // dpix / dr
-  pix_H_.block<1, 2>(0, rx_idx) = fx_ * rhoi * e_1.transpose() * R_v_c * R_I_b.transpose();
-  pix_H_.block<1, 2>(1, rx_idx) = fy_ * rhoi * e_2.transpose() * R_v_c * R_I_b.transpose();
+  //// Landmark ids are from 0 -> (SIZE - 1)
+  //const unsigned int rx_idx = xLM + 0 + 3 * id;
+  //const unsigned int ry_idx = xLM + 1 + 3 * id;
+  //const unsigned int rho_idx = xLM + 2 + 3 * id;
 
-  // dpix / drho
-  pix_H_(0, rho_idx) = fx_ * e_1.transpose() * R_v_c * posi_v;
-  pix_H_(1, rho_idx) = fy_ * e_2.transpose() * R_v_c * posi_v;
+  //const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
+  //const double theta = xhat_(xATT);
+  //const Vector2d r_b = xhat_.block<2, 1>(rx_idx, 0);
+  //const double rhoi = xhat_(rho_idx);
 
-  //PRINTMAT(pix_H_);
+  //Matrix2d R_I_b;
+  //toRot(theta, R_I_b);
 
-  K_ = P_ * pix_H_.transpose() * (pix_H_ * P_ * pix_H_.transpose() + pix_R_).inverse();
+  //const Vector2d posi_v = pos_v + R_I_b.transpose() * r_b;
+  //const Vector2d posi_c = R_v_c * posi_v;
 
-  xhat_ += K_ * pix_residual_;
-  // just reuse A_ to save memory
-  A_ = I_ - K_ * pix_H_;
-  P_ = A_ * P_ * A_.transpose() + K_ * pix_R_ * K_.transpose();
-}
+  //Vector2d zhat;
+  //zhat(0) = fx_ * rhoi * posi_c(0) + cx_;
+  //zhat(1) = fy_ * rhoi * posi_c(1) + cy_;
 
-void Estimator::updateLandmarkDepth(const int& id, const double& lm_depth)
-{
-  const unsigned int rho_idx = xLM + 2 + 3 * id;
+  //pix_residual_ = lm_pix - zhat;
 
-  const double rhoi = xhat_(rho_idx);
-  Matrix1d depth_residual;
-  depth_residual(0) = lm_depth - (1. / rhoi);
+  //pix_H_.setZero();
+  //// dpix / dpos
+  //pix_H_.block<1, 2>(0, xPOS) = fx_ * rhoi * e_1.transpose() * R_v_c;
+  //pix_H_.block<1, 2>(1, xPOS) = fy_ * rhoi * e_2.transpose() * R_v_c;
 
-  depth_H_.setZero();
-  depth_H_(0, rho_idx) = -1. / (rhoi * rhoi);
+  //// dpix / dtheta
+  //pix_H_(0, xATT) = fx_ * rhoi * e_1.transpose() * R_v_c * dtheta_R(theta).transpose() * r_b;
+  //pix_H_(1, xATT) = fy_ * rhoi * e_2.transpose() * R_v_c * dtheta_R(theta).transpose() * r_b;
 
-  K_.leftCols(1) = P_ * depth_H_.transpose() *
-                   (depth_H_ * P_ * depth_H_.transpose() + depth_R_).inverse();
+  //// dpix / dr
+  //pix_H_.block<1, 2>(0, rx_idx) = fx_ * rhoi * e_1.transpose() * R_v_c * R_I_b.transpose();
+  //pix_H_.block<1, 2>(1, rx_idx) = fy_ * rhoi * e_2.transpose() * R_v_c * R_I_b.transpose();
 
-  xhat_ += K_.leftCols(1) * depth_residual;
-  // just reuse A_ to save memory
-  A_ = I_ - K_.leftCols(1) * depth_H_;
-  P_ = A_ * P_ * A_.transpose() +
-       K_.leftCols(1) * depth_R_ * K_.leftCols(1).transpose();
-}
+  //// dpix / drho
+  //pix_H_(0, rho_idx) = fx_ * e_1.transpose() * R_v_c * posi_v;
+  //pix_H_(1, rho_idx) = fy_ * e_2.transpose() * R_v_c * posi_v;
 
-Vector2d Estimator::invserseMeasurementModelLandmark(const Vector2d& lm_pix,
-                                                     const double rho)
-{
-  static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
+  ////PRINTMAT(pix_H_);
 
-  const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
-  const double theta = xhat_(xATT);
+  //K_ = P_ * pix_H_.transpose() * (pix_H_ * P_ * pix_H_.transpose() + pix_R_).inverse();
 
-  Matrix2d R_I_b;
-  toRot(theta, R_I_b);
+  //xhat_ += K_ * pix_residual_;
+  //// just reuse A_ to save memory
+  //A_ = I_ - K_ * pix_H_;
+  //P_ = A_ * P_ * A_.transpose() + K_ * pix_R_ * K_.transpose();
+//}
 
-  Vector2d posi_c;
-  posi_c(0) = (1. / fx_) * (lm_pix(0) - cx_);
-  posi_c(1) = (1. / fy_) * (lm_pix(1) - cy_);
+//void Estimator::updateLandmarkDepth(const int& id, const double& lm_depth)
+//{
+  //const unsigned int rho_idx = xLM + 2 + 3 * id;
 
-  Vector2d r_b = R_I_b * ((1. / rho) * R_v_c.transpose() * posi_c - pos_v);
+  //const double rhoi = xhat_(rho_idx);
+  //Matrix1d depth_residual;
+  //depth_residual(0) = lm_depth - (1. / rhoi);
 
-  return r_b;
-}
+  //depth_H_.setZero();
+  //depth_H_(0, rho_idx) = -1. / (rhoi * rhoi);
 
-Vector2d Estimator::virtualImagePixels(const Vector2d& pix)
-{
-  Vector3d pix_vec(pix(0), pix(1), 1.);
+  //K_.leftCols(1) = P_ * depth_H_.transpose() *
+                   //(depth_H_ * P_ * depth_H_.transpose() + depth_R_).inverse();
 
-  Matrix3d K;
-  K << fx_, 0., cx_,
-        0., fy_, cy_,
-        0., 0., 1.;
+  //xhat_ += K_.leftCols(1) * depth_residual;
+  //// just reuse A_ to save memory
+  //A_ = I_ - K_.leftCols(1) * depth_H_;
+  //P_ = A_ * P_ * A_.transpose() +
+       //K_.leftCols(1) * depth_R_ * K_.leftCols(1).transpose();
+//}
 
-  pix_vec = K.inverse() * pix_vec;
+//Vector2d Estimator::invserseMeasurementModelLandmark(const Vector2d& lm_pix,
+                                                     //const double rho)
+//{
+  //static const Matrix2d R_v_c = q_b_c_.R().block<2, 2>(0, 0);
 
-  static const Matrix3d R_b_c = q_b_c_.R();
+  //const Vector2d pos_v = xhat_.block<2, 1>(xPOS, 0);
+  //const double theta = xhat_(xATT);
 
-  Vector3d virtual_vec;
-  virtual_vec = K * R_b_c * q_I_b_.R().transpose() * R_b_c.transpose() * pix_vec;
+  //Matrix2d R_I_b;
+  //toRot(theta, R_I_b);
 
-  Vector2d virtual_pix;
-  virtual_pix = virtual_vec.block<2, 1>(0, 0) / virtual_vec(2);
-  return virtual_pix;
-}
+  //Vector2d posi_c;
+  //posi_c(0) = (1. / fx_) * (lm_pix(0) - cx_);
+  //posi_c(1) = (1. / fy_) * (lm_pix(1) - cy_);
+
+  //Vector2d r_b = R_I_b * ((1. / rho) * R_v_c.transpose() * posi_c - pos_v);
+
+  //return r_b;
+//}
+
+//Vector2d Estimator::virtualImagePixels(const Vector2d& pix)
+//{
+  //Vector3d pix_vec(pix(0), pix(1), 1.);
+
+  //Matrix3d K;
+  //K << fx_, 0., cx_,
+        //0., fy_, cy_,
+        //0., 0., 1.;
+
+  //pix_vec = K.inverse() * pix_vec;
+
+  //static const Matrix3d R_b_c = q_b_c_.R();
+
+  //Vector3d virtual_vec;
+  //virtual_vec = K * R_b_c * q_I_b_.R().transpose() * R_b_c.transpose() * pix_vec;
+
+  //Vector2d virtual_pix;
+  //virtual_pix = virtual_vec.block<2, 1>(0, 0) / virtual_vec(2);
+  //return virtual_pix;
+//}
