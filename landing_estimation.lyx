@@ -1443,5 +1443,49 @@ f_{y}\rho\vect e_{2}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{
 
 \end_layout
 
+\begin_layout Subsubsection
+Goal Pixel Measurement Update
+\end_layout
+
+\begin_layout Standard
+The estimates of the goal location are in the UAV's vehicle frame (inertial)
+ but we measure the pixels in the camera frame.
+ We must therefore, rotate the estimate into the camera frame and then project
+ the location onto the camera image.
+ If we define
+\begin_inset Formula 
+\begin{equation}
+\vect p^{I}=\begin{bmatrix}pos_{x}^{I}\\
+pos_{y}^{I}\\
+\frac{1}{\rho}
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+then
+\begin_inset Formula 
+\begin{equation}
+\vect p^{cam}=R_{b}^{cam}R_{I}^{b}\vect p^{I}.
+\end{equation}
+
+\end_inset
+
+Projecting this onto the camera image, we get the estimated pixel location
+ to be given by 
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}u_{est}\\
+v_{est}
+\end{bmatrix}=\begin{bmatrix}f_{x}\frac{\vect e_{1}^{\transpose}\vect p^{cam}}{\vect e_{3}^{\transpose}\vect p^{cam}}+c_{x}\\
+f_{y}\frac{\vect e_{2}^{\transpose}\vect p^{cam}}{\vect e_{3}^{\transpose}\vect p^{cam}}+c_{y}
+\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document

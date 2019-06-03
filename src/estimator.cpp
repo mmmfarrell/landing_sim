@@ -121,19 +121,22 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
 
   if (t < use_goal_stop_time_)
   {
-    updateGoal(virtualImagePixels(z.pixs[0]));
+    //updateGoal(virtualImagePixels(z.pixs[0]));
+    // update goal with real measured pixels, not virtual image
+    updateGoal(z.pixs[0]);
 
     if (update_goal_depth_)
       updateGoalDepth(z.depths[0]);
   }
 
-  for (unsigned int i = 0; i < SIZE; i++)
-  {
-    unsigned int lm_id = i;
-    unsigned int lm_idx = i + 1;
-    // updateLandmark(lm_id, z.pixs[lm_idx]);
-    updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
-  }
+  // TODO put the landmark updates back
+  //for (unsigned int i = 0; i < SIZE; i++)
+  //{
+    //unsigned int lm_id = i;
+    //unsigned int lm_idx = i + 1;
+    //// updateLandmark(lm_id, z.pixs[lm_idx]);
+    //updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
+  //}
 }
 
 void Estimator::initLandmarks(
@@ -283,8 +286,10 @@ void Estimator::updateUAVAttitude(const Vector3d& uav_euler)
   P_ = A_ * P_ * A_.transpose() + att_K_ * att_R_ * att_K_.transpose();
 }
 
-void Estimator::updateGoal(const Vector2d& goal_pix)
+void Estimator::updateGoal(const Vector2d& goal_pix_meas)
 {
+  const Vector2d goal_pix = virtualImagePixels(goal_pix_meas);
+
   static const Vector2d e_1(1., 0.);
   static const Vector2d e_2(0., 1.);
 
@@ -299,6 +304,49 @@ void Estimator::updateGoal(const Vector2d& goal_pix)
   zhat(1) = fy_ * rho0 * pos_c(1) + cy_;
 
   pix_residual_ = goal_pix - zhat;
+
+  Vector3d pos_I;
+  pos_I(0) = xhat_(xPOS + 0);
+  pos_I(1) = xhat_(xPOS + 1);
+  pos_I(2) = 1. / rho0;
+
+  Matrix3d Rot_I_b = R_I_b();
+
+  Vector3d pos_cam = q_b_c_.R() * Rot_I_b * pos_I;
+
+  //PRINTMAT(pos_I);
+  //PRINTMAT(pos_cam);
+
+  double u_cam = fx_ * pos_cam(0) / pos_cam(2) + cx_;
+  double u_meas = goal_pix_meas(0);
+
+  double v_cam = fy_ * pos_cam(1) / pos_cam(2) + cy_;
+  double v_meas = goal_pix_meas(1);
+
+  //std::cout << "u pix diff: " << u_cam - u_meas << std::endl;
+  std::cout << "v pix diff: " << v_cam - v_meas << std::endl;
+
+  //Matrix3d K_cam;
+  //K_cam.setZero();
+  //K_cam(0, 0) = fx_;
+  //K_cam(1, 1) = fy_;
+  //K_cam(2, 2) = 1.;
+  //K_cam(0, 2) = cx_;
+  //K_cam(1, 2) = cy_;
+
+  //Vector3d est_pix_vec = K_cam * q_b_c_.R() * Rot_I_b * vec_I;
+  //est_pix_vec /= est_pix_vec(2);
+  //static const Vector3d e_13(1., 0., 0.);
+  //static const Vector3d e_23(0., 1., 0.);
+  //est_pix_vec(0) = fx_ * rho0 * e_13.transpose() * q_b_c_.R() * Rot_I_b * vec_I + cx_;
+  //est_pix_vec(1) = fy_ * rho0 * e_23.transpose() * q_b_c_.R() * Rot_I_b * vec_I + cy_;
+
+  //Vector2d diff_pix = goal_pix_meas - est_pix_vec.block<2, 1>(0, 0);
+  //PRINTMAT(diff_pix);
+  //PRINTMAT(goal_pix_meas);
+  //PRINTMAT(est_pix_vec);
+  //std::cout << "u pix diff: " << est_pix_vec(0) - goal_pix_meas(0) << std::endl;
+  //std::cout << "v pix diff: " << est_pix_vec(1) - goal_pix_meas(1) << std::endl;
 
   pix_H_.setZero();
   pix_H_.block<1, 2>(0, xPOS) = fx_ * rho0 * e_1.transpose() * R_v_c;
