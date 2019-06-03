@@ -49,9 +49,12 @@ public:
   // z - imu measurement [acc, gyro]
   // R - imu covariance
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
-  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R) {}
+  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
+  {
+  }
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
-  void velocityCallback(const double& t, const Vector3d& vel_b, const Matrix3d& R);
+  void velocityCallback(const double& t, const Vector3d& vel_b,
+                        const Matrix3d& R);
 
   void simpleCamCallback(const double& t, const ImageFeat& z,
                          const Matrix2d& R_pix, const Matrix1d& R_depth);
@@ -59,11 +62,13 @@ public:
   // t - current time (seconds)
   // z - gnss measurement [p_{b/ECEF}^ECEF, v_{b/ECEF}^ECEF]
   // R - gnss covariance
-  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
+  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R)
+  {
+  }
 
-  //void initLandmarks(
-      //const std::vector<Eigen::Vector2d,
-                        //Eigen::aligned_allocator<Eigen::Vector2d>>& pixs);
+  void initLandmarks(
+      const std::vector<Eigen::Vector2d,
+                        Eigen::aligned_allocator<Eigen::Vector2d>>& pixs);
   void setInverseDepth();
   void toRot(const double theta, Matrix2d& R);
   Matrix2d dtheta_R(const double theta);
@@ -72,14 +77,16 @@ public:
   void propagate(const double& time_step, const InputVec& u_in);
 
   void updateUAVAttitude(const Vector3d& uav_euler);
-  //void updateGoal(const Vector2d& goal_pix);
-  //void updateGoalDepth(const double& goal_depth);
-  //void updateLandmark(const int& id, const Vector2d& lm_pix);
-  //void updateLandmarkDepth(const int& id, const double& lm_depth);
+  void updateGoal(const Vector2d& goal_pix);
+  void updateGoalDepth(const double& goal_depth);
+  void updateLandmark(const int& id, const Vector2d& lm_pix);
+  void updateLandmarkDepth(const int& id, const double& lm_depth);
 
-  //Vector2d invserseMeasurementModelLandmark(const Vector2d& lm_pix,
-                                            //const double rho);
-  //Vector2d virtualImagePixels(const Vector2d& pix);
+  Vector2d invserseMeasurementModelLandmark(const Vector2d& lm_pix,
+                                            const double rho);
+  Vector2d virtualImagePixels(const Vector2d& pix);
+
+  Matrix3d R_I_b() const;
 
   // Kalman filter
   StateVec xhat_;

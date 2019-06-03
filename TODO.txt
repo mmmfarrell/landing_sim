@@ -1,5 +1,6 @@
 TODO
   - Estimate attitude
+  - Use estimated attitude everywhere, true attitude nowhere
   - Lyx
   - code: using pixels, UAV velocity, angular rates, estimate landing vehicle
 

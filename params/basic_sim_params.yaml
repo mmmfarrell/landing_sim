@@ -152,10 +152,10 @@ raw_gnss_enabled: false
 ## IMU
 imu_update_rate: 250
 accel_init_stdev: 0.0
-accel_noise_stdev: 0.2
+accel_noise_stdev: 0.0
 accel_bias_walk: 0.05
 gyro_init_stdev: 0.0
-gyro_noise_stdev: 0.1
+gyro_noise_stdev: 0.0
 gyro_bias_walk: 0.01
 p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
@@ -165,8 +165,8 @@ simple_cam_update_rate: 30
 sc_cam_center: [320, 240]
 sc_image_size: [640, 480]
 sc_focal_len: [410., 410.]
-sc_pixel_noise_stdev: 3.
-sc_depth_noise_stdev: 2.
+sc_pixel_noise_stdev: 0.
+sc_depth_noise_stdev: 0.
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
 p_b_sc: [0.0, 0.0, 0.0 ]
 
@@ -176,7 +176,7 @@ camera_time_offset: 0.0
 camera_transmission_time: 0.0
 camera_transmission_noise: 0.0
 camera_update_rate: 20
-pixel_noise_stdev: 0.1
+pixel_noise_stdev: 0.0
 focal_len: [250.0, 250.0]
 cam_center: [320, 240]
 image_size: [640, 480]
@@ -220,7 +220,7 @@ mocap_transmission_time: 0
 
 ## Velocity Sensor
 velocity_update_rate: 250
-velocity_noise_stdev: 2.
+velocity_noise_stdev: 0.
 
 ## GNSS
 ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
