@@ -25,3 +25,6 @@ target_link_libraries(basic_example multirotor_sim)
 
 add_executable(estimator src/estimator.cpp src/estimator_example.cpp)
 target_link_libraries(estimator ${OpenCV_LIBS} multirotor_sim)
+
+add_executable(test_utils src/test_estimator_utils.cpp)
+target_link_libraries(test_utils gtest gtest_main pthread)

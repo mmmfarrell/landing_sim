@@ -4,6 +4,7 @@
 #include "multirotor_sim/utils.h"
 
 #include "estimator.h"
+#include "estimator_utils.h"
 
 using namespace Eigen;
 using namespace multirotor_sim;
@@ -510,26 +511,5 @@ Matrix3d Estimator::R_I_b() const
   const double theta = xhat_(xUAVATT + 1);
   const double psi = xhat_(xUAVATT + 2);
 
-  const double cp = cos(phi);
-  const double sp = sin(phi);
-  const double ct = cos(theta);
-  const double st = sin(theta);
-  const double cpsi = cos(psi);
-  const double spsi = sin(psi);
-
-  // Inertial frame to body frame from UAV book
-  Matrix3d rot;
-  rot(0, 0) = ct * cpsi;
-  rot(0, 1) = ct * spsi;
-  rot(0, 2) = -st;
-
-  rot(1, 0) = sp * st * cpsi - cp * spsi;
-  rot(1, 1) = sp * st * spsi + cp * cpsi;
-  rot(1, 2) = sp * ct;
-
-  rot(2, 0) = cp * st * cpsi + sp * spsi;
-  rot(2, 1) = cp * st * spsi - sp * cpsi;
-  rot(2, 2) = cp * ct;
-
-  return rot;
+  return rotmItoB(phi, theta, psi);
 }
