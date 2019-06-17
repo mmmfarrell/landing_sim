@@ -1484,6 +1484,28 @@ f_{y}\frac{\vect e_{2}^{\transpose}\vect p^{cam}}{\vect e_{3}^{\transpose}\vect 
 
 \end_inset
 
+or expanded as
+\begin_inset Formula 
+\begin{equation}
+h\left(\x\right)=\begin{bmatrix}u_{est}\\
+v_{est}
+\end{bmatrix}=\begin{bmatrix}f_{x}\frac{\vect e_{1}^{\transpose}R_{b}^{cam}R_{I}^{b}\vect p^{I}}{\vect e_{3}^{\transpose}R_{b}^{cam}R_{I}^{b}\vect p^{I}}+c_{x}\\
+f_{y}\frac{\vect e_{2}^{\transpose}R_{b}^{cam}R_{I}^{b}\vect p^{I}}{\vect e_{3}^{\transpose}R_{b}^{cam}R_{I}^{b}\vect p^{I}}+c_{y}
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
+This gives us the jacobians of
+\begin_inset Formula 
+\begin{equation}
+H\left(\x\right)=\begin{bmatrix}f_{x}\rho\vect e_{1}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{b}\right)\vect p^{v\text{(landing veh)}} & f_{x}\rho\vect e_{1}^{\transpose}R_{v}^{c} & f_{x}\vect e_{1}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0\\
+f_{y}\rho\vect e_{2}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{b}\right)\vect p^{v\text{(landing veh)}} & f_{y}\rho\vect e_{2}^{\transpose}R_{v}^{c} & f_{y}\vect e_{2}^{\transpose}R_{v}^{c}\vect p^{v} & 0 & 0 & 0 & 0 & \dots & 0 & 0
+\end{bmatrix}.
+\end{equation}
+
+\end_inset
+
 
 \end_layout
 
