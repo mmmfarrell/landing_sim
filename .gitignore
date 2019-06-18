@@ -2,3 +2,17 @@ build/
 *.pyc
 *.lyx#
 *.lyx~
+
+# latex
+*.bbl
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+*.aux
+*.pdf
+*.bin
+

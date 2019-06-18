@@ -1,0 +1,295 @@
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=2in]{geometry}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{amsmath,amssymb,amsbsy,amsfonts}
+\usepackage{accents}
+\usepackage{nicefrac}
+\usepackage{upgreek}
+\usepackage[]{footmisc}
+
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\input{macros}
+
+\title{\LARGE \bf UAV Precision Maritime Landing}
+
+\author{Michael Farrell}
+
+
+\begin{document}
+\maketitle
+
+\section{UAV State Estimator}
+\subsection{UAV State}
+The purpose of this section is to develop a full state estimator for a
+multirotor UAV. The state that we want to estimate is given by
+\begin{equation}
+  \x =
+  \begin{bmatrix}
+    p_n & p_e & p_d &
+    \phi & \theta & \psi &
+    u & v & w
+  \end{bmatrix}^\transpose.
+\label{eq:uav_state}
+\end{equation}
+
+\subsection{Sensors}
+We assume that the UAV has a sensor suite contatining the following sensors:
+\begin{itemize}
+  \item GPS (Position, Velocity)
+  \item IMU (Accel, Angular rate, RPY angles?)
+  \item Altimeter (Baro or Laser)
+\end{itemize}
+
+\subsection{Estimator}
+As a first pass, we assume that there are no biases on the sensors. We do,
+however, assume that there is linear drag acting on the UAV and therefore
+we must estimate the drag term. Our estimated state is equal to the UAV state
+given in (\ref{eq:uav_state}) appeneded with this drag term, $\mu$,
+\begin{equation}
+  \x =
+  \begin{bmatrix}
+    p_n & p_e & p_d &
+    \phi & \theta & \psi &
+    u & v & w &
+    \mu
+  \end{bmatrix}^\transpose.
+\label{eq:est_state}
+\end{equation}
+As the inputs to the estimator, we use the IMU measurements, namely:
+\begin{equation}
+  \vect{u} =
+  \begin{bmatrix}
+    a_z &
+    p & q & r
+  \end{bmatrix}^\transpose.
+\label{eq:est_inputs}
+\end{equation}
+Note that we only use the acceleration in the $z$ direction as an input. The
+other accelerations, $a_x$ and $a_y$, will be used as measurements with the drag
+model.
+
+\subsection{Dynamics}
+We use common UAV dynamics with the addition of a linear drag term as explained
+in~\cite{leishman2014accel}. The UAV dynamics are given by
+\begin{align}
+  \begin{bmatrix}
+    \dot{p_n} \\
+    \dot{p_e} \\
+    \dot{p_d}
+  \end{bmatrix}
+  &=
+  R_b^I
+  \begin{bmatrix}
+    u \\
+    v \\
+    w
+  \end{bmatrix}
+  \\
+  \begin{bmatrix}
+    \dot{\phi} \\
+    \dot{\theta} \\
+    \dot{\psi}
+  \end{bmatrix}
+  &=
+  \begin{bmatrix}
+    1 & \sin\phi\tan\theta & \cos\phi\tan\theta \\
+    0 & \cos\phi & -\sin\phi \\
+    0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+  \end{bmatrix}
+  \begin{bmatrix}
+    p \\
+    q \\
+    r 
+  \end{bmatrix}
+  \\
+  \begin{bmatrix}
+    \dot{u} \\
+    \dot{v} \\
+    \dot{w}
+  \end{bmatrix}
+  &=
+  R_I^b
+  \begin{bmatrix}
+    0 \\
+    0 \\
+    g
+  \end{bmatrix}
+  +
+  \begin{bmatrix}
+    vr - wq \\
+    wp - ur \\
+    uq - vp
+  \end{bmatrix}
+  -
+  \begin{bmatrix}
+    0 \\
+    0 \\
+    a_z
+  \end{bmatrix}
+  -
+  \begin{bmatrix}
+    \mu u \\
+    \mu v \\
+    0
+  \end{bmatrix}
+  \\
+  \dot{\mu} &= 0.
+\end{align}
+It is also imporant to note that the rotation from the inertial frame to the
+body frame, $R_I^b$, is given by
+\begin{equation}
+  R_I^b =
+  \begin{bmatrix}
+    \ctheta \cpsi & \ctheta \spsi & -\stheta \\
+    \sphi \stheta \cpsi - \cphi \spsi & \sphi \stheta \spsi + \cphi
+    \cpsi & \sphi \ctheta \\
+    \cphi \stheta \cpsi + \sphi \spsi & \cphi \stheta \spsi - \sphi
+    \cpsi & \cphi \ctheta
+  \end{bmatrix}
+\end{equation}
+and the rotation from the body frame to the inertial frame is given by
+\begin{equation}
+  R_b^I = \left(R_I^b\right)^\transpose.
+\end{equation}
+To make it easier to derive the jacobians in the following section, we expand
+the dynamic equations.
+\begin{align}
+  \dot{p_n} &= (\ctheta \cpsi)u + (\sphi \stheta \cpsi - \cphi \spsi)v +
+    (\cphi \stheta \cpsi + \sphi \spsi)w \\
+  \dot{p_e} &= (\ctheta \spsi)u + (\sphi \stheta \spsi + \cphi \cpsi)v +
+    (\cphi \stheta \spsi - \sphi \cpsi)w \\
+  \dot{p_d} &= (-\stheta)u + (\sphi \ctheta)v + (\cphi \ctheta)w \\
+  \dot{\phi} &= p + \sphi \ttheta q + \cphi \ttheta r \\
+  \dot{\theta} &= \cphi q - \sphi r \\
+  \dot{\psi} &= \frac{\sphi}{\ctheta} q + \frac{\cphi}{\ctheta} r \\
+  \dot{u} &= -\stheta g + vr - wq - \mu u \\
+  \dot{v} &= \sphi \ctheta g + wp - ur - \mu v \\
+  \dot{w} &= \cphi \ctheta g + uq - vp - a_z \\
+  \dot{\mu} &= 0
+\end{align}
+
+\subsection{Motion Model Jacobians}
+For use in the EKF, we need the jacobians of the dynamics. We need both the
+jacobian with respect to the state,
+\begin{equation}
+  A = \frac{d f\left(\x, \vect{u}\right)}{d \x}
+\end{equation}
+as well as the jacobian with respect to the inputs,
+\begin{equation}
+  B = \frac{d f\left(\x, \vect{u}\right)}{d \vect{u}}
+\end{equation}
+
+\subsubsection{State Jacobians}
+\begin{equation}
+  A =
+  \begin{bmatrix}
+    \vect{0} & \frac{\partial \dot{\vect{p}}}{\partial \vect{\theta}} &
+    \frac{\partial \dot{\vect{p}}}{\partial \vect{v}} & \vect{0} \\
+    \vect{0} & \frac{\partial \dot{\vect{\theta}}}{\partial \vect{\theta}} &
+    \vect{0} & \vect{0} \\
+    \vect{0} & \frac{\partial \dot{\vect{v}}}{\partial \vect{\theta}} & \frac{\partial \dot{\vect{v}}}{\partial \vect{v}} & \frac{\partial \dot{\vect{v}}}{\partial \mu} \\
+    \vect{0} & \vect{0} & \vect{0} & 0 
+  \end{bmatrix}
+\end{equation}
+The partial jacobians are then given by:
+\begin{align*}
+  \dot{p_n} &= (\ctheta \cpsi)u + (\sphi \stheta \cpsi - \cphi \spsi)v +
+    (\cphi \stheta \cpsi + \sphi \spsi)w \\
+  \frac{\partial \dot{p_n}}{\partial \phi} &= (\cphi \stheta \cpsi + \sphi
+    \spsi) v + (-\sphi \stheta \cpsi + \cphi \spsi) w \\
+  \frac{\partial \dot{p_n}}{\partial \theta} &= (-\stheta \cpsi) u + (\sphi
+    \ctheta \cpsi) v + (\cphi \ctheta \cpsi) w \\
+  \frac{\partial \dot{p_n}}{\partial \psi} &= (-\ctheta \spsi) u +(-\sphi
+    \stheta \spsi - \cphi \cpsi) v + (-\cphi \stheta \spsi + \sphi \cpsi)
+    w \\
+  \\
+  \dot{p_e} &= (\ctheta \spsi)u + (\sphi \stheta \spsi + \cphi \cpsi)v +
+    (\cphi \stheta \spsi - \sphi \cpsi)w \\
+  \frac{\partial \dot{p_e}}{\partial \phi} &= (\cphi \stheta \spsi - \sphi
+    \cpsi) v + (-\sphi \stheta \spsi - \cphi \cpsi) w \\
+  \frac{\partial \dot{p_e}}{\partial \theta} &= (-\stheta \cpsi)u + (\sphi
+    \ctheta \cpsi)v + (\cphi \ctheta \cpsi)w \\
+  \frac{\partial \dot{p_e}}{\partial \psi} &= (\ctheta \cpsi) u + (\sphi \stheta
+    \cpsi - \cphi \spsi) v + (\cphi \stheta \cpsi + \sphi \spsi) w \\
+  \\
+  \dot{p_d} &= (-\stheta)u + (\sphi \ctheta)v + (\cphi \ctheta)w \\
+  \frac{\partial \dot{p_d}}{\partial \phi} &= (\cphi \ctheta) v + (-\sphi
+    \ctheta) w \\
+  \frac{\partial \dot{p_d}}{\partial \theta} &= (-\ctheta) u + (-\sphi \stheta)
+    v + (-\cphi \stheta) w \\
+  \frac{\partial \dot{p_d}}{\partial \psi} &= 0 \\
+  \\
+  \frac{\partial \dot{\vect{p}}}{\partial {\vect{v}}} &= R_b^I \\
+  \\
+  \dot{\phi} &= p + \sphi \ttheta q + \cphi \ttheta r \\
+  \frac{\partial \dot{\phi}}{\partial \phi} &= \cphi \ttheta q -
+    \sphi \ttheta r \\
+  \frac{\partial \dot{\phi}}{\partial \theta} &= \frac{\sphi}{\ctheta \ctheta} q
+    + \frac{\cphi}{\ctheta \ctheta} r \\
+  \frac{\partial \dot{\phi}}{\partial \psi} &= 0 \\
+  \\
+  \dot{\theta} &= \cphi q - \sphi r \\
+  \frac{\partial \dot{\theta}}{\partial \phi} &= -\sphi q - \cphi r \\
+  \frac{\partial \dot{\theta}}{\partial \theta} &= 0 \\
+  \frac{\partial \dot{\theta}}{\partial \psi} &= 0 \\
+  \\
+  \dot{\psi} &= \frac{\sphi}{\ctheta} q + \frac{\cphi}{\ctheta} r \\
+  \frac{\partial \dot{\psi}}{\partial \phi} &= \frac{\cphi}{\ctheta} q +
+    \frac{-\sphi}{\ctheta} r \\
+  \frac{\partial \dot{\psi}}{\partial \theta} &= \frac{\sphi}{\ctheta} \ttheta q +
+  \frac{\cphi}{\ctheta}\ttheta r \\
+  \frac{\partial \dot{\psi}}{\partial \psi} &= 0 \\
+\end{align*}
+\TODO
+
+\subsubsection{Input Jacobians}
+\begin{equation}
+  B =
+  \begin{bmatrix}
+    0 & \vect{0} \\
+    0 & \frac{\partial \dot{\vect{\theta}}}{\partial \vect{\omega}} \\
+    \frac{\partial \dot{\vect{v}}}{\partial a_z} & \frac{\partial
+      \dot{\vect{v}}}{\partial \vect{\omega}} \\
+    0 & \vect{0} 
+  \end{bmatrix}
+\end{equation}
+
+\begin{align*}
+  \begin{bmatrix}
+    \dot{\phi} \\
+    \dot{\theta} \\
+    \dot{\psi}
+  \end{bmatrix}
+  &=
+  \begin{bmatrix}
+    1 & \sin\phi\tan\theta & \cos\phi\tan\theta \\
+    0 & \cos\phi & -\sin\phi \\
+    0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+  \end{bmatrix}
+  \begin{bmatrix}
+    p \\
+    q \\
+    r 
+  \end{bmatrix}
+  \\
+  \frac{\partial \dot{\vect{\theta}}}{\partial \vect{\omega}} &=
+  \begin{bmatrix}
+    1 & \sin\phi\tan\theta & \cos\phi\tan\theta \\
+    0 & \cos\phi & -\sin\phi \\
+    0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+  \end{bmatrix}
+\end{align*}
+\TODO
+
+\bibliographystyle{IEEEtran}
+\bibliography{abbrev,library}
+\end{document}

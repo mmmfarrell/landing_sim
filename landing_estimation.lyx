@@ -1509,5 +1509,79 @@ f_{y}\rho\vect e_{2}^{\transpose}R_{b}^{c}\left(\frac{\delta}{\delta ATT}R_{I}^{
 
 \end_layout
 
+\begin_layout Section
+UAV Estimator
+\end_layout
+
+\begin_layout Standard
+The purpose of this estimator is to develop an EKF for a multirotor UAV
+ with the following sensors:
+\end_layout
+
+\begin_layout Itemize
+GPS
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+North, East Position
+\end_layout
+
+\begin_layout Itemize
+North, East Velocity
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+AHRS/IMU
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Accel
+\end_layout
+
+\begin_layout Itemize
+Angular rate
+\end_layout
+
+\begin_layout Itemize
+RPY angles?
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+Altitude Sensor (Baro/laser)
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Altitude
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+State
+\end_layout
+
+\begin_layout Standard
+The estimated state of the UAV is given by
+\begin_inset Formula 
+\begin{equation}
+\x=\begin{bmatrix}p_{n} & p_{e} & p_{d} & \phi & \theta & \psi & u & v & w\end{bmatrix}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document

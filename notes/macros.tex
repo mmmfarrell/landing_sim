@@ -1,0 +1,73 @@
+% !TEX root=root.tex
+
+% vectors, quaternions, etc.
+\newcommand*{\vect}[1]{\boldsymbol{\mathrm{#1}}}
+\newcommand*{\quat}[1]{\boldsymbol{\mathrm{#1}}}
+
+\newcommand*{\x}{\vect{x}}
+\newcommand*{\xt}{\tilde{\vect{x}}}
+\newcommand*{\xhat}{\hat{\vect{x}}}
+\newcommand*{\xbar}{\bar{\vect{x}}}
+
+\newcommand*{\z}{\vect{z}}
+\newcommand*{\zhat}{\hat{\vect{z}}}
+\newcommand*{\zbar}{\bar{\vect{z}}}
+
+\newcommand*{\q}{\quat{q}}
+\newcommand*{\e}{\vect{e}}
+\newcommand*{\qt}{\tilde{\quat{q}}}
+\newcommand*{\drag}{c_d}
+
+% Trig functions
+\newcommand*{\sphi}{s_\phi}
+\newcommand*{\cphi}{c_\phi}
+\newcommand*{\stheta}{s_\theta}
+\newcommand*{\ctheta}{c_\theta}
+\newcommand*{\ttheta}{t_\theta}
+\newcommand*{\spsi}{s_\psi}
+\newcommand*{\cpsi}{c_\psi}
+
+% modifiers
+% \newcommand*{\desired}[1]{\accentset{\circ}{#1}}
+\newcommand*{\des}[1]{\check{#1}}
+
+% norms, transpose, etc.
+\newcommand*{\transpose}{\mathsf{T}}
+\newcommand*{\skewmat}[1]{\left[ #1 \right]_{\times}}
+\newcommand*{\norm}[1]{\left\Vert #1\right\Vert }
+\newcommand*{\abs}[1]{\left\vert #1\right\vert }
+
+% group/algebra names
+\newcommand*{\SO}{\ensuremath{\mathit{SO}}}
+\newcommand*{\so}{\ensuremath{\mathfrak{so}}}
+\newcommand*{\SE}{\ensuremath{\mathit{SE}}}
+\newcommand*{\se}{\ensuremath{\mathfrak{se}}}
+
+% operators
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\Exp}{Exp}
+\DeclareMathOperator*{\Log}{Log}
+
+% reference commands
+%\renewcommand*{\eqref}[1]{Eq.~\ref{#1}}
+\renewcommand*{\eqref}[1]{(\ref{#1})}
+\newcommand*{\tabref}[1]{Table~\ref{#1}}
+\newcommand*{\secref}[1]{Sec.~\ref{#1}}
+\newcommand*{\appxref}[1]{Appx.~\ref{#1}}
+
+% comments
+\definecolor{orange}{rgb}{1,0.5,0}
+\definecolor{darkgreen}{rgb}{0,0.6,0}
+\newcommand{\JJ}[1]{{\color{orange}{JJ: #1}}}
+\newcommand{\RB}[1]{{\color{teal}{RB: #1}}}
+\newcommand{\TM}[1]{{\color{purple}{TM: #1}}}
+\newcommand{\DK}[1]{{\color{darkgreen}{DK: #1}}}
+\newcommand{\JN}[1]{{\color{red}{JN: #1}}}
+\newcommand{\MF}[1]{{\color{red}{MF: #1}}}
+\newcommand{\TODO}{{\color{red}{TODO}}}
+
+% theorem environments
+\newtheorem{theorem}{Theorem}[subsection]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+
