@@ -16,6 +16,22 @@ DONE
     - OK with a little ~0.5 deg std dev
     - Not OK with more
 
+PAPER
+- Simulation 
+- Unicycle Model
+  - OR Car model?
+- Sensors
+  - IMU (accel + gyro)
+  - CAMERA (feature points + aruco)
+  - ?AHRSS attitude?
+  - ?GPS position/velocity?
+- Estimate
+  - ?UAV position?
+  - UAV velocity
+  - ?UAV orientation?
+  - LV Relative Position
+  - LV Velocity
+  - LV Orientation
 
 BACKLOG
 - Estimate UAV velocity as well
