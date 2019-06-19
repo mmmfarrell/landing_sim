@@ -39,6 +39,20 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
     this->propagate(dt, u_);
   }
   last_prop_time_ = t;
+
+  // TODO update with ax, ay
+}
+
+void Estimator::altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
+{
+  const double alt_dims = 1;
+  z_resid_.head(alt_dims) = z + xhat_.segment<1>(xPOS + 2);
+  z_R_.topLeftCorner(alt_dims, alt_dims) = R;
+
+  H_.setZero();
+  H_.block<1, 1>(0, xPOS + 2) = -1 * Matrix1d::Identity();
+
+  update(alt_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::mocapCallback(const double& t, const Xformd& z,
@@ -89,34 +103,11 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                                   const Matrix2d& R_pix,
                                   const Matrix1d& R_depth)
 {
-  // if (draw_feats_)
-  // drawImageFeatures(record_vid_, z.pixs);
+}
 
-  // if (!feats_initialized_)
-  //{
-  // initLandmarks(z.pixs);
-  // feats_initialized_ = true;
-  // return;
-  //}
-
-  // if (t < use_goal_stop_time_)
-  //{
-  ////updateGoal(virtualImagePixels(z.pixs[0]));
-  //// update goal with real measured pixels, not virtual image
-  // updateGoal(z.pixs[0]);
-
-  // if (update_goal_depth_)
-  // updateGoalDepth(z.depths[0]);
-  //}
-
-  //// TODO put the landmark updates back
-  ////for (unsigned int i = 0; i < SIZE; i++)
-  ////{
-  ////unsigned int lm_id = i;
-  ////unsigned int lm_idx = i + 1;
-  ////// updateLandmark(lm_id, z.pixs[lm_idx]);
-  ////updateLandmark(lm_id, virtualImagePixels(z.pixs[lm_idx]));
-  ////}
+void Estimator::gnssCallback(const double& t, const Vector6d& z,
+                             const Matrix6d& R)
+{
 }
 
 void Estimator::propagate(const double& dt, const InputVec& u_in)
@@ -132,14 +123,6 @@ void Estimator::propagate(const double& dt, const InputVec& u_in)
 void Estimator::update(const double dims, const MeasVec& residual,
                        const MeasMat& R, const MeasH& H)
 {
-  //att_residual_ = uav_euler - xhat_.block<3, 1>(xUAVATT, 0);
-
-  //att_H_.setZero();
-  //att_H_.block<3, 3>(0, xUAVATT).setIdentity();
-
-  //att_K_ = P_ * att_H_.transpose() *
-           //(att_H_ * P_ * att_H_.transpose() + att_R_).inverse();
-
   K_.leftCols(dims) = P_ * H.topRows(dims).transpose() *
                       (H.topRows(dims) * P_ * H.topRows(dims).transpose() +
                        R.topLeftCorner(dims, dims))
@@ -151,9 +134,6 @@ void Estimator::update(const double dims, const MeasVec& residual,
   P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
                                       R.topLeftCorner(dims, dims) *
                                       K_.leftCols(dims).transpose();
-  //xhat_ += att_K_ * att_residual_;
-  //A_ = I_ - att_K_ * att_H_;
-  //P_ = A_ * P_ * A_.transpose() + att_K_ * att_R_ * att_K_.transpose();
 }
 
 void Estimator::dynamics(const StateVec& x, const InputVec& u_in,

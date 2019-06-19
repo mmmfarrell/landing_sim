@@ -51,9 +51,7 @@ public:
   // z - imu measurement [acc, gyro]
   // R - imu covariance
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
-  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
-  {
-  }
+  void altCallback(const double& t, const Vector1d& z, const Matrix1d& R);
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
   void velocityCallback(const double& t, const Vector3d& vel_b,
                         const Matrix3d& R);
@@ -64,9 +62,7 @@ public:
   // t - current time (seconds)
   // z - gnss measurement [p_{b/ECEF}^ECEF, v_{b/ECEF}^ECEF]
   // R - gnss covariance
-  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R)
-  {
-  }
+  void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R);
 
   void propagate(const double& dt, const InputVec& u_in);
   void update(const double dims, const MeasVec& residual, const MeasMat& R,
