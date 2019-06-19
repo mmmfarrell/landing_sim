@@ -13,6 +13,7 @@ Estimator::Estimator(std::string filename)
 {
   // Init EKF State
   xhat_.setZero();
+
   P_.setIdentity();
 
   Q_.setIdentity();
@@ -43,6 +44,16 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
 void Estimator::mocapCallback(const double& t, const Xformd& z,
                               const Matrix6d& R)
 {
+  // update position
+  const double pos_dims = 3;
+  const Vector3d mocap_pos = z.t();
+  z_resid_.head(pos_dims) = mocap_pos - xhat_.segment<3>(xPOS);
+  z_R_.topLeftCorner(pos_dims, pos_dims) = 0.001 * Eigen::Matrix3d::Identity();
+
+  H_.setZero();
+  H_.block<3, 3>(0, xPOS) = Eigen::Matrix3d::Identity();
+
+  update(pos_dims, z_resid_, z_R_, H_);
 
   // Update atttitude
   const double att_dims = 3;
@@ -51,10 +62,9 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
   z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix3d::Identity();
 
   H_.setZero();
-  H_.block<3, 3>(0, xATT);
+  H_.block<3, 3>(0, xATT) = Eigen::Matrix3d::Identity();
 
   update(att_dims, z_resid_, z_R_, H_);
-  // this->updateUAVAttitude(mocap_euler);
 }
 
 void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
@@ -177,7 +187,7 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   xdot.segment<3>(xATT) = wmat * pqr;
   xdot(xVEL + 0) = grav_b(0) + v * r - w * q - mu * u;
   xdot(xVEL + 1) = grav_b(1) + w * p - u * r - mu * v;
-  xdot(xVEL + 2) = grav_b(2) + u * q - v * p - az;
+  xdot(xVEL + 2) = grav_b(2) + u * q - v * p + az;
   xdot(xMU) = 0.;
 
   // Jacobian

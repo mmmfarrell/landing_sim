@@ -38,7 +38,7 @@ traj_heading_straight_gain: 0.01
 #traj_delta_north: 10
 #traj_delta_east: 10
 traj_delta_north: 1.
-traj_delta_east: 0.
+traj_delta_east: 1.
 traj_delta_alt: -0.
 traj_delta_yaw: 0
 traj_nom_north: 0
