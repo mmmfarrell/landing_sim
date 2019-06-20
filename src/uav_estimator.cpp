@@ -13,11 +13,14 @@ Estimator::Estimator(std::string filename)
 {
   // Init EKF State
   xhat_.setZero();
+  xhat_(xMU) = 0.1;
 
   P_.setIdentity();
+  P_(xMU, xMU) = 0.;
 
   Q_.setIdentity();
   Q_ *= 0.001;
+  Q_(xMU, xMU) = 0.;
 
   last_prop_time_ = -999.;
 }
@@ -40,10 +43,27 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
   }
   last_prop_time_ = t;
 
-  // TODO update with ax, ay
+  //// update with ax, ay
+  // const double imu_dims = 2;
+  // const double xhat_mu = xhat_(xMU);
+  // const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
+  // z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
+  ////z_R_.topLeftCorner(imu_dims, imu_dims) = R.topLeftCorner(imu_dims,
+  ///imu_dims);
+  // z_R_.topLeftCorner(imu_dims, imu_dims) = 0.001 *
+  // Eigen::Matrix2d::Identity();
+
+  // H_.setZero();
+  // H_(0, xVEL + 0) = -xhat_mu;
+  // H_(0, xMU) = -xhat_(xVEL + 0);
+  // H_(1, xVEL + 1) = -xhat_mu;
+  // H_(1, xMU) = -xhat_(xVEL + 1);
+
+  // update(imu_dims, z_resid_, z_R_, H_);
 }
 
-void Estimator::altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
+void Estimator::altCallback(const double& t, const Vector1d& z,
+                            const Matrix1d& R)
 {
   const double alt_dims = 1;
   z_resid_.head(alt_dims) = z + xhat_.segment<1>(xPOS + 2);
@@ -58,16 +78,16 @@ void Estimator::altCallback(const double& t, const Vector1d& z, const Matrix1d& 
 void Estimator::mocapCallback(const double& t, const Xformd& z,
                               const Matrix6d& R)
 {
-  // update position
-  const double pos_dims = 3;
-  const Vector3d mocap_pos = z.t();
-  z_resid_.head(pos_dims) = mocap_pos - xhat_.segment<3>(xPOS);
-  z_R_.topLeftCorner(pos_dims, pos_dims) = 0.001 * Eigen::Matrix3d::Identity();
+  //// update position
+  //const double pos_dims = 3;
+  //const Vector3d mocap_pos = z.t();
+  //z_resid_.head(pos_dims) = mocap_pos - xhat_.segment<3>(xPOS);
+  //z_R_.topLeftCorner(pos_dims, pos_dims) = 0.001 * Eigen::Matrix3d::Identity();
 
-  H_.setZero();
-  H_.block<3, 3>(0, xPOS) = Eigen::Matrix3d::Identity();
+  //H_.setZero();
+  //H_.block<3, 3>(0, xPOS) = Eigen::Matrix3d::Identity();
 
-  update(pos_dims, z_resid_, z_R_, H_);
+  //update(pos_dims, z_resid_, z_R_, H_);
 
   // Update atttitude
   const double att_dims = 3;
@@ -108,6 +128,42 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
 void Estimator::gnssCallback(const double& t, const Vector6d& z,
                              const Matrix6d& R)
 {
+  // update position
+  const double pos_dims = 3;
+  const Vector3d gnss_pos = z.head(pos_dims);
+  z_resid_.head(pos_dims) = gnss_pos - xhat_.segment<3>(xPOS);
+  z_R_.topLeftCorner(pos_dims, pos_dims) = 0.1 * Eigen::Matrix3d::Identity();
+
+  H_.setZero();
+  H_.block<3, 3>(0, xPOS) = Eigen::Matrix3d::Identity();
+
+  update(pos_dims, z_resid_, z_R_, H_);
+
+  // update velocity
+  const double vel_dims = 3;
+  const Eigen::Vector3d gnss_vel_I = z.segment<3>(3);
+
+  const double phi = xhat_(xATT + 0);
+  const double theta = xhat_(xATT + 1);
+  const double psi = xhat_(xATT + 2);
+  const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
+  const Eigen::Vector3d xhat_vel_b = xhat_.segment<3>(xVEL);
+  const Eigen::Vector3d zhat_vel_I = R_I_b.transpose() * xhat_vel_b;
+
+  z_resid_.head(vel_dims) = gnss_vel_I - zhat_vel_I;
+  //z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
+  z_R_.topLeftCorner(vel_dims, vel_dims) = 0.1 * Eigen::Matrix3d::Identity();
+
+  const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
+  H_.setZero();
+  H_.block<3, 1>(0, xATT + 0) = d_R_d_phi * xhat_vel_b;
+  H_.block<3, 1>(0, xATT + 1) = d_R_d_theta * xhat_vel_b;
+  H_.block<3, 1>(0, xATT + 2) = d_R_d_psi * xhat_vel_b;
+  H_.block<3, 3>(0, xVEL) = R_I_b.transpose();
+
+  update(vel_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::propagate(const double& dt, const InputVec& u_in)

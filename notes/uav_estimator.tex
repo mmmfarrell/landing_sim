@@ -337,6 +337,67 @@ The partial jacobians are then given by:
   \frac{\partial \dot{w}}{\partial r} &= 0 \\
 \end{align*}
 
+\subsection{Measurement Models}
+
+\subsubsection{GNSS}
+We assume that the UAV is outfitted with a GNSS sensor that produces
+measurements for both position and velocity expressed in an earth centered, earth
+fixed (ECEF) frame denoted by some reference latitude, longitude, and altitude.
+In this case the GNSS measurement is given by
+\begin{equation}
+  \vect{z}_{GNSS} = 
+  \begin{bmatrix}
+    \vect{p}_{b/ECEF}^{ECEF} & \vect{v}_{b/ECEF}^{ECEF}
+  \end{bmatrix}^\transpose
+\end{equation}
+or also
+\begin{equation}
+	\vect{z}_{GNSS} = 
+	\begin{bmatrix}
+		\left(R_E^I\right)^\transpose \vect{p}_{b/I}^I + \vect{p}_{I/E}^E \\
+		\left(R_E^I\right)^\transpose \left(R_I^b\right)^\transpose\vect{v}_{b/I}^b \\
+	\end{bmatrix} + \vect{\eta}_G,
+\end{equation}
+where $\vect{p}_{I/E}^E$ and $R_E^I$ are constant and must be calculated before operations.
+This leaves us with the measurement jacobian given by
+\begin{equation}
+  H_{GNSS} =
+  \begin{bmatrix}
+    \left(R_E^I\right)^\transpose & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \vect{z}}{\partial \vect{\theta}} & \left(R_E^I\right)^\transpose
+      \left(R_I^b\right)^\transpose & 0
+  \end{bmatrix}
+\end{equation}
+
+\subsubsection{GNSS cheating}
+We assume that the UAV is outfitted with a GNSS sensor that produces
+measurements for both position and velocity expressed in an inertial frame. We
+use this inertial frame as the frame of reference for the estimated UAV states
+such that the measurement model is given by
+\begin{equation}
+  \vect{z}_{GNSS} = 
+  \begin{bmatrix}
+    \vect{p}_{b/I}^{I} & \vect{v}_{b/I}^{I}
+  \end{bmatrix}^\transpose
+\end{equation}
+or also
+\begin{equation}
+  \vect{z}_{GNSS} = 
+  \begin{bmatrix}
+    \vect{p}_{b/I}^{I} & \left(R_I^b\right)^\transpose \vect{v}_{b/I}^{b}
+  \end{bmatrix}^\transpose.
+\end{equation}
+This leaves us with the measurement model jacobian
+\begin{equation}
+  H_{GNSS} =
+  \begin{bmatrix}
+    I & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \vect{z}}{\partial \vect{\theta}} & 
+      \left(R_I^b\right)^\transpose & 0
+  \end{bmatrix}.
+\end{equation}
+
+
 \bibliographystyle{IEEEtran}
 \bibliography{abbrev,library}
 \end{document}

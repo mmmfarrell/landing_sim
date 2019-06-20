@@ -61,6 +61,8 @@ for i in range(3):
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i,:], label="x")
     plt.plot(t, xhat[i,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i,:] + 2. * phat[i, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i,:] - 2. * phat[i, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
@@ -74,6 +76,8 @@ for i in range(3):
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+3,:], label="x")
     plt.plot(t, xhat[i+3,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+3,:] + 2. * phat[i+3, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+3,:] - 2. * phat[i+3, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
@@ -87,6 +91,8 @@ for i in range(3):
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+6,:], label="x")
     plt.plot(t, xhat[i+6,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+6,:] + 2. * phat[i+6, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+6,:] - 2. * phat[i+6, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
@@ -101,6 +107,8 @@ for i in range(1):
     true_drag = 0.1 * np.ones_like(t)
     plt.plot(t, true_drag, label="x")
     plt.plot(t, xhat[i+9,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+9,:] + 2. * phat[i+9, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+9,:] - 2. * phat[i+9, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()

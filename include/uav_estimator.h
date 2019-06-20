@@ -60,7 +60,7 @@ public:
                          const Matrix2d& R_pix, const Matrix1d& R_depth);
 
   // t - current time (seconds)
-  // z - gnss measurement [p_{b/ECEF}^ECEF, v_{b/ECEF}^ECEF]
+  // z - gnss measurement [p_{b/I}^I v_{b/I}^I]
   // R - gnss covariance
   void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R);
 

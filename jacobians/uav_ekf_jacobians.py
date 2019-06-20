@@ -28,6 +28,78 @@ def RotInertial2Body(phi, theta, psi):
 
     return rot
 
+def RotI2BdPhi(phi, theta, psi):
+    rot = np.zeros((3, 3))
+
+    sp = np.sin(phi)
+    cp = np.cos(phi)
+    st = np.sin(theta)
+    ct = np.cos(theta)
+    spsi = np.sin(psi)
+    cpsi = np.cos(psi)
+
+    rot[0, 0] = 0.
+    rot[0, 1] = 0.
+    rot[0, 2] = 0.
+
+    rot[1, 0] = cp * st * cpsi + sp * spsi
+    rot[1, 1] = cp * st * spsi - sp * cpsi
+    rot[1, 2] = cp * ct
+
+    rot[2, 0] = -sp * st * cpsi + cp * spsi
+    rot[2, 1] = -sp * st * spsi - cp * cpsi
+    rot[2, 2] = -sp * ct
+
+    return rot
+
+def RotI2BdTheta(phi, theta, psi):
+    rot = np.zeros((3, 3))
+
+    sp = np.sin(phi)
+    cp = np.cos(phi)
+    st = np.sin(theta)
+    ct = np.cos(theta)
+    spsi = np.sin(psi)
+    cpsi = np.cos(psi)
+
+    rot[0, 0] = -st * cpsi
+    rot[0, 1] = -st * spsi
+    rot[0, 2] = -ct
+
+    rot[1, 0] = sp * ct * cpsi
+    rot[1, 1] = sp * ct * spsi
+    rot[1, 2] = sp * -st
+
+    rot[2, 0] = cp * ct * cpsi
+    rot[2, 1] = cp * ct * spsi
+    rot[2, 2] = cp * -st
+
+    return rot
+
+def RotI2BdPsi(phi, theta, psi):
+    rot = np.zeros((3, 3))
+
+    sp = np.sin(phi)
+    cp = np.cos(phi)
+    st = np.sin(theta)
+    ct = np.cos(theta)
+    spsi = np.sin(psi)
+    cpsi = np.cos(psi)
+
+    rot[0, 0] = -ct * spsi
+    rot[0, 1] = ct * cpsi
+    rot[0, 2] = 0.
+
+    rot[1, 0] = -sp * st * spsi - cp * cpsi
+    rot[1, 1] = sp * st * cpsi - cp * spsi
+    rot[1, 2] = 0.
+
+    rot[2, 0] = -cp * st * spsi + sp * cpsi
+    rot[2, 1] = cp * st * cpsi + sp * spsi
+    rot[2, 2] = 0.
+
+    return rot
+
 def WMat(phi, theta, psi):
     wmat = np.zeros((3, 3))
 
@@ -118,28 +190,32 @@ def analytical_state_jac(x_and_u):
     cpsi = np.cos(psi)
 
     R_I_b = RotInertial2Body(phi, theta, psi)
-    vel = x[6:9]
+    vel_b = x[6:9]
 
     jac = np.zeros((10, 10))
 
     # pdot
-    jac[0, 3] = (cp * st * cpsi + sp * spsi) * vel_v + (-sp * st * cpsi + cp *
-            spsi) * vel_w
-    jac[0, 4] = (-st * cpsi) * vel_u + (sp * ct * cpsi) * vel_v + (cp * ct *
-            cpsi) * vel_w
-    jac[0, 5] = (-ct * spsi) * vel_u + (-sp * st * spsi - cp * cpsi) * vel_v + \
-            (-cp * st * spsi + sp * cpsi) * vel_w
+    # jac[0, 3] = (cp * st * cpsi + sp * spsi) * vel_v + (-sp * st * cpsi + cp *
+            # spsi) * vel_w
+    # jac[0, 4] = (-st * cpsi) * vel_u + (sp * ct * cpsi) * vel_v + (cp * ct *
+            # cpsi) * vel_w
+    # jac[0, 5] = (-ct * spsi) * vel_u + (-sp * st * spsi - cp * cpsi) * vel_v + \
+            # (-cp * st * spsi + sp * cpsi) * vel_w
 
-    jac[1, 3] = (cp * st * spsi - sp * cpsi) * vel_v + (-sp * st * spsi - cp *
-            cpsi) * vel_w
-    jac[1, 4] = (-st * spsi) * vel_u + (sp * ct * spsi) * vel_v + (cp * ct *
-            spsi) * vel_w
-    jac[1, 5] = (ct * cpsi) * vel_u + (sp * st * cpsi - cp * spsi) * vel_v + (cp * st *
-            cpsi + sp * spsi) * vel_w
+    # jac[1, 3] = (cp * st * spsi - sp * cpsi) * vel_v + (-sp * st * spsi - cp *
+            # cpsi) * vel_w
+    # jac[1, 4] = (-st * spsi) * vel_u + (sp * ct * spsi) * vel_v + (cp * ct *
+            # spsi) * vel_w
+    # jac[1, 5] = (ct * cpsi) * vel_u + (sp * st * cpsi - cp * spsi) * vel_v + (cp * st *
+            # cpsi + sp * spsi) * vel_w
 
-    jac[2, 3] = (cp * ct) * vel_v + (-sp * ct) * vel_w
-    jac[2, 4] = (-ct) * vel_u + (-sp * st) * vel_v + (-cp * st) * vel_w
-    jac[2, 5] = 0.
+    # jac[2, 3] = (cp * ct) * vel_v + (-sp * ct) * vel_w
+    # jac[2, 4] = (-ct) * vel_u + (-sp * st) * vel_v + (-cp * st) * vel_w
+    # jac[2, 5] = 0.
+
+    jac[0:3, 3] = np.squeeze(np.matmul(RotI2BdPhi(phi, theta, psi).transpose(), vel_b))
+    jac[0:3, 4] = np.squeeze(np.matmul(RotI2BdTheta(phi, theta, psi).transpose(), vel_b))
+    jac[0:3, 5] = np.squeeze(np.matmul(RotI2BdPsi(phi, theta, psi).transpose(), vel_b))
 
     jac[0:3, 6:9] = R_I_b.transpose()
 
@@ -234,6 +310,67 @@ def analytical_input_jac(x_and_u):
     
     return jac
 
+def gps_meas_model(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+
+    sp = np.sin(phi)
+    cp = np.cos(phi)
+    st = np.sin(theta)
+    ct = np.cos(theta)
+    tt = np.tan(theta)
+    spsi = np.sin(psi)
+    cpsi = np.cos(psi)
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+    pos_I = x[0:3]
+    vel_b = x[6:9]
+
+    z = np.zeros((6, 1))
+    z[0:3] = pos_I
+    z[3:6] = np.matmul(R_I_b.transpose(), vel_b)
+
+    return z
+
+def analytical_gps_meas_jac(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+
+    sp = np.sin(phi)
+    cp = np.cos(phi)
+    st = np.sin(theta)
+    ct = np.cos(theta)
+    tt = np.tan(theta)
+    spsi = np.sin(psi)
+    cpsi = np.cos(psi)
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+    pos_I = x[0:3]
+    vel_b = x[6:9]
+
+    jac = np.zeros((6, 10))
+    # pos
+    jac[0:3, 0:3] = np.eye(3)
+
+    # vel
+    jac[3:6, 3] = np.squeeze(np.matmul(RotI2BdPhi(phi, theta, psi).transpose(), vel_b))
+    jac[3:6, 4] = np.squeeze(np.matmul(RotI2BdTheta(phi, theta, psi).transpose(), vel_b))
+    jac[3:6, 5] = np.squeeze(np.matmul(RotI2BdPsi(phi, theta, psi).transpose(), vel_b))
+
+    jac[3:6, 6:9] = R_I_b.transpose()
+
+    return jac
+
 def test_state_jacobian():
     x = np.random.rand(10, 1)
     u = np.random.rand(4, 1)
@@ -266,8 +403,18 @@ def test_input_jacobian():
     res = np.isclose(input_jac, analytical_jac)
     assert(np.all(res)), res
 
+def test_gps_model_jacobian():
+    x = np.random.rand(10, 1)
+    jac_func = nd.Jacobian(gps_meas_model)
+
+    jac = jac_func(x)
+    analytical_jac = analytical_gps_meas_jac(x)
+
+    res = np.isclose(jac, analytical_jac)
+    assert(np.all(res)), res
+
 
 if __name__ == '__main__':
     test_state_jacobian()
     test_input_jacobian()
-
+    test_gps_model_jacobian()
