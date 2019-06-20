@@ -4,6 +4,7 @@ TODO
   - Lyx
   - code: using pixels, UAV velocity, angular rates, estimate landing vehicle
 
+
 DONE
 - plot r vecs
 - plot everything in inertial frame
