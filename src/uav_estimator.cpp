@@ -15,12 +15,17 @@ Estimator::Estimator(std::string filename)
   xhat_.setZero();
   xhat_(xMU) = 0.1;
 
-  P_.setIdentity();
-  P_(xMU, xMU) = 0.;
+  //P_.setIdentity();
+  //P_(xMU, xMU) = 0.;
+  P_.setZero();
 
-  Q_.setIdentity();
-  Q_ *= 0.001;
-  Q_(xMU, xMU) = 0.;
+  Qx_.setIdentity();
+  Qx_ *= 0.001;
+  Qx_(xMU, xMU) = 0.0001;
+
+  Qu_.setIdentity();
+  Qu_(uAZ, uAZ) = 0.2 * 0.2;
+  Qu_.block<3, 3>(uOMEGA, uOMEGA) *= 0.1 * 0.1;
 
   last_prop_time_ = -999.;
 }
@@ -43,23 +48,21 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
   }
   last_prop_time_ = t;
 
-  //// update with ax, ay
-  // const double imu_dims = 2;
-  // const double xhat_mu = xhat_(xMU);
-  // const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
-  // z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
-  ////z_R_.topLeftCorner(imu_dims, imu_dims) = R.topLeftCorner(imu_dims,
-  ///imu_dims);
-  // z_R_.topLeftCorner(imu_dims, imu_dims) = 0.001 *
-  // Eigen::Matrix2d::Identity();
+  // update with ax, ay
+  const double imu_dims = 2;
+  const double xhat_mu = xhat_(xMU);
+  const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
+  z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
+  //z_R_.topLeftCorner(imu_dims, imu_dims) = 0.2 * 0.2 * Eigen::Matrix2d::Identity();
+  z_R_.topLeftCorner(imu_dims, imu_dims) = R.topLeftCorner(imu_dims, imu_dims);
 
-  // H_.setZero();
-  // H_(0, xVEL + 0) = -xhat_mu;
-  // H_(0, xMU) = -xhat_(xVEL + 0);
-  // H_(1, xVEL + 1) = -xhat_mu;
-  // H_(1, xMU) = -xhat_(xVEL + 1);
+  H_.setZero();
+  H_(0, xVEL + 0) = -xhat_mu;
+  H_(0, xMU) = -xhat_(xVEL + 0);
+  H_(1, xVEL + 1) = -xhat_mu;
+  H_(1, xMU) = -xhat_(xVEL + 1);
 
-  // update(imu_dims, z_resid_, z_R_, H_);
+  update(imu_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::altCallback(const double& t, const Vector1d& z,
@@ -93,30 +96,29 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
   const double att_dims = 3;
   const Vector3d mocap_euler = z.q().euler();
   z_resid_.head(att_dims) = mocap_euler - xhat_.segment<3>(xATT);
-  z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix3d::Identity();
+  //z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix3d::Identity();
+  z_R_.topLeftCorner(att_dims, att_dims) = R.block<3, 3>(3, 3);
 
   H_.setZero();
   H_.block<3, 3>(0, xATT) = Eigen::Matrix3d::Identity();
 
   update(att_dims, z_resid_, z_R_, H_);
+
+  //// Update atttitude no yaw
+  //const double att_dims = 2;
+  //const Vector3d mocap_euler = z.q().euler();
+  //z_resid_.head(att_dims) = mocap_euler.head(2) - xhat_.segment<2>(xATT);
+  //z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix2d::Identity();
+
+  //H_.setZero();
+  //H_.block<2, 2>(0, xATT) = Eigen::Matrix2d::Identity();
+
+  //update(att_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
                                  const Matrix3d& R)
 {
-  // if (last_time_ < 0)
-  //{
-  // last_time_ = t;
-  // return;
-  //}
-
-  // Vector3d vel_I = q_I_b_.R().transpose() * vel_b;
-  // u_in_.block<3, 1>(uVEL, 0) = vel_I;
-
-  // const double dt = t - last_time_;
-  // propagate(dt, u_in_);
-
-  // last_time_ = t;
 }
 
 void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
@@ -132,7 +134,8 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
   const double pos_dims = 3;
   const Vector3d gnss_pos = z.head(pos_dims);
   z_resid_.head(pos_dims) = gnss_pos - xhat_.segment<3>(xPOS);
-  z_R_.topLeftCorner(pos_dims, pos_dims) = 0.1 * Eigen::Matrix3d::Identity();
+  //z_R_.topLeftCorner(pos_dims, pos_dims) = 0.1 * Eigen::Matrix3d::Identity();
+  z_R_.topLeftCorner(pos_dims, pos_dims) = R.topLeftCorner(pos_dims, pos_dims);
 
   H_.setZero();
   H_.block<3, 3>(0, xPOS) = Eigen::Matrix3d::Identity();
@@ -151,8 +154,8 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
   const Eigen::Vector3d zhat_vel_I = R_I_b.transpose() * xhat_vel_b;
 
   z_resid_.head(vel_dims) = gnss_vel_I - zhat_vel_I;
-  //z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
-  z_R_.topLeftCorner(vel_dims, vel_dims) = 0.1 * Eigen::Matrix3d::Identity();
+  z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
+  //z_R_.topLeftCorner(vel_dims, vel_dims) = 0.1 * Eigen::Matrix3d::Identity();
 
   const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
   const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
@@ -168,12 +171,17 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
 
 void Estimator::propagate(const double& dt, const InputVec& u_in)
 {
-  dynamics(xhat_, u_, xdot_, A_);
+  dynamics(xhat_, u_, xdot_, A_, G_);
 
   xhat_ += xdot_ * dt;
 
-  A_ = I_ + A_ * dt;
-  P_ = A_ * P_ * A_.transpose() + Q_;
+  //A_ = I_ + A_ * dt;
+  //P_ = A_ * P_ * A_.transpose() + Q_;
+
+  // FROM VIEKF
+  G_ = (I_ + A_*dt/2.0 + A_*A_*dt*dt/6.0)*G_*dt;
+  A_ = I_ + A_*dt + A_*A_*dt*dt/2.0;
+  P_ = A_ * P_ * A_.transpose() + G_ * Qu_ * G_.transpose() + Qx_;
 }
 
 void Estimator::update(const double dims, const MeasVec& residual,
@@ -193,7 +201,7 @@ void Estimator::update(const double dims, const MeasVec& residual,
 }
 
 void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
-                         StateVec& xdot, StateMat& A)
+                         StateVec& xdot, StateMat& A, StateInputMat& G)
 {
   const double phi = x(xATT + 0);
   const double theta = x(xATT + 1);
@@ -227,6 +235,7 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   xdot(xMU) = 0.;
 
   // Jacobian
+  A.setZero();
   const double cp = cos(phi);
   const double sp = sin(phi);
   const double ct = cos(theta);
@@ -299,5 +308,27 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   A(xVEL + 2, xVEL + 1) = -p;
   A(xVEL + 2, xVEL + 2) = 0.;
   A(xVEL + 2, xMU) = 0.;
+
+  // Input Jacobian
+  G.setZero();
+
+  // attitude dot
+  G.block<3, 3>(xATT, uOMEGA) = wmat;
+
+  // velocity dot
+  G(xVEL + 0, uAZ) = 0.;
+  G(xVEL + 0, uOMEGA + 0) = 0.;
+  G(xVEL + 0, uOMEGA + 1) = -w;
+  G(xVEL + 0, uOMEGA + 2) = v;
+
+  G(xVEL + 1, uAZ) = 0.;
+  G(xVEL + 1, uOMEGA + 0) = w;
+  G(xVEL + 1, uOMEGA + 1) = 0.;
+  G(xVEL + 1, uOMEGA + 2) = -u;
+
+  G(xVEL + 2, uAZ) = -1.;
+  G(xVEL + 2, uOMEGA + 0) = -v;
+  G(xVEL + 2, uOMEGA + 1) = u;
+  G(xVEL + 2, uOMEGA + 2) = 0.;
 }
 

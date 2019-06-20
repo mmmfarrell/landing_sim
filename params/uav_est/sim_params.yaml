@@ -1,4 +1,4 @@
-tmax: 10.0 # Simulation total time, time step is determined by IMU rate
+tmax: 30.0 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
 seed: 15 # 0 initializes seed with time
@@ -8,7 +8,7 @@ seed: 15 # 0 initializes seed with time
 #   1 : random waypoints
 #   2 : circular trajectory
 #   3 : constant velocity, randomly varying heading
-path_type: 2
+path_type: 0
 
 # User-defined waypoints
 waypoints: [    
@@ -37,8 +37,8 @@ traj_heading_straight_gain: 0.01
 # Follow the carrot trajectory parameters
 #traj_delta_north: 10
 #traj_delta_east: 10
-traj_delta_north: 5.
-traj_delta_east: 5.
+traj_delta_north: 10.
+traj_delta_east: 10.
 traj_delta_alt: -0.
 traj_delta_yaw: 0
 traj_nom_north: 0
@@ -49,7 +49,7 @@ traj_north_period: 3
 traj_east_period: 3
 traj_alt_period: 5
 traj_yaw_period: 20
-follow_vehicle: True
+follow_vehicle: False
 
 
 # Controller Configuration
@@ -98,7 +98,7 @@ max_tau_z: 1.0
 inertia: [0.1, 0.1, 0.1]
 
 
-x0: [0, 0, -5,   # POS
+x0: [0, 0, 0,   # POS
      1, 0, 0, 0, # ATT 
      0, 0, 0,    # VEL
      0, 0, 0]    # OMEGA
@@ -152,10 +152,12 @@ raw_gnss_enabled: false
 ## IMU
 imu_update_rate: 250
 accel_init_stdev: 0.0
-accel_noise_stdev: 0.0
+accel_noise_stdev: 0.2
+#accel_bias_walk: 0.05
 accel_bias_walk: 0.0
 gyro_init_stdev: 0.0
-gyro_noise_stdev: 0.0
+gyro_noise_stdev: 0.1
+#gyro_bias_walk: 0.01
 gyro_bias_walk: 0.0
 p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
@@ -211,9 +213,9 @@ depth_noise_stdev: 0.1
 ## Motion Capture
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
-mocap_update_rate: 250
-attitude_noise_stdev: 0.0
-position_noise_stdev: 0.0
+mocap_update_rate: 10
+attitude_noise_stdev: 0.01
+position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
 mocap_transmission_time: 0
@@ -226,8 +228,8 @@ velocity_noise_stdev: 0.
 ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
 gnss_update_rate: 5
 use_gnss_truth: false
-#gnss_horizontal_position_stdev: 1.0
-gnss_horizontal_position_stdev: 0.1
+gnss_horizontal_position_stdev: 1.0
+#gnss_horizontal_position_stdev: 0.1
 gnss_vertical_position_stdev: 3.0
 gnss_velocity_stdev: 0.1
 

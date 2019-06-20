@@ -38,6 +38,8 @@ public:
   typedef Eigen::Matrix<double, xZ, 1> StateVec;
   typedef Eigen::Matrix<double, xZ, xZ> StateMat;
   typedef Eigen::Matrix<double, uZ, 1> InputVec;
+  typedef Eigen::Matrix<double, uZ, uZ> InputMat;
+  typedef Eigen::Matrix<double, xZ, uZ> StateInputMat;
 
   typedef Eigen::Matrix<double, zDIMS, 1> MeasVec;
   typedef Eigen::Matrix<double, zDIMS, zDIMS> MeasMat;
@@ -68,16 +70,18 @@ public:
   void update(const double dims, const MeasVec& residual, const MeasMat& R,
               const MeasH& H);
   void dynamics(const StateVec& x, const InputVec& u_in, StateVec& xdot,
-                StateMat& A);
+                StateMat& A, StateInputMat& G);
 
   // EKF Member variables
   StateVec xhat_;
   StateMat P_;
-  StateMat Q_;
+  StateMat Qx_;
+  InputMat Qu_;
 
   InputVec u_;
   StateVec xdot_;
   StateMat A_;
+  StateInputMat G_;
 
   MeasVec z_resid_;
   MeasMat z_R_;
