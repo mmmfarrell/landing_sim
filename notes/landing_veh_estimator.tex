@@ -100,4 +100,117 @@ Note that the rotation from the vehicle frame to the goal frame is given by
   \end{bmatrix}.
 \end{equation}
 
+\subsection{Motion Model Jacobians}
+The full state jacobian is given by
+\begin{equation}
+  A =
+  \begin{bmatrix}
+    \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{UAV}}} &
+    \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{Goal}}} \\
+    \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{UAV}}} &
+    \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{Goal}}} 
+  \end{bmatrix}.
+\end{equation}
+We have defined the first term, $\frac{\partial \dot{\x}_{\text{UAV}}}{\partial
+\x_{\text{UAV}}}$ above in the previous section. We also note that
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{Goal}}} = \vect{0}
+\end{equation}
+as the UAV dynamics do not depend on the landing vehicle dynamics. We define the
+remaining terms here below.
 
+\subsubsection{Jacobian w.r.t. UAV State}
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{UAV}}}
+  =
+  \begin{bmatrix}
+    \vect{0} & \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}} & \frac{\partial
+      \dot{\vect{p}}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}} & \frac{\partial
+      \dot{\rho}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}} & 0 \\
+      \vect{0} & 0 & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}_{i}}{\partial
+      \vect{\theta}_{\text{UAV}}} & \frac{\partial
+      \dot{\rho}_{i}}{\partial \vect{v}_{\text{UAV}}} & 0
+  \end{bmatrix}
+\end{equation}
+\begin{align}
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}}
+      &=
+      - I_{2 \times 3} \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
+      \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}}
+      &=
+      - I_{2 \times 3}\left(R_{v}^{b}\right)^\transpose
+      \\
+    \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}}
+      &=
+      \rho^{2} \vect{e}_{3}^\transpose
+        \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
+        \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}}
+      &=
+      \rho^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose
+      \\
+    \frac{\partial \dot{\rho}_i}{\partial
+      \vect{\theta}_{\text{UAV}}}
+      &=
+      \rho_i^{2} \vect{e}_{3}^\transpose
+        \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
+        \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\rho}_i}{\partial \vect{v}_{\text{UAV}}}
+      &=
+      \rho_i^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose
+      \\
+\end{align}
+
+\subsubsection{Jacobian w.r.t. Goal State}
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{Goal}}}
+  =
+  \begin{bmatrix}
+    \vect{0} & 0 & \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{v}_{\text{Goal}}} & \frac{\partial
+      \dot{\vect{p}}_{\text{Goal}}}{\partial \theta_{\text{Goal}}} & 0 & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}}{\partial \rho} & \vect{0} & 0 & 0
+             & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & \frac{\partial
+      \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}} & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}_i}{\partial \rho_i} & \vect{0} & 0 & 0 & \vect{0} & 0
+  \end{bmatrix}
+\end{equation}
+\begin{align}
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{v}_{\text{Goal}}}
+      &=
+      \left(R_{v}^{g}\right)^\transpose
+      \\
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial \theta_{\text{Goal}}}
+      &=
+      \frac{\partial}{\partial \theta_{\text{Goal}}} \left(R_{v}^{g}\right)^\transpose \vect{v}_{g/I}^{g}
+      \\
+    \frac{\partial \dot{\rho}}{\partial \rho}
+      &=
+      2 \rho \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}}
+      &=
+      1
+      \\
+    \frac{\partial \dot{\rho}_i}{\partial \rho_i}
+      &=
+      2 \rho_i \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+\end{align}

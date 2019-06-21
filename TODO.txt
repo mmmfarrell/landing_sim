@@ -1,21 +1,9 @@
 TODO
-  - Estimate attitude
-  - Use estimated attitude everywhere, true attitude nowhere
-  - Lyx
-  - code: using pixels, UAV velocity, angular rates, estimate landing vehicle
-
-
-DONE
-- plot r vecs
-- plot everything in inertial frame
-- Account for UAV motion
-  - UAV velocity sensor
-  - use UAV attitude to rotate pixels to virtual image plane
-- Add noise
-  - Noise in pixel, depth, velocity are all fine
-  - Noise in UAV attitude
-    - OK with a little ~0.5 deg std dev
-    - Not OK with more
+  - Latex
+    - Derive jacobians for goal state dynamics
+  - Sim
+    - Implement goal state dynamics, jacobians
+    - Python plotting for goal states
 
 PAPER
 - Simulation 
