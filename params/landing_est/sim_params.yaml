@@ -198,7 +198,8 @@ vo_rotation_noise_stdev: 0.01
 
 ## Altimeter
 altimeter_update_rate: 25
-altimeter_noise_stdev: 0.1
+#altimeter_noise_stdev: 0.1 # TODO putback
+altimeter_noise_stdev: 0.001
 
 ## Barometer
 baro_update_rate: 25
@@ -213,8 +214,10 @@ depth_noise_stdev: 0.1
 ## Motion Capture
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
-mocap_update_rate: 10
-attitude_noise_stdev: 0.01
+#mocap_update_rate: 10
+mocap_update_rate: 100
+#attitude_noise_stdev: 0.01
+attitude_noise_stdev: 0.001
 position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
@@ -226,12 +229,14 @@ velocity_noise_stdev: 0.
 
 ## GNSS
 ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
-gnss_update_rate: 5
+#gnss_update_rate: 5
+gnss_update_rate: 100
 use_gnss_truth: false
-gnss_horizontal_position_stdev: 1.0
-#gnss_horizontal_position_stdev: 0.1
+#gnss_horizontal_position_stdev: 1.0
+gnss_horizontal_position_stdev: 0.001
 gnss_vertical_position_stdev: 3.0
-gnss_velocity_stdev: 0.1
+#gnss_velocity_stdev: 0.1
+gnss_velocity_stdev: 0.001
 
 ## Raw GNSS
 use_raw_gnss_truth: true
