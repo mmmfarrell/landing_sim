@@ -106,6 +106,38 @@ Eigen::Matrix3d dRIBdPsi(const double phi, const double theta, const double psi)
   return rotm;
 }
 
+Eigen::Matrix2d rotm2dItoB(const double theta)
+{
+  const double ct = cos(theta);
+  const double st = sin(theta);
+
+  // Inertial frame to body frame from UAV book
+  Eigen::Matrix2d rotm;
+  rotm(0, 0) = ct;
+  rotm(0, 1) = st;
+
+  rotm(1, 0) = -st;
+  rotm(1, 1) = ct;
+
+  return rotm;
+}
+
+Eigen::Matrix2d dR2DdTheta(const double theta)
+{
+  const double ct = cos(theta);
+  const double st = sin(theta);
+
+  // Inertial frame to body frame from UAV book
+  Eigen::Matrix2d rotm;
+  rotm(0, 0) = -st;
+  rotm(0, 1) = ct;
+
+  rotm(1, 0) = -ct;
+  rotm(1, 1) = -st;
+
+  return rotm;
+}
+
 Eigen::Matrix3d wMat(const double phi, const double theta, const double psi)
 {
   const double cp = cos(phi);

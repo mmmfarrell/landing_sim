@@ -207,7 +207,7 @@ def dynamics(x_and_u):
     R_v_g = Rot2DInertial2Body(theta_g)
     vel_g = x[13:15]
     I_2x3 = np.eye(3)[0:2, :]
-    e3 = np.eye(3)[0, :]
+    e3 = np.eye(3)[2, :]
 
     xdot[10:12] = np.matmul(R_v_g.transpose(), vel_g) - np.matmul(I_2x3,
         np.matmul(R_I_b.transpose(), vel_b))
@@ -315,7 +315,7 @@ def analytical_state_jac(x_and_u):
     dRdTheta = Rot2DdTheta(theta_g)
     vel_g = x[13:15]
     I_2x3 = np.eye(3)[0:2, :]
-    e3 = np.eye(3)[0, :]
+    e3 = np.eye(3)[2, :]
 
     # dGOAL / dUAV
     jac[10:12, 3] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdPhi(phi,
