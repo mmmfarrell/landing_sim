@@ -21,7 +21,8 @@ Estimator::Estimator(std::string filename)
 
   Qx_.setIdentity();
   Qx_ *= 0.001;
-  Qx_(xMU, xMU) = 0.0001;
+  Qx_(xMU, xMU) = 0.;
+  //Qx_(xMU, xMU) = 0.0001;
 
   Qu_.setIdentity();
   Qu_(uAZ, uAZ) = 0.2 * 0.2;
@@ -48,21 +49,21 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
   }
   last_prop_time_ = t;
 
-  // update with ax, ay
-  const double imu_dims = 2;
-  const double xhat_mu = xhat_(xMU);
-  const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
-  z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
-  //z_R_.topLeftCorner(imu_dims, imu_dims) = 0.2 * 0.2 * Eigen::Matrix2d::Identity();
-  z_R_.topLeftCorner(imu_dims, imu_dims) = R.topLeftCorner(imu_dims, imu_dims);
+  //// update with ax, ay
+  //const double imu_dims = 2;
+  //const double xhat_mu = xhat_(xMU);
+  //const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
+  //z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
+  ////z_R_.topLeftCorner(imu_dims, imu_dims) = 0.2 * 0.2 * Eigen::Matrix2d::Identity();
+  //z_R_.topLeftCorner(imu_dims, imu_dims) = R.topLeftCorner(imu_dims, imu_dims);
 
-  H_.setZero();
-  H_(0, xVEL + 0) = -xhat_mu;
-  H_(0, xMU) = -xhat_(xVEL + 0);
-  H_(1, xVEL + 1) = -xhat_mu;
-  H_(1, xMU) = -xhat_(xVEL + 1);
+  //H_.setZero();
+  //H_(0, xVEL + 0) = -xhat_mu;
+  //H_(0, xMU) = -xhat_(xVEL + 0);
+  //H_(1, xVEL + 1) = -xhat_mu;
+  //H_(1, xMU) = -xhat_(xVEL + 1);
 
-  update(imu_dims, z_resid_, z_R_, H_);
+  //update(imu_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::altCallback(const double& t, const Vector1d& z,
