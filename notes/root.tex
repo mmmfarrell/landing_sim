@@ -1,0 +1,36 @@
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[a4paper]{article}
+\usepackage[a4paper, margin=2in]{geometry}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{amsmath,amssymb,amsbsy,amsfonts}
+\usepackage{accents}
+\usepackage{nicefrac}
+\usepackage{upgreek}
+\usepackage[]{footmisc}
+
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\input{macros}
+
+\title{\LARGE \bf UAV Precision Maritime Landing}
+
+\author{Michael Farrell}
+
+
+\begin{document}
+\maketitle
+
+\input{uav_estimator}
+
+\input{landing_veh_estimator}
+
+\bibliographystyle{IEEEtran}
+\bibliography{abbrev,library}
+\end{document}
