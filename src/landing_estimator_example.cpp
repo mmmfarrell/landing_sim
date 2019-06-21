@@ -42,8 +42,48 @@ int main()
     log.log(sim.t_);
 
     // Uav States
-    //log.logVectors(sim.state().arr);
-    log.logVectors(sim.state().p, sim.state().q.euler(), sim.state().v);
+    Matrix1d mu_true(0.1);
+    log.logVectors(sim.state().p, sim.state().q.euler(), sim.state().v, mu_true);
+
+    //// Landing Goal states
+    //// log x = [ px, py, vx, vy, theta, omega ]
+    //log.logVectors(veh.x_);
+
+    //// log lm positions (even though they never change)
+    //// This is a 5 x 3 vector b/c (0, 0, 0) is in this too
+    //log.logVectors(veh.landmarks_body_);
+
+    // True states to log
+    // p_{g/v}^{v}, rho, v_{g/I}^{g}, theta_{I}^{g}, omega_{g/I}^{g}, r_{i}^{g}, \rho_{i} 
+    const Eigen::Vector2d p_g_v = veh.x_.head(2) - sim.state().p.head(2);
+    Matrix1d rho;
+    rho(0) = -1. / sim.state().p(2);
+    const Eigen::Vector2d v_g_I = veh.x_.segment<2>(UnicycleVehicle::xVEL);
+    const Eigen::Vector2d goal_theta_omega = veh.x_.segment<2>(UnicycleVehicle::xATT);
+    Eigen::Matrix<double, Estimator::MAXLANDMARKS * 3, 1> landmarks;
+    for (unsigned int i = 0; i < Estimator::MAXLANDMARKS; i++)
+    {
+      const int veh_lms_idx = i + 1;
+      const int lms_vec_idx = 3 * i;
+      const int lms_rho_idx = 3 * i + 2;
+      
+      landmarks.block<2, 1>(lms_vec_idx, 0) = veh.landmarks_body_.block<1, 2>(veh_lms_idx, 0).transpose();
+      landmarks(lms_rho_idx) = 1. / (-sim.state().p(2) + veh.landmarks_body_(veh_lms_idx, 2));
+    }
+
+    log.logVectors(p_g_v, rho, v_g_I, goal_theta_omega, landmarks);
+
+    //xPOS = 0,
+    //xATT = 3,
+    //xVEL = 6,
+    //xMU = 9,
+    //xGOAL_POS = 10,
+    //xGOAL_RHO = 12,
+    //xGOAL_VEL = 13,
+    //xGOAL_ATT = 15,
+    //xGOAL_OMEGA = 16,
+    //xGOAL_LM = 17,
+    //xZ = 29
 
     // Estimator states
     p_diag = estimator.P_.diagonal();
