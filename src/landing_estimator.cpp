@@ -15,9 +15,9 @@ Estimator::Estimator(std::string filename)
   xhat_.setZero();
   xhat_(xMU) = 0.1;
 
-  //P_.setIdentity();
-  //P_(xMU, xMU) = 0.;
-  P_.setZero();
+  P_.setIdentity();
+  P_(xMU, xMU) = 0.;
+  //P_.setZero();
 
   Qx_.setIdentity();
   Qx_ *= 0.001;
