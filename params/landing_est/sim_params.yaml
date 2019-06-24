@@ -35,17 +35,17 @@ traj_heading_walk: 10.0
 traj_heading_straight_gain: 0.01
 
 # Follow the carrot trajectory parameters
-#traj_delta_north: 10
-#traj_delta_east: 10
-traj_delta_north: 0.
-traj_delta_east: 0.
+traj_delta_north: 5
+traj_delta_east: 0
+#traj_delta_north: 0.
+#traj_delta_east: 0.
 traj_delta_alt: -0.
 traj_delta_yaw: 0
 traj_nom_north: 0
 traj_nom_east: 0
-traj_nom_alt: 10
+traj_nom_alt: 5
 traj_nom_yaw: 0
-traj_north_period: 3
+traj_north_period: 30
 traj_east_period: 3
 traj_alt_period: 5
 traj_yaw_period: 20
@@ -231,7 +231,8 @@ velocity_noise_stdev: 0.
 ref_LLA: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
 #gnss_update_rate: 5
 gnss_update_rate: 100
-use_gnss_truth: false
+#use_gnss_truth: false
+use_gnss_truth: true
 #gnss_horizontal_position_stdev: 1.0
 gnss_horizontal_position_stdev: 0.001
 gnss_vertical_position_stdev: 3.0

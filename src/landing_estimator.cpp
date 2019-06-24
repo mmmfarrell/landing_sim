@@ -126,6 +126,41 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                                   const Matrix2d& R_pix,
                                   const Matrix1d& R_depth)
 {
+  std::cout << std::endl;
+  //std::cout << "Goal pix px: " << z.pixs[0](0) << " py: " << z.pixs[0](1) << std::endl;
+
+  const double fx = 410.;
+  const double fy = 410.;
+  const double cx = 320.;
+  const double cy = 240.;
+
+  //drawImageFeatures(false, z.pixs);
+
+  const double phi = xhat_(xATT + 0);
+  const double theta = xhat_(xATT + 1);
+  const double psi = xhat_(xATT + 2);
+  const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
+
+  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
+  q /= q.norm();
+  quat::Quatd q_b_c(q);
+  const Eigen::Matrix3d R_b_c = q_b_c.R();
+  PRINTMAT(R_b_c);
+
+  Eigen::Vector3d p_g_v_v;
+  //p_g_v_v(0) = xhat_(xGOAL_POS + 0);
+  //p_g_v_v(1) = xhat_(xGOAL_POS + 1);
+  //p_g_v_v(2) = 1. / xhat_(xGOAL_RHO);
+  p_g_v_v(0) = - xhat_(xPOS + 0);
+  p_g_v_v(1) = - xhat_(xPOS + 1);
+  p_g_v_v(2) = - xhat_(xPOS + 2);
+
+  Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
+
+  const double px_hat = fx * (p_g_c_c(0) / p_g_c_c(2)) + cx;
+  const double py_hat = fy * (p_g_c_c(1) / p_g_c_c(2)) + cy;
+  //std::cout << "Goal est px: " << px_hat << " py: " << py_hat << std::endl;
+
 }
 
 void Estimator::gnssCallback(const double& t, const Vector6d& z,

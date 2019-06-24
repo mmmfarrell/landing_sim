@@ -1,9 +1,13 @@
 TODO
-  - Latex
-    - Derive jacobians for goal state dynamics
+  - LaTex
+    - derive goal pixel meas model / jacobian
   - Sim
-    - Implement goal state dynamics, jacobians
-    - Python plotting for goal states
+    - Show camera image
+    - Goal pixel measurement update
+  - LaTex
+    - derive LM pixel meas model / jacobian
+  - Sim
+    - LM pixel meas update
 
 PAPER
 - Simulation 
@@ -21,6 +25,3 @@ PAPER
   - LV Relative Position
   - LV Velocity
   - LV Orientation
-
-BACKLOG
-- Estimate UAV velocity as well

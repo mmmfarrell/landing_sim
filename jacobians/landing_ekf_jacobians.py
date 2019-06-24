@@ -6,6 +6,18 @@ GRAV = 9.81
 STATES = 10 + 10
 INPUTS = 4
 
+RBC = np.array([[0., 1., 0.],
+                [-1., 0., 0],
+                [0., 0., 1]])
+PCBB = np.reshape(np.array([1., -2., 0.]), (3, 1))
+E1 = np.array([1., 0., 0])
+E2 = np.array([0., 1., 0])
+E3 = np.array([0., 0., 1])
+FX = 410.
+FY = 420.
+CX = 320.
+CY = 240.
+
 def RotInertial2Body(phi, theta, psi):
     rot = np.zeros((3, 3))
 
@@ -469,6 +481,115 @@ def analytical_gps_meas_jac(x):
 
     return jac
 
+def goal_pix_meas_model(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+    px_g = x[10]
+    py_g = x[11]
+    rho_g = x[12]
+    vx_g = x[13]
+    vy_g = x[14]
+    theta_g = x[15]
+    omega_g = x[16]
+    rx_i = x[17]
+    ry_i = x[18]
+    rho_i = x[19]
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+
+    p_g_v_v = np.array([px_g, py_g, 1. / rho_g])
+
+    p_g_c_c = np.matmul(RBC, np.matmul(R_I_b, p_g_v_v) - PCBB)
+
+    pix_x = FX * (p_g_c_c[0] / p_g_c_c[2]) + CX
+    pix_y = FY * (p_g_c_c[1] / p_g_c_c[2]) + CY
+
+    return np.array([pix_x, pix_y])
+
+def analytical_goal_pix_jac(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+    px_g = x[10]
+    py_g = x[11]
+    rho_g = x[12]
+    vx_g = x[13]
+    vy_g = x[14]
+    theta_g = x[15]
+    omega_g = x[16]
+    rx_i = x[17]
+    ry_i = x[18]
+    rho_i = x[19]
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+
+    p_g_v_v = np.array([px_g, py_g, 1. / rho_g])
+
+    p_g_c_c = np.matmul(RBC, np.matmul(R_I_b, p_g_v_v) - PCBB)
+
+    pix_x = FX * (p_g_c_c[0] / p_g_c_c[2]) + CX
+    pix_y = FY * (p_g_c_c[1] / p_g_c_c[2]) + CY
+
+    jac = np.zeros((2, STATES))
+
+    # d / d (p_g_v_v)
+    d1 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+            p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, R_I_b)) \
+                    / p_g_c_c[2]
+    d2 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+            p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, R_I_b)) \
+                    / p_g_c_c[2]
+    jac[0, 10:12] = d1[0:2]
+    jac[1, 10:12] = d2[0:2]
+
+    # d / d rho
+    jac[0, 12] = -d1[2] / rho_g / rho_g
+    jac[1, 12] = -d2[2] / rho_g / rho_g
+
+    # d / d (phi, theta, psi)
+    dRdPhi = RotI2BdPhi(phi, theta, psi)
+    dRdTheta= RotI2BdTheta(phi, theta, psi)
+    dRdPsi= RotI2BdPsi(phi, theta, psi)
+
+    d1dphi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPhi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+            p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPhi,
+                p_g_v_v))) / p_g_c_c[2]
+    d1dtheta = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdTheta, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+            p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdTheta,
+                p_g_v_v))) / p_g_c_c[2]
+    d1dpsi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPsi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+            p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPsi,
+                p_g_v_v))) / p_g_c_c[2]
+
+    jac[0, 3] = d1dphi
+    jac[0, 4] = d1dtheta
+    jac[0, 5] = d1dpsi
+
+    d2dphi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPhi, p_g_v_v))) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+            p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(dRdPhi,
+                p_g_v_v))) / p_g_c_c[2]
+    d2dtheta = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdTheta, p_g_v_v))) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+            p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(dRdTheta,
+                p_g_v_v))) / p_g_c_c[2]
+    d2dpsi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPsi, p_g_v_v))) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+            p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(dRdPsi,
+                p_g_v_v))) / p_g_c_c[2]
+
+    jac[1, 3] = d2dphi
+    jac[1, 4] = d2dtheta
+    jac[1, 5] = d2dpsi
+
+    return jac
+
 def test_state_jacobian():
     x = np.random.rand(STATES, 1)
     u = np.random.rand(INPUTS, 1)
@@ -511,8 +632,20 @@ def test_gps_model_jacobian():
     res = np.isclose(jac, analytical_jac)
     assert(np.all(res)), res
 
+def test_goal_pix_model_jacobian():
+    x = np.random.rand(STATES, 1)
+    jac_func = nd.Jacobian(goal_pix_meas_model)
+
+    meas = goal_pix_meas_model(x)
+    jac = jac_func(x)
+    analytical_jac = analytical_goal_pix_jac(x)
+
+    res = np.isclose(jac, analytical_jac)
+    assert(np.all(res)), res
+
 
 if __name__ == '__main__':
     test_state_jacobian()
     test_input_jacobian()
     test_gps_model_jacobian()
+    test_goal_pix_model_jacobian()

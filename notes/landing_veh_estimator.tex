@@ -214,3 +214,124 @@ remaining terms here below.
       &=
       2 \rho_i \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
 \end{align}
+
+\subsection{Goal Measurement}
+\subsubsection{Measurement model}
+We assume that the UAV is equiped with a downward facing camera that is rigidly
+attached to the UAV. From this camera, we can get a measurement of the pixel
+location of the goal landing location in the image frame
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose.
+\end{equation}
+We can expand this measurements using our estimated states
+\begin{align}
+  \vect{z} &=
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose \\
+  \vect{z} &=
+  \begin{bmatrix}
+    f_x \frac{\e_1 \vect{p}_{g/c}^c}{\e_3 \vect{p}_{g/c}^c} + c_x \\
+    f_y \frac{\e_2 \vect{p}_{g/c}^c}{\e_3 \vect{p}_{g/c}^c} + c_y
+  \end{bmatrix},
+\end{align}
+where $f_x$, $f_y$, $c_x$, and $c_y$ are constant parameters of the camera. We
+can then express the position of the goal with respect to the camera in the
+camera frame 
+\begin{align}
+  \vect{p}_{g/c}^c &= R_b^c R_v^b \left(\vect{p}_{g/v}^v -
+    \vect{p}_{c/v}^v\right) \\
+    \vect{p}_{g/c}^c &= R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)
+\end{align}
+where $R_b^c$ and $p_{c/b}^b$ are constant, known values and
+\begin{equation}
+  \vect{p}_{g/v}^v =
+    \begin{bmatrix}
+      \vect{p}_{g/v}^v(0) \\
+      \vect{p}_{g/v}^v(1) \\
+      1 / \rho
+    \end{bmatrix}
+\end{equation}
+Therefore, the measurement model expanded looks like this
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    f_x \frac{\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)}{\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)} + c_x \\
+    f_y \frac{\e_2 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)}{\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)} + c_y
+  \end{bmatrix}.
+\end{equation}
+\TODO Come back and take a look at this. In simulation I am assuming the camera
+is not offset from the body frame.
+
+\subsubsection{Jacobian}
+To derive  the jacobian of this measurement model, we first look at just the
+first measurement, $p_x$ which can be written as
+\begin{equation}
+    p_x = f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+      \vect{p}_{c/b}^b\right)\right) \left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+      \vect{p}_{c/b}^b\right)\right)^{-1} + c_x.
+\end{equation}
+Note that all values are constants except for $\vect{p}_{g/v}^v$ and $R_v^b$.
+The individual parts of the jacobian are given here:
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{g/v}^v} =
+  \frac{f_x \e_1 R_b^c R_v^b}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where only the first two (of three) entries of the vector are used. The third
+entry is used for the jacobian w.r.t. $\rho$ as
+\begin{equation}
+  \frac{\partial p_x}{\partial \rho} = -\frac{1}{\rho^2} \frac{\partial p_x}{\partial
+  \vect{p}_{g/v}^v}\left(2\right).
+\end{equation}
+The derivatives for the euler angles are given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \phi} =
+  \frac{f_x \e_1 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{g/v}^v}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{g/v}^v \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where the jacobians for the other angles are similar, just substituting in. The
+jacobians for the y pixel measurement, $p_y$ are similar to the ones derived
+above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.
+
+
+% Python code
+%d1 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, R_I_b)) \
+                %/ p_g_c_c[2]
+%d2 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, R_I_b)) \
+                %/ p_g_c_c[2]
+%jac[0, 10:12] = d1[0:2]
+%jac[1, 10:12] = d2[0:2]
+
+%# d / d rho
+%jac[0, 12] = -d1[2] / rho_g / rho_g
+%jac[1, 12] = -d2[2] / rho_g / rho_g
+
+%d1dphi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPhi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPhi,
+            %p_g_v_v))) / p_g_c_c[2]
+%d1dtheta = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdTheta, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdTheta,
+            %p_g_v_v))) / p_g_c_c[2]
+%d1dpsi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPsi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPsi,
+            %p_g_v_v))) / p_g_c_c[2]
+
+%jac[0, 3] = d1dphi
+%jac[0, 4] = d1dtheta
+%jac[0, 5] = d1dpsi
+
