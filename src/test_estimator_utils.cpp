@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <estimator_utils.h>
+#include "estimator_utils.h"
 
 template <typename T>
 void EXPECT_NEAR_MAT(T mat1, T mat2, double tol)

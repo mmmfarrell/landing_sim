@@ -9,7 +9,8 @@ INPUTS = 4
 RBC = np.array([[0., 1., 0.],
                 [-1., 0., 0],
                 [0., 0., 1]])
-PCBB = np.reshape(np.array([1., -2., 0.]), (3, 1))
+# PCBB = np.reshape(np.array([1., -2., 0.]), (3, 1))
+PCBB = np.reshape(np.array([0., 0., 0.]), (3, 1))
 E1 = np.array([1., 0., 0])
 E2 = np.array([0., 1., 0])
 E3 = np.array([0., 0., 1])
@@ -633,12 +634,22 @@ def test_gps_model_jacobian():
     assert(np.all(res)), res
 
 def test_goal_pix_model_jacobian():
-    x = np.random.rand(STATES, 1)
+    # x = np.random.rand(STATES, 1)
+    x = np.zeros((STATES, 1))
+    x[3] = 0.1
+    x[4] = -0.3
+    x[5] = 1.2
+    x[10] = -0.45
+    x[11] = 1.23
+    x[12] = 0.1
     jac_func = nd.Jacobian(goal_pix_meas_model)
 
     meas = goal_pix_meas_model(x)
+    print('x = {}'.format(x))
+    print('meas = {}'.format(meas))
     jac = jac_func(x)
     analytical_jac = analytical_goal_pix_jac(x)
+    print('jac = {}'.format(jac))
 
     res = np.isclose(jac, analytical_jac)
     assert(np.all(res)), res
