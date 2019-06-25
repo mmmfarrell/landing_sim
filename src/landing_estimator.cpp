@@ -14,6 +14,7 @@ Estimator::Estimator(std::string filename)
   // Init EKF State
   xhat_.setZero();
   xhat_(xMU) = 0.1;
+  xhat_(xGOAL_RHO) = 0.1;
 
   P_.setIdentity();
   P_(xMU, xMU) = 0.;
@@ -126,13 +127,24 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                                   const Matrix2d& R_pix,
                                   const Matrix1d& R_depth)
 {
-  std::cout << std::endl;
+  // Update goal depth
+  const int depth_dims = 1;
+  const double zhat_depth = 1./ xhat_(xGOAL_RHO);
+  z_resid_(0) = z.depths[0] - zhat_depth;
+  z_R_.topLeftCorner(depth_dims, depth_dims) = 0.1 * Matrix1d::Identity();
+  H_.setZero();
+  H_(0, xGOAL_RHO) = - zhat_depth * zhat_depth;
+  update(depth_dims, z_resid_, z_R_, H_);
+  //std::cout << std::endl;
   //std::cout << "Goal pix px: " << z.pixs[0](0) << " py: " << z.pixs[0](1) << std::endl;
 
   const double fx = 410.;
   const double fy = 410.;
   const double cx = 320.;
   const double cy = 240.;
+  static const Eigen::Vector3d e1(1., 0., 0.);
+  static const Eigen::Vector3d e2(0., 1., 0.);
+  static const Eigen::Vector3d e3(0., 0., 1.);
 
   //drawImageFeatures(false, z.pixs);
 
@@ -145,21 +157,69 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   q /= q.norm();
   quat::Quatd q_b_c(q);
   const Eigen::Matrix3d R_b_c = q_b_c.R();
-  PRINTMAT(R_b_c);
 
+  const double rho_g = xhat_(xGOAL_RHO);
   Eigen::Vector3d p_g_v_v;
-  //p_g_v_v(0) = xhat_(xGOAL_POS + 0);
-  //p_g_v_v(1) = xhat_(xGOAL_POS + 1);
-  //p_g_v_v(2) = 1. / xhat_(xGOAL_RHO);
-  p_g_v_v(0) = - xhat_(xPOS + 0);
-  p_g_v_v(1) = - xhat_(xPOS + 1);
-  p_g_v_v(2) = - xhat_(xPOS + 2);
+  p_g_v_v(0) = xhat_(xGOAL_POS + 0);
+  p_g_v_v(1) = xhat_(xGOAL_POS + 1);
+  p_g_v_v(2) = 1. / rho_g;
+  //p_g_v_v(0) = - xhat_(xPOS + 0);
+  //p_g_v_v(1) = - xhat_(xPOS + 1);
+  //p_g_v_v(2) = - xhat_(xPOS + 2);
 
-  Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
+  const Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
 
   const double px_hat = fx * (p_g_c_c(0) / p_g_c_c(2)) + cx;
   const double py_hat = fy * (p_g_c_c(1) / p_g_c_c(2)) + cy;
+  const Eigen::Vector2d zhat(px_hat, py_hat);
   //std::cout << "Goal est px: " << px_hat << " py: " << py_hat << std::endl;
+  //const Eigen::Vector2d z = z.pixs[0];
+
+  const int pix_dims = 2;
+  z_resid_.head(pix_dims) = z.pixs[0] - zhat;
+  z_R_.topLeftCorner(pix_dims, pix_dims) = 1.0 * Eigen::Matrix2d::Identity();
+
+  // 
+  const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
+
+  // Jacobian
+  H_.setZero();
+  const Eigen::Vector3d RdRdPhip = R_b_c * d_R_d_phi * p_g_v_v;
+  const double dpx_dphi = (fx * RdRdPhip(0) / p_g_c_c(2)) - (fx * RdRdPhip(2) * p_g_c_c(0) / p_g_c_c(2) / p_g_c_c(2));
+  const Eigen::Vector3d RdRdThetap = R_b_c * d_R_d_theta * p_g_v_v;
+  const double dpx_dtheta = (fx * RdRdThetap(0) / p_g_c_c(2)) - (fx * RdRdThetap(2) * p_g_c_c(0) / p_g_c_c(2) / p_g_c_c(2));
+  const Eigen::Vector3d RdRdPsip = R_b_c * d_R_d_psi * p_g_v_v;
+  const double dpx_dpsi = (fx * RdRdPsip(0) / p_g_c_c(2)) - (fx * RdRdPsip(2) * p_g_c_c(0) / p_g_c_c(2) / p_g_c_c(2));
+
+  const Eigen::Vector3d dpx_dp = ((fx * e1.transpose() * R_b_c * R_I_b) / p_g_c_c(2)) -
+    ((fx * e3.transpose() * R_b_c * R_I_b * p_g_c_c(0)) / (p_g_c_c(2) * p_g_c_c(2)));
+  const double dpx_drho = - (1. / rho_g / rho_g) * dpx_dp(2);
+
+  H_(0, xATT + 0) = dpx_dphi;
+  H_(0, xATT + 1) = dpx_dtheta;
+  H_(0, xATT + 2) = dpx_dpsi;
+  H_.block<1, 2>(0, xGOAL_POS) = dpx_dp.head(2);
+  H_(0, xGOAL_RHO) = dpx_drho;
+
+  const double dpy_dphi = (fy * RdRdPhip(1) / p_g_c_c(2)) - (fy * RdRdPhip(2) * p_g_c_c(1) / p_g_c_c(2) / p_g_c_c(2));
+  const double dpy_dtheta = (fy * RdRdThetap(1) / p_g_c_c(2)) - (fy * RdRdThetap(2) * p_g_c_c(1) / p_g_c_c(2) / p_g_c_c(2));
+  const double dpy_dpsi = (fy * RdRdPsip(1) / p_g_c_c(2)) - (fy * RdRdPsip(2) * p_g_c_c(1) / p_g_c_c(2) / p_g_c_c(2));
+
+  const Eigen::Vector3d dpy_dp = ((fy * e2.transpose() * R_b_c * R_I_b) / p_g_c_c(2)) -
+    ((fy * e3.transpose() * R_b_c * R_I_b * p_g_c_c(1)) / (p_g_c_c(2) * p_g_c_c(2)));
+  const double dpy_drho = - (1. / rho_g / rho_g) * dpy_dp(2);
+
+  H_(1, xATT + 0) = dpy_dphi;
+  H_(1, xATT + 1) = dpy_dtheta;
+  H_(1, xATT + 2) = dpy_dpsi;
+  H_.block<1, 2>(1, xGOAL_POS) = dpy_dp.head(2);
+  H_(1, xGOAL_RHO) = dpy_drho;
+  //PRINTMAT(H_);
+
+  update(pix_dims, z_resid_, z_R_, H_);
+  //PRINTMAT(z_resid_);
 
 }
 

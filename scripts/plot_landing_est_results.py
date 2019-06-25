@@ -130,9 +130,9 @@ for i in range(3):
     starting_idx = 10
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
-    # plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
-    # plt.plot(t, xhat[i+starting_idx,:] + 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
-    # plt.plot(t, xhat[i+starting_idx,:] - 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+starting_idx,:] + 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:] - 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
@@ -146,7 +146,7 @@ for i in range(2):
     starting_idx = 13
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
-    # plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
     # plt.plot(t, xhat[i+starting_idx,:] + 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
     # plt.plot(t, xhat[i+starting_idx,:] - 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
