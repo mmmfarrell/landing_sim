@@ -4,6 +4,8 @@
 #include "landing_estimator.h"
 #include "estimator_utils.h"
 
+void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
+                        Estimator::MeasVec& z, Estimator::MeasH& H);
 void goalPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
                         Estimator::MeasVec& z, Estimator::MeasH& H);
 

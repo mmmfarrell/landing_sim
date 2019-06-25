@@ -591,6 +591,79 @@ def analytical_goal_pix_jac(x):
 
     return jac
 
+def goal_depth_meas_model(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+    px_g = x[10]
+    py_g = x[11]
+    rho_g = x[12]
+    vx_g = x[13]
+    vy_g = x[14]
+    theta_g = x[15]
+    omega_g = x[16]
+    rx_i = x[17]
+    ry_i = x[18]
+    rho_i = x[19]
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+
+    p_g_v_v = np.array([px_g, py_g, 1. / rho_g])
+
+    p_g_c_c = np.matmul(RBC, np.matmul(R_I_b, p_g_v_v) - PCBB)
+
+    z_depth = p_g_c_c[2]
+
+    return np.array([z_depth])
+
+def analytical_goal_depth_jac(x):
+    phi = x[3]
+    theta = x[4]
+    psi = x[5]
+    vel_u = x[6]
+    vel_v = x[7]
+    vel_w = x[8]
+    mu = x[9]
+    px_g = x[10]
+    py_g = x[11]
+    rho_g = x[12]
+    vx_g = x[13]
+    vy_g = x[14]
+    theta_g = x[15]
+    omega_g = x[16]
+    rx_i = x[17]
+    ry_i = x[18]
+    rho_i = x[19]
+
+    R_I_b = RotInertial2Body(phi, theta, psi)
+
+    p_g_v_v = np.array([px_g, py_g, 1. / rho_g])
+
+    p_g_c_c = np.matmul(RBC, np.matmul(R_I_b, p_g_v_v) - PCBB)
+
+    jac = np.zeros((1, STATES))
+
+    dRdPhi = RotI2BdPhi(phi, theta, psi)
+    dRdTheta= RotI2BdTheta(phi, theta, psi)
+    dRdPsi= RotI2BdPsi(phi, theta, psi)
+
+    jac[0, 3] = np.matmul(E3.transpose(), np.matmul(RBC, np.matmul(dRdPhi,
+        p_g_v_v)))
+    jac[0, 4] = np.matmul(E3.transpose(), np.matmul(RBC, np.matmul(dRdTheta,
+        p_g_v_v)))
+    jac[0, 5] = np.matmul(E3.transpose(), np.matmul(RBC, np.matmul(dRdPsi,
+        p_g_v_v)))
+
+    dzdp = np.matmul(E3.transpose(), np.matmul(RBC, R_I_b))
+    jac[0, 10:12] = dzdp[0:2]
+    jac[0, 12] = (-1. / rho_g / rho_g) * dzdp[2]
+
+    return jac
+
 def test_state_jacobian():
     x = np.random.rand(STATES, 1)
     u = np.random.rand(INPUTS, 1)
@@ -634,6 +707,27 @@ def test_gps_model_jacobian():
     assert(np.all(res)), res
 
 def test_goal_pix_model_jacobian():
+    x = np.random.rand(STATES, 1)
+    # x = np.zeros((STATES, 1))
+    # x[3] = 0.1
+    # x[4] = -0.3
+    # x[5] = 1.2
+    # x[10] = -0.45
+    # x[11] = 1.23
+    # x[12] = 0.1
+    jac_func = nd.Jacobian(goal_pix_meas_model)
+
+    meas = goal_pix_meas_model(x)
+    # print('x = {}'.format(x))
+    # print('meas = {}'.format(meas))
+    jac = jac_func(x)
+    analytical_jac = analytical_goal_pix_jac(x)
+    # print('jac = {}'.format(jac))
+
+    res = np.isclose(jac, analytical_jac)
+    assert(np.all(res)), res
+
+def test_goal_depth_model_jacobian():
     # x = np.random.rand(STATES, 1)
     x = np.zeros((STATES, 1))
     x[3] = 0.1
@@ -642,13 +736,13 @@ def test_goal_pix_model_jacobian():
     x[10] = -0.45
     x[11] = 1.23
     x[12] = 0.1
-    jac_func = nd.Jacobian(goal_pix_meas_model)
+    jac_func = nd.Jacobian(goal_depth_meas_model)
 
-    meas = goal_pix_meas_model(x)
+    meas = goal_depth_meas_model(x)
     print('x = {}'.format(x))
     print('meas = {}'.format(meas))
     jac = jac_func(x)
-    analytical_jac = analytical_goal_pix_jac(x)
+    analytical_jac = analytical_goal_depth_jac(x)
     print('jac = {}'.format(jac))
 
     res = np.isclose(jac, analytical_jac)
@@ -660,3 +754,4 @@ if __name__ == '__main__':
     test_input_jacobian()
     test_gps_model_jacobian()
     test_goal_pix_model_jacobian()
+    test_goal_depth_model_jacobian()

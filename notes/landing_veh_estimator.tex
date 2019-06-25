@@ -215,7 +215,7 @@ remaining terms here below.
       2 \rho_i \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
 \end{align}
 
-\subsection{Goal Measurement}
+\subsection{Goal Pixel Measurement}
 \subsubsection{Measurement model}
 We assume that the UAV is equiped with a downward facing camera that is rigidly
 attached to the UAV. From this camera, we can get a measurement of the pixel
@@ -335,3 +335,38 @@ above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.
 %jac[0, 4] = d1dtheta
 %jac[0, 5] = d1dpsi
 
+\subsection{Goal Depth Measurement}
+We assume that the camera also provides a measurement of the distance to the
+goal. This is given in the form of the z coordinate of the goal location in the
+camera frame.
+
+\subsubsection{Measurement Model}
+We can express the goal depth measurement as
+\begin{equation}
+  \vect{z} = \e_3^\transpose \vect{p}_{g/c}^c.
+\end{equation}
+We can expand this to be in terms of our estimated state as
+\begin{align}
+  \vect{z} &= \e_3^\transpose \vect{p}_{g/c}^c \\
+  \vect{z} &= \e_3^\transpose R_b^c R_v^b \vect{p}_{g/c}^v \\
+  %\vect{z} &= \e_3^\transpose R_b^c R_v^b \left( \vect{p}_{g/v}^v \right) \\
+  \vect{z} &= \e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right).
+\end{align}
+
+\subsubsection{Measurement Jacobian}
+As seen in the measurement model above, the measurement is dependent on the UAV
+attitude as well as the goal position. The jacobian terms for these parts are
+given by
+\begin{align}
+  \frac{\partial \vect{z}}{\partial \phi} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \phi} \left( \vect{p}_{g/v}^v \right) \\
+  \frac{\partial \vect{z}}{\partial \theta} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \theta} \left( \vect{p}_{g/v}^v \right) \\
+  \frac{\partial \vect{z}}{\partial \psi} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \psi} \left( \vect{p}_{g/v}^v \right) \\
+    \frac{\partial \vect{z}}{\partial \vect{p}_{g/v}^v} &= \e_3^\transpose R_b^c
+    R_v^b \\
+  \frac{\partial \vect{z}}{\partial \rho} &= -\frac{1}{\rho^2}
+    \frac{\partial \vect{z}}{\partial \vect{p}_{g/v}^v}\left(2\right).
+\end{align}

@@ -63,6 +63,54 @@ TEST_F(RandomState, goalPixelJac_ZerosWhereExpected)
   EXPECT_TRUE((dHdGoalRho.array() != 0.0).all());
 }
 
+TEST_F(RandomState, goalDepthMeas_Dimension1)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  const int true_meas_dims = 1;
+  EXPECT_EQ(meas_dims, true_meas_dims);
+}
+
+TEST_F(RandomState, goalDepthMeas_NonZero)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  EXPECT_TRUE((zhat.head(meas_dims).array() != 0.).all());
+}
+
+TEST_F(RandomState, goalDepthJac_ZerosWhereExpected)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  // Goal depth model doesnt depend on UAV POS, VEL, DRAG or on GOAL ATT, OMEGA,
+  // VEL, or LMS
+  auto dHdPos = H.block<1, 3>(0, Estimator::xPOS);
+  EXPECT_TRUE(dHdPos.isZero());
+
+  auto dHdVel = H.block<1, 3>(0, Estimator::xVEL);
+  EXPECT_TRUE(dHdVel.isZero());
+
+  auto dHdDrag = H.block<1, 1>(0, Estimator::xMU);
+  EXPECT_TRUE(dHdDrag.isZero());
+
+  auto dHdGoal =
+      H.block<1, Estimator::xZ - Estimator::xGOAL_VEL>(0, Estimator::xGOAL_VEL);
+  EXPECT_TRUE(dHdGoal.isZero());
+
+  // Goal meas model does depend on UAV ATT, GOAL POS & RHO
+  // All entries should be different from 0
+  auto dHdAtt = H.block<1, 3>(0, Estimator::xATT);
+  EXPECT_TRUE((dHdAtt.array() != 0.0).all());
+
+  auto dHdGoalPos = H.block<1, 2>(0, Estimator::xGOAL_POS);
+  EXPECT_TRUE((dHdGoalPos.array() != 0.0).all());
+
+  auto dHdGoalRho = H.block<1, 1>(0, Estimator::xGOAL_RHO);
+  EXPECT_TRUE((dHdGoalRho.array() != 0.0).all());
+}
+
 class SimpleState : public ::testing::Test
 {
 public:
@@ -102,6 +150,26 @@ TEST_F(SimpleState, goalPixelJac_CorrectValues)
   EXPECT_DOUBLE_EQ(H(0, Estimator::xGOAL_POS + 1), fx * rho_g);
   EXPECT_DOUBLE_EQ(H(1, Estimator::xATT + 1), fy);
   EXPECT_DOUBLE_EQ(H(1, Estimator::xGOAL_POS + 0), -fy * rho_g);
+}
+
+TEST_F(SimpleState, goalDepthMeas_Correct)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_depth = 10.;
+  EXPECT_DOUBLE_EQ(zhat(0), true_depth);
+}
+
+TEST_F(SimpleState, goalDepthJac_CorrectValues)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  const double rho_g = xhat(Estimator::xGOAL_RHO);
+  const double true_jac_val = -(1. / rho_g / rho_g);
+
+  EXPECT_DOUBLE_EQ(H(0, Estimator::xGOAL_RHO), true_jac_val);
 }
 
 class ComplexState : public ::testing::Test
@@ -170,4 +238,36 @@ TEST_F(ComplexState, goalPixelJac_CorrectValues)
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpydposx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpydposy, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_RHO), true_dpydrho, abs_tol);
+}
+
+TEST_F(ComplexState, goalDepthMeas_DirectlyCentered)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_depth = 9.13012;
+
+  const double abs_tol = 1e-4;
+  EXPECT_NEAR(zhat(0), true_depth, abs_tol);
+}
+
+TEST_F(ComplexState, goalDepthJac_CorrectValues)
+{
+  int meas_dims = 0;
+  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_ddepthdphi = -1.786;
+  const double true_ddepthdtheta = 3.875;
+  const double true_ddepthdpsi = -0.156;
+  const double true_ddepthdposx = -0.0135;
+  const double true_ddepthdposy = -0.310;
+  const double true_ddepthdrho = -95.056;
+
+  const double abs_tol = 1e-2;
+  EXPECT_NEAR(H(0, Estimator::xATT + 0), true_ddepthdphi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 1), true_ddepthdtheta, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 2), true_ddepthdpsi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_ddepthdposx, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_ddepthdposy, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_RHO), true_ddepthdrho, abs_tol);
 }
