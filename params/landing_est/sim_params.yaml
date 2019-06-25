@@ -167,8 +167,8 @@ simple_cam_update_rate: 30
 sc_cam_center: [320, 240]
 sc_image_size: [640, 480]
 sc_focal_len: [410., 420.]
-sc_pixel_noise_stdev: 0.
-sc_depth_noise_stdev: 0.
+sc_pixel_noise_stdev: 2.
+sc_depth_noise_stdev: 1.
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
 p_b_sc: [0.0, 0.0, 0.0 ]
 

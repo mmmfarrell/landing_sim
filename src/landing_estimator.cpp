@@ -15,7 +15,7 @@ Estimator::Estimator(std::string filename)
   // Init EKF State
   xhat_.setZero();
   xhat_(xMU) = 0.1;
-  xhat_(xGOAL_RHO) = 0.2;
+  xhat_(xGOAL_RHO) = 0.1;
 
   P_.setIdentity();
   P_(xMU, xMU) = 0.;
@@ -130,23 +130,29 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                                   const Matrix1d& R_depth)
 {
   // Update goal depth
-  const int depth_dims = 1;
-  const double zhat_depth = 1./ xhat_(xGOAL_RHO);
-  z_resid_(0) = z.depths[0] - zhat_depth;
-  z_R_.topLeftCorner(depth_dims, depth_dims) = 0.1 * Matrix1d::Identity();
-  H_.setZero();
-  H_(0, xGOAL_RHO) = - zhat_depth * zhat_depth;
+  //const int depth_dims = 1;
+  //const double zhat_depth = 1./ xhat_(xGOAL_RHO);
+  //z_resid_(0) = z.depths[0] - zhat_depth;
+  //z_R_.topLeftCorner(depth_dims, depth_dims) = 0.1 * Matrix1d::Identity();
+  //H_.setZero();
+  //H_(0, xGOAL_RHO) = - zhat_depth * zhat_depth;
+  //update(depth_dims, z_resid_, z_R_, H_);
+  int depth_dims = 0;
+  MeasVec depth_zhat;
+  goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
+  z_resid_(0) = z.depths[0] - depth_zhat(0);
+  //z_R_.topLeftCorner(depth_dims, depth_dims) = 1.0 * Matrix1d::Identity();
+  z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
   update(depth_dims, z_resid_, z_R_, H_);
-  //std::cout << std::endl;
-  //std::cout << "Goal pix px: " << z.pixs[0](0) << " py: " << z.pixs[0](1) << std::endl;
 
+  // Update goal pixel
   int pix_dims = 0;
   MeasVec pix_zhat;
   goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
-
-  z_resid_.head(pix_dims) = pix_zhat.head(pix_dims) - z.pixs[0];
-  z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 * Eigen::Matrix2d::Identity();
-  //update(pix_dims, z_resid_, z_R_, H_);
+  z_resid_.head(pix_dims) = z.pixs[0] - pix_zhat.head(pix_dims);
+  //z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 * Eigen::Matrix2d::Identity();
+  z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
+  update(pix_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::gnssCallback(const double& t, const Vector6d& z,
