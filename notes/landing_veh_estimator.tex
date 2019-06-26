@@ -370,3 +370,130 @@ given by
   \frac{\partial \vect{z}}{\partial \rho} &= -\frac{1}{\rho^2}
     \frac{\partial \vect{z}}{\partial \vect{p}_{g/v}^v}\left(2\right).
 \end{align}
+
+\subsection{Landmark Pixel Measurement}
+We assume that landmark locations that are rigidly attached to the landing
+vehicle are tracked in the camera image. For now we will just have a fixed
+number of landmarks that are tracked for the entire duration of the flight, even
+when they leave the FOV of the camera and reenter. In real life, however, the
+landmarks must be dynamically added and removed from the estimated states vector
+as they leave the FOV of the camera and more are acquired.
+
+\subsubsection{Measurement Model}
+The measurement is a pixel location of each landmark in the camera image
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose.
+\end{equation}
+We can expand this measurements using our estimated states
+\begin{align}
+  \vect{z} &=
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose \\
+  \vect{z} &=
+  \begin{bmatrix}
+    f_x \frac{\e_1 \vect{p}_{i/c}^c}{\e_3 \vect{p}_{i/c}^c} + c_x \\
+    f_y \frac{\e_2 \vect{p}_{i/c}^c}{\e_3 \vect{p}_{i/c}^c} + c_y
+  \end{bmatrix},
+\end{align}
+where $f_x$, $f_y$, $c_x$, and $c_y$ are constant parameters of the camera. We
+can then express the position of the landmark $i$ with respect to the camera in the
+camera frame as
+\begin{align}
+  \vect{p}_{i/c}^c &= R_b^c R_v^b \left(\vect{p}_{i/v}^v -
+    \vect{p}_{c/v}^v\right) \\
+    \vect{p}_{i/c}^c &= R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)
+\end{align}
+This is actually a little bit weird because of the state parameters, but
+\begin{equation}
+  \vect{p}_{i/v}^v =
+  \begin{bmatrix}
+    \e_1^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
+    \e_2^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
+    1 / \rho_i
+  \end{bmatrix}.
+\end{equation}
+
+\subsubsection{Measurement Jacobian}
+For the purpose of deriving the jacobians, we will just look at the jacobians
+with respect to $p_x$, the pixel location along the $x$ axis of the camera
+frame. From above we have that
+\begin{align}
+  p_x &= f_x \frac{\e_1^\transpose \vect{p}_{i/c}^c}{\e_3^\transpose \vect{p}_{i/c}^c} + c_x \\ 
+  p_x &= f_x \frac{\e_1^\transpose R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+      \vect{p}_{c/b}^b\right) }{\e_3^\transpose R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right) } + c_x 
+\end{align}
+Note that all values are constants except for $\vect{p}_{i/v}^v$ and $R_v^b$.
+The individual parts of the jacobian are given here:
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{g/v}^v} =
+  \frac{f_x \e_1 R_b^c R_v^b}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where only the first two (of three) entries of the vector are used. The third
+entry is used for the jacobian w.r.t. $\rho_i$ as
+\begin{equation}
+  \frac{\partial p_x}{\partial \rho_i} = -\frac{1}{\rho_i^2} \frac{\partial p_x}{\partial
+  \vect{p}_{g/v}^v}\left(2\right).
+\end{equation}
+The derivatives for the euler angles are given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \phi} =
+  \frac{f_x \e_1 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{i/v}^v}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{i/v}^v \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where the jacobians for the other angles are similar, just substituting in.
+The derivative for the goal angle, $theta_g$ is given by using
+\begin{equation}
+  \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g} =
+  \begin{bmatrix}
+    \e_1^\transpose \frac{\partial R_g^v}{\partial \theta_g} \vect{p}_{i/g}^g \\
+    \e_2^\transpose \frac{\partial R_g^v}{\partial \theta_g} \vect{p}_{i/g}^g \\
+    0
+  \end{bmatrix}
+\end{equation}
+in the jacobian given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \theta_g} =
+  \frac{f_x \e_1 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g}}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g} \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+Similarly, the derivative for the landmark offset, $\vect{r}_i$ or
+$\vect{p}_{i/g}^g$ is given by using
+\begin{equation}
+  \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g} =
+  \begin{bmatrix}
+    \e_1^\transpose R_g^v \\
+    \e_2^\transpose R_g^v \\
+    0
+  \end{bmatrix}
+\end{equation}
+in the jacobian given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{i/g}^g} =
+  \frac{f_x \e_1 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g}}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g} \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+The jacobians for the y pixel measurement, $p_y$ are similar to the ones derived
+above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.

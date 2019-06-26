@@ -1,10 +1,5 @@
 TODO
   - LaTex
-    - derive goal pixel meas model / jacobian
-  - Sim
-    # Show camera image
-    - Goal pixel measurement update
-  - LaTex
     - derive LM pixel meas model / jacobian
   - Sim
     - LM pixel meas update
