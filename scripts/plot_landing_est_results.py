@@ -162,9 +162,9 @@ for i in range(2):
     starting_idx = 15
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
-    # plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
-    # plt.plot(t, xhat[i+starting_idx,:] + 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
-    # plt.plot(t, xhat[i+starting_idx,:] - 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
@@ -179,9 +179,11 @@ for i in range(3):
         plt.subplot(3, 4, 4*i + j+1)
         starting_idx = 17 + 3*j
         plt.plot(t, x[i+starting_idx, :], label="x")
-        # plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
-        # plt.plot(t, xhat[i+starting_idx,:] + 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
-        # plt.plot(t, xhat[i+starting_idx,:] - 2. * phat[i+starting_idx, :], 'r', label=r"$2\sigma$")
+        plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+        plt.plot(t, xhat[i+starting_idx,:] + 2.
+                * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+        plt.plot(t, xhat[i+starting_idx,:] - 2.
+                * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
         if j == 0:
             plt.ylabel(ylabel[i])
             if i == 0:

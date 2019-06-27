@@ -16,10 +16,18 @@ Estimator::Estimator(std::string filename)
   xhat_.setZero();
   xhat_(xMU) = 0.1;
   xhat_(xGOAL_RHO) = 0.1;
+  xhat_(xGOAL_LM + 0 + 2) = 0.1;
+  xhat_(xGOAL_LM + 3 + 2) = 0.1;
+  xhat_(xGOAL_LM + 6 + 2) = 0.1;
+  xhat_(xGOAL_LM + 9 + 2) = 0.1;
 
   P_.setIdentity();
   P_(xMU, xMU) = 0.;
   P_(xGOAL_RHO, xGOAL_RHO) = 0.01;
+  P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = 0.001;
+  P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = 0.001;
+  P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = 0.001;
+  P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = 0.001;
   //P_.setZero();
 
   Qx_.setIdentity();
@@ -153,6 +161,21 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   //z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 * Eigen::Matrix2d::Identity();
   z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
   update(pix_dims, z_resid_, z_R_, H_);
+
+  // Update Landmark Pixels
+  static const int num_landmarks = 4;
+  for (int i = 0; i < num_landmarks; i++)
+  {
+    int lm_pix_dims = 0;
+    MeasVec lm_pix_zhat;
+    landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+    z_resid_.head(lm_pix_dims) = z.pixs[i + 1] - lm_pix_zhat.head(lm_pix_dims);
+    // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
+    // Eigen::Matrix2d::Identity();
+    //PRINTMAT(z_resid_);
+    z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
+    update(lm_pix_dims, z_resid_, z_R_, H_);
+  }
 }
 
 void Estimator::gnssCallback(const double& t, const Vector6d& z,
