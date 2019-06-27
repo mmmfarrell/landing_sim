@@ -48,6 +48,9 @@ Estimator::Estimator(std::string filename)
   Qu_.block<3, 3>(uOMEGA, uOMEGA) *= 0.1 * 0.1;
 
   last_prop_time_ = -999.;
+
+  // Load yaml params
+  get_yaml_node("use_goal_stop_time", filename, use_goal_stop_time_);
 }
 
 Estimator::~Estimator()
@@ -128,7 +131,8 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
   //const double att_dims = 2;
   //const Vector3d mocap_euler = z.q().euler();
   //z_resid_.head(att_dims) = mocap_euler.head(2) - xhat_.segment<2>(xATT);
-  //z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix2d::Identity();
+  ////z_R_.topLeftCorner(att_dims, att_dims) = 0.001 * Eigen::Matrix2d::Identity();
+  //z_R_.topLeftCorner(att_dims, att_dims) = R.block<2, 2>(3, 3);
 
   //H_.setZero();
   //H_.block<2, 2>(0, xATT) = Eigen::Matrix2d::Identity();
@@ -145,30 +149,27 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
                                   const Matrix2d& R_pix,
                                   const Matrix1d& R_depth)
 {
-  // Update goal depth
-  //const int depth_dims = 1;
-  //const double zhat_depth = 1./ xhat_(xGOAL_RHO);
-  //z_resid_(0) = z.depths[0] - zhat_depth;
-  //z_R_.topLeftCorner(depth_dims, depth_dims) = 0.1 * Matrix1d::Identity();
-  //H_.setZero();
-  //H_(0, xGOAL_RHO) = - zhat_depth * zhat_depth;
-  //update(depth_dims, z_resid_, z_R_, H_);
-  int depth_dims = 0;
-  MeasVec depth_zhat;
-  goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
-  z_resid_(0) = z.depths[0] - depth_zhat(0);
-  //z_R_.topLeftCorner(depth_dims, depth_dims) = 1.0 * Matrix1d::Identity();
-  z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
-  update(depth_dims, z_resid_, z_R_, H_);
+  if (t < use_goal_stop_time_)
+  {
+    // Update goal depth
+    int depth_dims = 0;
+    MeasVec depth_zhat;
+    goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
+    z_resid_(0) = z.depths[0] - depth_zhat(0);
+    // z_R_.topLeftCorner(depth_dims, depth_dims) = 1.0 * Matrix1d::Identity();
+    z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
+    update(depth_dims, z_resid_, z_R_, H_);
 
-  // Update goal pixel
-  int pix_dims = 0;
-  MeasVec pix_zhat;
-  goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
-  z_resid_.head(pix_dims) = z.pixs[0] - pix_zhat.head(pix_dims);
-  //z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 * Eigen::Matrix2d::Identity();
-  z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
-  update(pix_dims, z_resid_, z_R_, H_);
+    // Update goal pixel
+    int pix_dims = 0;
+    MeasVec pix_zhat;
+    goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
+    z_resid_.head(pix_dims) = z.pixs[0] - pix_zhat.head(pix_dims);
+    // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
+    // Eigen::Matrix2d::Identity();
+    z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
+    update(pix_dims, z_resid_, z_R_, H_);
+  }
 
   // Update Landmark Pixels
   static const int num_landmarks = 4;

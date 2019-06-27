@@ -20,3 +20,12 @@ PAPER
   - LV Relative Position
   - LV Velocity
   - LV Orientation
+
+TO GRADUATE
+- Hardware landing with tag leaving FOV of camera
+
+STEPS
+- Simulation
+  - land with tag staying in FOV
+  - consistent estimates with tag not detected
+  - land with losing tag intermitently

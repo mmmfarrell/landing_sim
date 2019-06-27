@@ -102,6 +102,7 @@ public:
   const StateMat I_ = StateMat::Identity();
 
   double last_prop_time_;
+  double use_goal_stop_time_;
 };
 
 #endif /* ESTIMATOR_H */

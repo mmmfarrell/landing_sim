@@ -1,4 +1,4 @@
-tmax: 10.0 # Simulation total time, time step is determined by IMU rate
+tmax: 20.0 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
 seed: 15 # 0 initializes seed with time
@@ -142,7 +142,7 @@ imu_enabled: true
 alt_enabled: true
 baro_enabled: true
 mocap_enabled: true
-velocity_sensor_enabled: true
+velocity_sensor_enabled: false
 vo_enabled: false
 simple_cam_enabled: true
 camera_enabled: false
@@ -167,10 +167,10 @@ simple_cam_update_rate: 30
 sc_cam_center: [320, 240]
 sc_image_size: [640, 480]
 sc_focal_len: [410., 420.]
-#sc_pixel_noise_stdev: 2.
-#sc_depth_noise_stdev: 1.
-sc_pixel_noise_stdev: 0.001
-sc_depth_noise_stdev: 0.001
+sc_pixel_noise_stdev: 1.
+sc_depth_noise_stdev: 0.5
+#sc_pixel_noise_stdev: 0.001
+#sc_depth_noise_stdev: 0.001
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
 p_b_sc: [0.0, 0.0, 0.0 ]
 
@@ -216,10 +216,10 @@ depth_noise_stdev: 0.1
 ## Motion Capture
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
-#mocap_update_rate: 10
-mocap_update_rate: 100
-#attitude_noise_stdev: 0.01
-attitude_noise_stdev: 0.001
+mocap_update_rate: 10
+#mocap_update_rate: 100
+attitude_noise_stdev: 0.01
+#attitude_noise_stdev: 0.001
 position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
@@ -235,8 +235,8 @@ gnss_update_rate: 5
 #gnss_update_rate: 100
 #use_gnss_truth: false
 use_gnss_truth: false
-#gnss_horizontal_position_stdev: 1.0
-gnss_horizontal_position_stdev: 0.00001
+gnss_horizontal_position_stdev: 1.0
+#gnss_horizontal_position_stdev: 0.00001
 gnss_vertical_position_stdev: 3.0
 gnss_velocity_stdev: 0.1
 #gnss_velocity_stdev: 0.001
