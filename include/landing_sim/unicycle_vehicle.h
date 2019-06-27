@@ -3,6 +3,7 @@
 #include <string>
 #include <Eigen/Core>
 #include <math.h>
+#include <random>
 
 #include "multirotor_sim/utils.h"
 
@@ -49,6 +50,17 @@ public:
   {
     get_yaml_eigen("x0", filename, x_);
     get_yaml_eigen("landmarks_body_frame", filename, landmarks_body_);
+
+    get_yaml_node("omega_walk_std", filename, omega_walk_std_);
+    get_yaml_node("vel_walk_std", filename, vel_walk_std_);
+
+    get_yaml_node("seed", filename, seed_);
+    if (seed_ == 0)
+    {
+      seed_ = std::chrono::system_clock::now().time_since_epoch().count();
+    }
+    rng_.seed(seed_);
+    srand(seed_);
   }
 
   void step(const double& dt)
@@ -60,16 +72,22 @@ public:
     for (int i = 0; i < num_sub_steps; i++)
     {
       const double theta = x_(xATT);
-      const double omega = x_(xOMEGA);
-      const Vector2d vel_b = x_.block<2, 1>(xVEL, 0);
-
       Matrix2d R_I_b;
       toRot(theta, R_I_b);
 
+      const double omega = x_(xOMEGA);
+      const Vector2d vel_b = x_.block<2, 1>(xVEL, 0);
+
       const Vector2d vel_I = R_I_b.transpose() * vel_b;
 
+      // dynamics
       x_.block<2, 1>(xPOS, 0) += time_step * vel_I;
-      x_(xATT) += time_step * x_(xOMEGA);
+      x_(xATT) += time_step * omega;
+
+      // random walk
+      x_(xVEL + 0) += time_step * vel_walk_std_ * normal_(rng_);
+      x_(xVEL + 1) += time_step * vel_walk_std_ * normal_(rng_);
+      x_(xOMEGA) += time_step * omega_walk_std_ * normal_(rng_);
     }
   }
 
@@ -103,6 +121,13 @@ public:
 
   StateVec x_;
   LandmarkVec landmarks_body_;
+
+  double omega_walk_std_;
+  double vel_walk_std_;
+
+  uint64_t seed_;
+  std::default_random_engine rng_;
+  std::normal_distribution<double> normal_;
 };
 
 }
