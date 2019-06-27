@@ -152,12 +152,16 @@ void goalPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   H(1, Estimator::xGOAL_RHO) = dpy_drho;
 }
 
-void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
-                        Estimator::MeasVec& z, Estimator::MeasH& H)
+void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
+                            int& meas_dims, Estimator::MeasVec& z,
+                            Estimator::MeasH& H)
 {
   meas_dims = 2;
   z.setZero();
   H.setZero();
+
+  // Landmarks are 0 indexed
+  const int xLM_IDX = Estimator::xGOAL_LM + 3 * lm_index;
 
   // Camera Params
   const double fx = 410.;
@@ -182,36 +186,37 @@ void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   const double theta_g = x(Estimator::xGOAL_ATT);
   const Eigen::Matrix2d R_I_g = rotm2dItoB(theta_g);
 
-  const Eigen::Vector2d p_i_g_g = x.segment<2>(Estimator::xGOAL_LM);
+  const Eigen::Vector2d p_i_g_g = x.segment<2>(xLM_IDX);
   const Eigen::Vector2d p_i_g_v = R_I_g.transpose() * p_i_g_g;
-  const Eigen::Vector2d p_i_v_v_2d = p_i_g_v + x.segment<2>(Estimator::xGOAL_POS);
+  const Eigen::Vector2d p_i_v_v_2d =
+      p_i_g_v + x.segment<2>(Estimator::xGOAL_POS);
 
-  const double rho_i = x(Estimator::xGOAL_LM + 2);
+  const double rho_i = x(xLM_IDX + 2);
   const Eigen::Vector3d p_i_v_v(p_i_v_v_2d(0), p_i_v_v_2d(1), 1. / rho_i);
 
   const Eigen::Vector3d p_i_c_c = R_b_c * R_I_b * p_i_v_v;
 
-  //const double rho_g = x(Estimator::xGOAL_RHO);
-  //Eigen::Vector3d p_g_v_v;
-  //p_g_v_v(0) = x(Estimator::xGOAL_POS + 0);
-  //p_g_v_v(1) = x(Estimator::xGOAL_POS + 1);
-  //p_g_v_v(2) = 1. / rho_g;
+  // const double rho_g = x(Estimator::xGOAL_RHO);
+  // Eigen::Vector3d p_g_v_v;
+  // p_g_v_v(0) = x(Estimator::xGOAL_POS + 0);
+  // p_g_v_v(1) = x(Estimator::xGOAL_POS + 1);
+  // p_g_v_v(2) = 1. / rho_g;
 
-  //const Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
+  // const Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
 
-    //R_I_b = RotInertial2Body(phi, theta, psi)
-    //R_v_g = Rot2DInertial2Body(theta_g)
+  // R_I_b = RotInertial2Body(phi, theta, psi)
+  // R_v_g = Rot2DInertial2Body(theta_g)
 
-    //p_i_g_g = np.array([rx_i, ry_i])
-    //p_i_g_v = np.matmul(R_v_g.transpose(), p_i_g_g)
-    //p_i_v_v_2d = p_i_g_v + np.array([px_g, py_g])
+  // p_i_g_g = np.array([rx_i, ry_i])
+  // p_i_g_v = np.matmul(R_v_g.transpose(), p_i_g_g)
+  // p_i_v_v_2d = p_i_g_v + np.array([px_g, py_g])
 
-    //p_i_v_v = np.array([p_i_v_v_2d[0], p_i_v_v_2d[1], 1. / rho_i])
+  // p_i_v_v = np.array([p_i_v_v_2d[0], p_i_v_v_2d[1], 1. / rho_i])
 
-    //p_i_c_c = np.matmul(RBC, np.matmul(R_I_b, p_i_v_v) - PCBB)
+  // p_i_c_c = np.matmul(RBC, np.matmul(R_I_b, p_i_v_v) - PCBB)
 
-    //pix_x = FX * (p_i_c_c[0] / p_i_c_c[2]) + CX
-    //pix_y = FY * (p_i_c_c[1] / p_i_c_c[2]) + CY
+  // pix_x = FX * (p_i_c_c[0] / p_i_c_c[2]) + CX
+  // pix_y = FY * (p_i_c_c[1] / p_i_c_c[2]) + CY
 
   // Measurement Model
   const double px_hat = fx * (p_i_c_c(0) / p_i_c_c(2)) + cx;
@@ -249,7 +254,7 @@ void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   H(0, Estimator::xATT + 1) = dpx_dtheta;
   H(0, Estimator::xATT + 2) = dpx_dpsi;
   H.block<1, 2>(0, Estimator::xGOAL_POS) = dpx_dp.head(2);
-  H(0, Estimator::xGOAL_LM + 2) = dpx_drho_i;
+  H(0, xLM_IDX + 2) = dpx_drho_i;
 
   const double dpy_dphi =
       (fy * RdRdPhip(1) / p_i_c_c(2)) -
@@ -271,11 +276,12 @@ void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   H(1, Estimator::xATT + 1) = dpy_dtheta;
   H(1, Estimator::xATT + 2) = dpy_dpsi;
   H.block<1, 2>(1, Estimator::xGOAL_POS) = dpy_dp.head(2);
-  H(1, Estimator::xGOAL_LM + 2) = dpy_drho_i;
+  H(1, xLM_IDX + 2) = dpy_drho_i;
 
   // d / d theta_g
-  const Vector2d d_theta_p_i_v_v_2d = d_R_d_theta_g.transpose() * p_i_g_g; 
-  const Vector3d d_theta_p_i_v_v(d_theta_p_i_v_v_2d(0), d_theta_p_i_v_v_2d(1), 0.);
+  const Vector2d d_theta_p_i_v_v_2d = d_R_d_theta_g.transpose() * p_i_g_g;
+  const Vector3d d_theta_p_i_v_v(d_theta_p_i_v_v_2d(0), d_theta_p_i_v_v_2d(1),
+                                 0.);
 
   const Eigen::Vector3d RRdRdThetaP = R_b_c * R_I_b * d_theta_p_i_v_v;
   const double dpx_dtheta_g =
@@ -287,21 +293,21 @@ void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   H(0, Estimator::xGOAL_ATT) = dpx_dtheta_g;
   H(1, Estimator::xGOAL_ATT) = dpy_dtheta_g;
 
-    //d_rxy_p_i_v_v = np.zeros((3, 2))
-    //d_rxy_p_i_v_v[0, 0:2] = R_v_g.transpose()[0, :]
-    //d_rxy_p_i_v_v[1, 0:2] = R_v_g.transpose()[1, :]
+  // d_rxy_p_i_v_v = np.zeros((3, 2))
+  // d_rxy_p_i_v_v[0, 0:2] = R_v_g.transpose()[0, :]
+  // d_rxy_p_i_v_v[1, 0:2] = R_v_g.transpose()[1, :]
 
-    //d1drxy = -np.matmul(E3, np.matmul(RBC, np.matmul(R_I_b,
-        //d_rxy_p_i_v_v))) * FX * (p_i_c_c[0] / p_i_c_c[2] /
-            //p_i_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(R_I_b,
-                //d_rxy_p_i_v_v))) / p_i_c_c[2]
-    //d2drxy = -np.matmul(E3, np.matmul(RBC, np.matmul(R_I_b,
-        //d_rxy_p_i_v_v))) * FY * (p_i_c_c[1] / p_i_c_c[2] /
-            //p_i_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(R_I_b,
-                //d_rxy_p_i_v_v))) / p_i_c_c[2]
+  // d1drxy = -np.matmul(E3, np.matmul(RBC, np.matmul(R_I_b,
+  // d_rxy_p_i_v_v))) * FX * (p_i_c_c[0] / p_i_c_c[2] /
+  // p_i_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(R_I_b,
+  // d_rxy_p_i_v_v))) / p_i_c_c[2]
+  // d2drxy = -np.matmul(E3, np.matmul(RBC, np.matmul(R_I_b,
+  // d_rxy_p_i_v_v))) * FY * (p_i_c_c[1] / p_i_c_c[2] /
+  // p_i_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(R_I_b,
+  // d_rxy_p_i_v_v))) / p_i_c_c[2]
 
-    //jac[0, 17:19] = d1drxy
-    //jac[1, 17:19] = d2drxy
+  // jac[0, 17:19] = d1drxy
+  // jac[1, 17:19] = d2drxy
 
   // d / d rxy
   Eigen::Matrix<double, 3, 2> d_rxy_p_i_v_v;
@@ -314,6 +320,6 @@ void landmarkPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   const Eigen::Matrix<double, 1, 2> dpy_drxy =
       (fy * RRdRdrxyp.block<1, 2>(1, 0) / p_i_c_c(2)) -
       (fy * RRdRdrxyp.block<1, 2>(2, 0) * p_i_c_c(1) / p_i_c_c(2) / p_i_c_c(2));
-  H.block<1, 2>(0, Estimator::xGOAL_LM) = dpx_drxy;
-  H.block<1, 2>(1, Estimator::xGOAL_LM) = dpy_drxy;
+  H.block<1, 2>(0, xLM_IDX) = dpx_drxy;
+  H.block<1, 2>(1, xLM_IDX) = dpy_drxy;
 }
