@@ -904,18 +904,25 @@ def test_goal_depth_model_jacobian():
     assert(np.all(res)), res
 
 def test_landmark_pixel_model_jacobian():
-    x = np.random.rand(STATES, 1)
-    # x = np.zeros((STATES, 1))
-    # x[3] = 0.1
-    # x[4] = -0.3
-    # x[5] = 1.2
-    # x[10] = -0.45
-    # x[11] = 1.23
-    # x[12] = 0.1
-    # x[15] = np.pi / 4. # theta_g
+    # x = np.random.rand(STATES, 1)
+
+    x = np.zeros((STATES, 1))
+    # Simple State
     # x[17] = 1.
-    # x[18] = 0.
+    # x[18] = 0.5
     # x[19] = 0.1
+
+    # # Complex State
+    x[3] = 0.1
+    x[4] = -0.3
+    x[5] = 1.2
+    x[10] = -0.45
+    x[11] = 1.23
+    x[12] = 0.1
+    x[15] = np.pi / 4. # theta_g
+    x[17] = 2.34
+    x[18] = -0.75
+    x[19] = 0.134
     jac_func = nd.Jacobian(landmark_pix_meas_model)
 
     meas = landmark_pix_meas_model(x)

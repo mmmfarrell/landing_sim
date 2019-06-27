@@ -119,6 +119,9 @@ public:
     // UAV centered directly above goal
     xhat.setZero();
     xhat(Estimator::xGOAL_RHO) = 0.1;
+    xhat(Estimator::xGOAL_LM + 0) = 1.;
+    xhat(Estimator::xGOAL_LM + 1) = 0.5;
+    xhat(Estimator::xGOAL_LM + 2) = 0.1;
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
@@ -172,6 +175,65 @@ TEST_F(SimpleState, goalDepthJac_CorrectValues)
   EXPECT_DOUBLE_EQ(H(0, Estimator::xGOAL_RHO), true_jac_val);
 }
 
+TEST_F(SimpleState, landmarkPixelMeas_Correct)
+{
+  int meas_dims = 0;
+  landmarkPixelMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_px = 340.5;
+  const double true_py = 198.;
+
+  EXPECT_DOUBLE_EQ(zhat(0), true_px);
+  EXPECT_DOUBLE_EQ(zhat(1), true_py);
+}
+
+TEST_F(SimpleState, landmarkPixelJac_CorrectValues)
+{
+  int meas_dims = 0;
+  landmarkPixelMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_dpx_dphi = 411.025;
+  const double true_dpx_dtheta = -2.05;
+  const double true_dpx_dpsi = -41.;
+  const double true_dpx_dgoalx = 0.;
+  const double true_dpx_dgoaly = 41.;
+  const double true_dpx_dtheta_g = 41.;
+  const double true_dpx_dlmx = 0.;
+  const double true_dpx_dlmy = 41.;
+  const double true_dpx_drho_i = 205.;
+
+  const double true_dpy_dphi = -2.1;
+  const double true_dpy_dtheta = 424.2;
+  const double true_dpy_dpsi = -21.;
+  const double true_dpy_dgoalx = -42.;
+  const double true_dpy_dgoaly = 0.;
+  const double true_dpy_dtheta_g = 21.;
+  const double true_dpy_dlmx = -42.;
+  const double true_dpy_dlmy = 0.;
+  const double true_dpy_drho_i = -420.;
+
+  const double abs_tol = 1e-7;
+  EXPECT_NEAR(H(0, Estimator::xATT + 0), true_dpx_dphi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 1), true_dpx_dtheta, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 2), true_dpx_dpsi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_dpx_dgoalx, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_dpx_dgoaly, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_ATT), true_dpx_dtheta_g, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 0), true_dpx_dlmx, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 1), true_dpx_dlmy, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_drho_i, abs_tol);
+
+  EXPECT_NEAR(H(1, Estimator::xATT + 0), true_dpy_dphi, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xATT + 1), true_dpy_dtheta, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xATT + 2), true_dpy_dpsi, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpy_dgoalx, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpy_dgoaly, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_ATT), true_dpy_dtheta_g, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 0), true_dpy_dlmx, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 1), true_dpy_dlmy, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_drho_i, abs_tol);
+}
+
 class ComplexState : public ::testing::Test
 {
 public:
@@ -186,13 +248,19 @@ public:
     xhat(Estimator::xGOAL_POS + 0) = -0.45;
     xhat(Estimator::xGOAL_POS + 1) = 1.23;
     xhat(Estimator::xGOAL_RHO) = 0.1;
+
+    xhat(Estimator::xGOAL_ATT) = M_PI / 4.;
+
+    xhat(Estimator::xGOAL_LM + 0) = 2.34;
+    xhat(Estimator::xGOAL_LM + 1) = -0.75;
+    xhat(Estimator::xGOAL_LM + 2) = 0.134;
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
   Estimator::MeasH H;
 };
 
-TEST_F(ComplexState, goalPixelMeas_DirectlyCentered)
+TEST_F(ComplexState, goalPixelMeas_Correct)
 {
   int meas_dims = 0;
   goalPixelMeasModel(xhat, meas_dims, zhat, H);
@@ -270,4 +338,64 @@ TEST_F(ComplexState, goalDepthJac_CorrectValues)
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_ddepthdposx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_ddepthdposy, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_RHO), true_ddepthdrho, abs_tol);
+}
+
+TEST_F(ComplexState, landmarkPixelMeas_Correct)
+{
+  int meas_dims = 0;
+  landmarkPixelMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_px = 311.484946;
+  const double true_py = -84.758426;
+
+  const double abs_tol = 1e-4;
+  EXPECT_NEAR(zhat(0), true_px, abs_tol);
+  EXPECT_NEAR(zhat(1), true_py, abs_tol);
+}
+
+TEST_F(ComplexState, landmarkPixelJac_CorrectValues)
+{
+  int meas_dims = 0;
+  landmarkPixelMeasModel(xhat, meas_dims, zhat, H);
+
+  const double true_dpx_dphi = 410.1768;
+  const double true_dpx_dtheta = 38.2010;
+  const double true_dpx_dpsi = -179.5100;
+  const double true_dpx_dgoalx = -60.6827;
+  const double true_dpx_dgoaly = 21.1214;
+  const double true_dpx_dtheta_g = 114.3750;
+  const double true_dpx_dlmx = -27.9740;
+  const double true_dpx_dlmy = 57.8442;
+  const double true_dpx_drho_i = -414.5959;
+
+  const double true_dpy_dphi = 6.7447;
+  const double true_dpy_dtheta = 666.8908;
+  const double true_dpy_dpsi = 74.2919;
+  const double true_dpy_dgoalx = -23.6244;
+  const double true_dpy_dgoaly = -74.8782;
+  const double true_dpy_dtheta_g = -137.0451;
+  const double true_dpy_dlmx = -69.6519;
+  const double true_dpy_dlmy = -36.2420;
+  const double true_dpy_drho_i = -1621.4416;
+
+  const double abs_tol = 1e-2;
+  EXPECT_NEAR(H(0, Estimator::xATT + 0), true_dpx_dphi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 1), true_dpx_dtheta, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xATT + 2), true_dpx_dpsi, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_dpx_dgoalx, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_dpx_dgoaly, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_ATT), true_dpx_dtheta_g, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 0), true_dpx_dlmx, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 1), true_dpx_dlmy, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_drho_i, abs_tol);
+
+  EXPECT_NEAR(H(1, Estimator::xATT + 0), true_dpy_dphi, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xATT + 1), true_dpy_dtheta, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xATT + 2), true_dpy_dpsi, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpy_dgoalx, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpy_dgoaly, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_ATT), true_dpy_dtheta_g, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 0), true_dpy_dlmx, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 1), true_dpy_dlmy, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_drho_i, abs_tol);
 }
