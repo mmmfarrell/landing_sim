@@ -43,13 +43,13 @@ traj_delta_alt: -0.
 traj_delta_yaw: 0
 traj_nom_north: 0
 traj_nom_east: 0
-traj_nom_alt: 10
+traj_nom_alt: 5
 traj_nom_yaw: 0
 traj_north_period: 30
 traj_east_period: 3
 traj_alt_period: 5
 traj_yaw_period: 20
-follow_vehicle: False
+follow_vehicle: True
 
 
 # Controller Configuration
@@ -167,8 +167,10 @@ simple_cam_update_rate: 30
 sc_cam_center: [320, 240]
 sc_image_size: [640, 480]
 sc_focal_len: [410., 420.]
-sc_pixel_noise_stdev: 2.
-sc_depth_noise_stdev: 1.
+#sc_pixel_noise_stdev: 2.
+#sc_depth_noise_stdev: 1.
+sc_pixel_noise_stdev: 0.001
+sc_depth_noise_stdev: 0.001
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
 p_b_sc: [0.0, 0.0, 0.0 ]
 
@@ -198,8 +200,8 @@ vo_rotation_noise_stdev: 0.01
 
 ## Altimeter
 altimeter_update_rate: 25
-altimeter_noise_stdev: 0.1
-#altimeter_noise_stdev: 0.001
+#altimeter_noise_stdev: 0.1
+altimeter_noise_stdev: 0.001
 
 ## Barometer
 baro_update_rate: 25
@@ -214,10 +216,10 @@ depth_noise_stdev: 0.1
 ## Motion Capture
 p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
-mocap_update_rate: 10
-#mocap_update_rate: 100
-attitude_noise_stdev: 0.01
-#attitude_noise_stdev: 0.001
+#mocap_update_rate: 10
+mocap_update_rate: 100
+#attitude_noise_stdev: 0.01
+attitude_noise_stdev: 0.001
 position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
@@ -233,8 +235,8 @@ gnss_update_rate: 5
 #gnss_update_rate: 100
 #use_gnss_truth: false
 use_gnss_truth: false
-gnss_horizontal_position_stdev: 1.0
-#gnss_horizontal_position_stdev: 0.00001
+#gnss_horizontal_position_stdev: 1.0
+gnss_horizontal_position_stdev: 0.00001
 gnss_vertical_position_stdev: 3.0
 gnss_velocity_stdev: 0.1
 #gnss_velocity_stdev: 0.001

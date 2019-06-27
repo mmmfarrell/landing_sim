@@ -12,22 +12,30 @@ using namespace multirotor_sim;
 
 Estimator::Estimator(std::string filename)
 {
+  // Unified Inverse Depth Parametrization for Monocular SLAM 
+  // by Montiel, et. al.
+  const double dmin = 2.;
+  const double rho_min = 1. / dmin;
+  const double rho_init = rho_min / 2.;
+  const double phat_rho_init = rho_min * rho_min / 16;
+
   // Init EKF State
   xhat_.setZero();
   xhat_(xMU) = 0.1;
-  xhat_(xGOAL_RHO) = 0.1;
-  xhat_(xGOAL_LM + 0 + 2) = 0.1;
-  xhat_(xGOAL_LM + 3 + 2) = 0.1;
-  xhat_(xGOAL_LM + 6 + 2) = 0.1;
-  xhat_(xGOAL_LM + 9 + 2) = 0.1;
+  xhat_(xGOAL_RHO) = rho_init;
+  xhat_(xGOAL_LM + 0 + 2) = rho_init;
+  xhat_(xGOAL_LM + 3 + 2) = rho_init;
+  xhat_(xGOAL_LM + 6 + 2) = rho_init;
+  xhat_(xGOAL_LM + 9 + 2) = rho_init;
 
   P_.setIdentity();
   P_(xMU, xMU) = 0.;
-  P_(xGOAL_RHO, xGOAL_RHO) = 0.01;
-  P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = 0.001;
-  P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = 0.001;
-  P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = 0.001;
-  P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = 0.001;
+  P_(xGOAL_ATT, xGOAL_ATT) = 0.;
+  P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
+  P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = phat_rho_init;
+  P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = phat_rho_init;
+  P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = phat_rho_init;
+  P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = phat_rho_init;
   //P_.setZero();
 
   Qx_.setIdentity();
