@@ -1,8 +1,9 @@
 TODO
-  - LaTex
-    - derive LM pixel meas model / jacobian
   - Sim
-    - LM pixel meas update
+    - estimate drag
+    - estimate IMU biases
+    - partial update?
+  - Gazebo sim
 
 PAPER
 - Simulation 
