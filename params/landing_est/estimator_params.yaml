@@ -13,7 +13,7 @@ min_goal_depth: 2.
 x0_states: [0., 0., 0.,   # POS
                 0., 0., 0.,   # ATT
                 0., 0., 0.,   # VEL
-                0.1,          # MU
+                0.15,          # MU
                 0., 0.,       # GOAL_POS
                 0.,           # GOAL_RHO
                 0., 0.,       # GOAL_VEL
@@ -25,7 +25,7 @@ x0_landmarks: [0., 0., 0.]
 P0_states: [1., 1., 1.,   # POS
                 1., 1., 1.,   # ATT
                 1., 1., 1.,   # VEL
-                0.,           # MU
+                0.05,           # MU
                 1., 1.,       # GOAL_POS
                 1.,           # GOAL_RHO
                 1., 1.,       # GOAL_VEL
@@ -45,7 +45,7 @@ Qx_states: [0.00001, 0.00001, 0.00001,   # POS
                 0.00001,           # GOAL_ATT
                 0.00001]           # GOAL_OMEGA
 
-Qx_landmarks: [0.00001, 0.00001, 0.00001]   
+Qx_landmarks: [0., 0., 0.]   
 
 Qu: [0.04,                # AZ
      0.01, 0.01, 0.01]    # OMEGA
