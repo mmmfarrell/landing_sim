@@ -99,10 +99,14 @@ public:
   MeasH H_;
   MeasK K_;
 
+  StateVec lambda_;
+  StateMat lambda_mat_;
+
   const StateMat I_ = StateMat::Identity();
 
   double last_prop_time_;
   double use_goal_stop_time_;
+  bool use_partial_update_;
 };
 
 #endif /* ESTIMATOR_H */

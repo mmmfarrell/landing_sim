@@ -1,6 +1,7 @@
 # Estimator Params
 #draw_feature_img: False
 #record_video: False
+use_partial_update: True
 #use_goal_stop_time: 9999.
 use_goal_stop_time: 10.
 

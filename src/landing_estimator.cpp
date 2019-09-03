@@ -54,6 +54,19 @@ Estimator::Estimator(std::string filename)
 
   // Load yaml params
   get_yaml_node("use_goal_stop_time", filename, use_goal_stop_time_);
+  get_yaml_node("use_partial_update", filename, use_partial_update_);
+
+  //lambda_.block<(int)dxZ, 1>(0,0) = lambda;
+
+  //for (int i = 0; i < NUM_FEATURES; i++)
+  //{
+    //lambda_.block<3,1>(dxZ+3*i,0) = lambda_feat;
+  //}
+  lambda_ = StateVec::Constant(1.0);
+  const StateVec ones = StateVec::Constant(1.0);
+  lambda_mat_ = ones * lambda_.transpose() + lambda_ * ones.transpose() -
+                lambda_ * lambda_.transpose();
+  //Lambda_ = dx_ones_ * lambda_.transpose() + lambda_*dx_ones_.transpose() - lambda_*lambda_.transpose();
 }
 
 Estimator::~Estimator()
@@ -255,12 +268,29 @@ void Estimator::update(const double dims, const MeasVec& residual,
                        R.topLeftCorner(dims, dims))
                           .inverse();
 
-  xhat_ += K_.leftCols(dims) * residual.head(dims);
-  // just reuse A_ to save memory
-  A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
-  P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
-                                      R.topLeftCorner(dims, dims) *
-                                      K_.leftCols(dims).transpose();
+  if (use_partial_update_)
+  {
+    // Apply Fixed Gain Partial update per
+    // "Partial-Update Schmidt-Kalman Filter" by Brink
+    // Modified to operate inline and on the manifold
+    //boxplus(x_[i_], lambda_.asDiagonal() * K * residual.topRows(meas.rdim),
+            //xp_);
+    //x_[i_] = xp_;
+    xhat_ += lambda_.asDiagonal() * K_.leftCols(dims) * residual.head(dims);
+    A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
+    P_ += lambda_mat_.cwiseProduct(A_ * P_ * A_.transpose() + K_.leftCols(dims) *
+                                        R.topLeftCorner(dims, dims) *
+                                        K_.leftCols(dims).transpose() - P_);
+  }
+  else
+  {
+    xhat_ += K_.leftCols(dims) * residual.head(dims);
+    // just reuse A_ to save memory
+    A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
+    P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
+                                        R.topLeftCorner(dims, dims) *
+                                        K_.leftCols(dims).transpose();
+  }
 }
 
 void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
