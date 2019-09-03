@@ -12,61 +12,70 @@ using namespace multirotor_sim;
 
 Estimator::Estimator(std::string filename)
 {
-  // Unified Inverse Depth Parametrization for Monocular SLAM 
-  // by Montiel, et. al.
-  const double dmin = 2.;
-  const double rho_min = 1. / dmin;
-  const double rho_init = rho_min / 2.;
-  const double phat_rho_init = rho_min * rho_min / 16;
-
-  // Init EKF State
-  xhat_.setZero();
-  xhat_(xMU) = 0.1;
-  xhat_(xGOAL_RHO) = rho_init;
-  xhat_(xGOAL_LM + 0) = 0.;
-  xhat_(xGOAL_LM + 1) = 0.;
-  xhat_(xGOAL_LM + 2) = 0.;
-  //xhat_(xGOAL_LM + 0 + 2) = rho_init;
-  //xhat_(xGOAL_LM + 3 + 2) = rho_init;
-  //xhat_(xGOAL_LM + 6 + 2) = rho_init;
-  //xhat_(xGOAL_LM + 9 + 2) = rho_init;
-
-  P_.setIdentity();
-  P_(xMU, xMU) = 0.;
-  P_(xGOAL_ATT, xGOAL_ATT) = 0.;
-  P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
-  //P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = phat_rho_init;
-  //P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = phat_rho_init;
-  //P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = phat_rho_init;
-  //P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = phat_rho_init;
-  //P_.setZero();
-
-  Qx_.setIdentity();
-  Qx_ *= 0.00001;
-  Qx_(xMU, xMU) = 0.;
-  Qx_(xGOAL_RHO, xGOAL_RHO) = 0.0000001;
-
-  Qu_.setIdentity();
-  Qu_(uAZ, uAZ) = 0.2 * 0.2;
-  Qu_.block<3, 3>(uOMEGA, uOMEGA) *= 0.1 * 0.1;
-
   last_prop_time_ = -999.;
 
   // Load yaml params
   get_yaml_node("use_goal_stop_time", filename, use_goal_stop_time_);
   get_yaml_node("use_partial_update", filename, use_partial_update_);
 
-  //lambda_.block<(int)dxZ, 1>(0,0) = lambda;
+  // Unified Inverse Depth Parametrization for Monocular SLAM 
+  // by Montiel, et. al.
+  double dmin;
+  get_yaml_node("min_goal_depth", filename, dmin);
+  const double rho_min = 1. / dmin;
+  const double rho_init = rho_min / 2.;
+  const double phat_rho_init = rho_min * rho_min / 16;
 
-  //for (int i = 0; i < NUM_FEATURES; i++)
-  //{
-    //lambda_.block<3,1>(dxZ+3*i,0) = lambda_feat;
-  //}
-  lambda_ = StateVec::Constant(1.0);
+  // Init EKF State
+  Eigen::Matrix<double, xGOAL_LM, 1> x0_states;
+  Eigen::Vector3d x0_landmarks;
+  get_yaml_eigen("x0_states", filename, x0_states);
+  get_yaml_eigen("x0_landmarks", filename, x0_landmarks);
+
+  xhat_.block<xGOAL_LM, 1>(0, 0) = x0_states;
+  xhat_(xGOAL_RHO) = rho_init;
+
+  Eigen::Matrix<double, xGOAL_LM, 1> P0_states;
+  Eigen::Vector3d P0_landmarks;
+  get_yaml_eigen("P0_states", filename, P0_states);
+  get_yaml_eigen("P0_landmarks", filename, P0_landmarks);
+
+  P_.block<xGOAL_LM, xGOAL_LM>(0, 0) = P0_states.asDiagonal();
+  P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
+
+  Eigen::Matrix<double, xGOAL_LM, 1> Qx_states;
+  Eigen::Vector3d Qx_landmarks;
+  get_yaml_eigen("Qx_states", filename, Qx_states);
+  get_yaml_eigen("Qx_landmarks", filename, Qx_landmarks);
+
+  Qx_.setZero();
+  Qx_.block<xGOAL_LM, xGOAL_LM>(0, 0) = Qx_states.asDiagonal();
+
+  InputVec Qu;
+  get_yaml_eigen("Qu", filename, Qu);
+  Qu_ = Qu.asDiagonal();
+
+  // Populate the partial update lambda vector and matrix
+  Eigen::Matrix<double, xGOAL_LM, 1> lambda_states;
+  Eigen::Vector3d lambda_landmarks;
+  get_yaml_eigen("lambda_states", filename, lambda_states);
+  get_yaml_eigen("lambda_landmarks", filename, lambda_landmarks);
+
+  lambda_.block<xGOAL_LM, 1>(0, 0) = lambda_states;
+
+  for (int i = 0; i < MAXLANDMARKS; ++i)
+  {
+    int LM_IDX = xGOAL_LM + 3 * i;
+    xhat_.block<3, 1>(LM_IDX, 0) = x0_landmarks;
+    P_.block<3, 3>(LM_IDX, LM_IDX) = P0_landmarks.asDiagonal();
+    Qx_.block<3, 3>(LM_IDX, LM_IDX) = Qx_landmarks.asDiagonal();
+    lambda_.block<3, 1>(LM_IDX, 0) = lambda_landmarks;
+  }
+
   const StateVec ones = StateVec::Constant(1.0);
   lambda_mat_ = ones * lambda_.transpose() + lambda_ * ones.transpose() -
                 lambda_ * lambda_.transpose();
-  //Lambda_ = dx_ones_ * lambda_.transpose() + lambda_*dx_ones_.transpose() - lambda_*lambda_.transpose();
+
 }
 
 Estimator::~Estimator()

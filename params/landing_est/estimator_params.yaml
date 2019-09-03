@@ -1,9 +1,67 @@
 # Estimator Params
-#draw_feature_img: False
-#record_video: False
+
 use_partial_update: True
 #use_goal_stop_time: 9999.
 use_goal_stop_time: 10.
+
+# Inverse depth parameterization
+# Note, the values derived from this override the
+# values set in x0 and P0
+min_goal_depth: 2.
+
+# Initial State
+x0_states: [0., 0., 0.,   # POS
+                0., 0., 0.,   # ATT
+                0., 0., 0.,   # VEL
+                0.1,          # MU
+                0., 0.,       # GOAL_POS
+                0.,           # GOAL_RHO
+                0., 0.,       # GOAL_VEL
+                0.,           # GOAL_ATT
+                0.]           # GOAL_OMEGA
+
+x0_landmarks: [0., 0., 0.]   
+
+P0_states: [1., 1., 1.,   # POS
+                1., 1., 1.,   # ATT
+                1., 1., 1.,   # VEL
+                0.,           # MU
+                1., 1.,       # GOAL_POS
+                1.,           # GOAL_RHO
+                1., 1.,       # GOAL_VEL
+                0.,           # GOAL_ATT
+                1.]           # GOAL_OMEGA
+
+P0_landmarks: [1., 1., 1.]   
+
+# Noise Params
+Qx_states: [0.00001, 0.00001, 0.00001,   # POS
+                0.00001, 0.00001, 0.00001,   # ATT
+                0.00001, 0.00001, 0.00001,   # VEL
+                0.,           # MU
+                0.00001, 0.00001,       # GOAL_POS
+                0.0000001,           # GOAL_RHO
+                0.00001, 0.00001,       # GOAL_VEL
+                0.00001,           # GOAL_ATT
+                0.00001]           # GOAL_OMEGA
+
+Qx_landmarks: [0.00001, 0.00001, 0.00001]   
+
+Qu: [0.04,                # AZ
+     0.01, 0.01, 0.01]    # OMEGA
+
+# Partial Update Params
+lambda_states: [1., 1., 1.,   # POS
+                1., 1., 1.,   # ATT
+                1., 1., 1.,   # VEL
+                0.5,          # MU
+                1., 1.,       # GOAL_POS
+                1.,           # GOAL_RHO
+                1., 1.,       # GOAL_VEL
+                1.,           # GOAL_ATT
+                1.]           # GOAL_OMEGA
+
+lambda_landmarks: [0.5, 0.5, 0.5]   
 
 ## Initial estimates
 #x0: [0., 0., 0., # UAVATT
