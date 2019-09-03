@@ -23,19 +23,19 @@ Estimator::Estimator(std::string filename)
   xhat_.setZero();
   xhat_(xMU) = 0.1;
   xhat_(xGOAL_RHO) = rho_init;
-  xhat_(xGOAL_LM + 0 + 2) = rho_init;
-  xhat_(xGOAL_LM + 3 + 2) = rho_init;
-  xhat_(xGOAL_LM + 6 + 2) = rho_init;
-  xhat_(xGOAL_LM + 9 + 2) = rho_init;
+  //xhat_(xGOAL_LM + 0 + 2) = rho_init;
+  //xhat_(xGOAL_LM + 3 + 2) = rho_init;
+  //xhat_(xGOAL_LM + 6 + 2) = rho_init;
+  //xhat_(xGOAL_LM + 9 + 2) = rho_init;
 
   P_.setIdentity();
-  //P_(xMU, xMU) = 0.;
+  P_(xMU, xMU) = 0.;
   P_(xGOAL_ATT, xGOAL_ATT) = 0.;
   P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
-  P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = phat_rho_init;
-  P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = phat_rho_init;
-  P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = phat_rho_init;
-  P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = phat_rho_init;
+  //P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = phat_rho_init;
+  //P_(xGOAL_LM + 3 * 1 + 2, xGOAL_LM + 3 * 1 + 2) = phat_rho_init;
+  //P_(xGOAL_LM + 3 * 2 + 2, xGOAL_LM + 3 * 2 + 2) = phat_rho_init;
+  //P_(xGOAL_LM + 3 * 3 + 2, xGOAL_LM + 3 * 3 + 2) = phat_rho_init;
   //P_.setZero();
 
   Qx_.setIdentity();
@@ -171,20 +171,20 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     update(pix_dims, z_resid_, z_R_, H_);
   }
 
-  // Update Landmark Pixels
-  static const int num_landmarks = 4;
-  for (int i = 0; i < num_landmarks; i++)
-  {
-    int lm_pix_dims = 0;
-    MeasVec lm_pix_zhat;
-    landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
-    z_resid_.head(lm_pix_dims) = z.pixs[i + 1] - lm_pix_zhat.head(lm_pix_dims);
-    // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
-    // Eigen::Matrix2d::Identity();
-    //PRINTMAT(z_resid_);
-    z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
-    update(lm_pix_dims, z_resid_, z_R_, H_);
-  }
+  //// Update Landmark Pixels
+  //static const int num_landmarks = 4;
+  //for (int i = 0; i < num_landmarks; i++)
+  //{
+    //int lm_pix_dims = 0;
+    //MeasVec lm_pix_zhat;
+    //landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+    //z_resid_.head(lm_pix_dims) = z.pixs[i + 1] - lm_pix_zhat.head(lm_pix_dims);
+    //// z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
+    //// Eigen::Matrix2d::Identity();
+    ////PRINTMAT(z_resid_);
+    //z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
+    //update(lm_pix_dims, z_resid_, z_R_, H_);
+  //}
 }
 
 void Estimator::gnssCallback(const double& t, const Vector6d& z,
@@ -442,24 +442,24 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   A(xGOAL_ATT, xGOAL_OMEGA) = 1.;
 
 
-  // Landmark dynamics
-  for (unsigned int i = 0; i < MAXLANDMARKS; i++)
-  {
-    const unsigned int xRHOI = xGOAL_LM + 2 + 3 * i;
-    const double rho_i = x(xRHOI);
+  // Zero Landmark dynamics
+  //for (unsigned int i = 0; i < MAXLANDMARKS; i++)
+  //{
+    //const unsigned int xRHOI = xGOAL_LM + 2 + 3 * i;
+    //const double rho_i = x(xRHOI);
 
-    // dynamics
-    xdot(xRHOI) = rho_i * rho_i * e3.transpose() * R_I_b.transpose() * vel_b;
+    //// dynamics
+    //xdot(xRHOI) = rho_i * rho_i * e3.transpose() * R_I_b.transpose() * vel_b;
 
-    // jacobian
-    // d goal / d UAV
-    A(xRHOI, xATT + 0) = rho_i * rho_i * e3.transpose() * d_R_d_phi.transpose() * vel_b;
-    A(xRHOI, xATT + 1) = rho_i * rho_i * e3.transpose() * d_R_d_theta.transpose() * vel_b;
-    A(xRHOI, xATT + 2) = rho_i * rho_i * e3.transpose() * d_R_d_psi.transpose() * vel_b;
-    A.block<1, 3>(xRHOI, xVEL) = rho_i * rho_i * e3.transpose() * R_I_b.transpose();
+    //// jacobian
+    //// d goal / d UAV
+    //A(xRHOI, xATT + 0) = rho_i * rho_i * e3.transpose() * d_R_d_phi.transpose() * vel_b;
+    //A(xRHOI, xATT + 1) = rho_i * rho_i * e3.transpose() * d_R_d_theta.transpose() * vel_b;
+    //A(xRHOI, xATT + 2) = rho_i * rho_i * e3.transpose() * d_R_d_psi.transpose() * vel_b;
+    //A.block<1, 3>(xRHOI, xVEL) = rho_i * rho_i * e3.transpose() * R_I_b.transpose();
 
-    // d goal / d goal
-    A(xRHOI, xRHOI) = 2. * rho_i * e3.transpose() * R_I_b.transpose() * vel_b;
-  }
+    //// d goal / d goal
+    //A(xRHOI, xRHOI) = 2. * rho_i * e3.transpose() * R_I_b.transpose() * vel_b;
+  //}
 }
 

@@ -14,6 +14,8 @@ Eigen::Matrix3d dRIBdPsi(const double phi, const double theta,
 
 Eigen::Matrix2d rotm2dItoB(const double theta);
 Eigen::Matrix2d dR2DdTheta(const double theta);
+Eigen::Matrix3d rotm3dItoB(const double theta);
+Eigen::Matrix3d dR3DdTheta(const double theta);
 
 Eigen::Matrix3d wMat(const double phi, const double theta, const double psi);
 

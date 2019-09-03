@@ -184,15 +184,16 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
 
   const double theta_g = x(Estimator::xGOAL_ATT);
-  const Eigen::Matrix2d R_I_g = rotm2dItoB(theta_g);
+  const Eigen::Matrix3d R_I_g = rotm3dItoB(theta_g);
 
-  const Eigen::Vector2d p_i_g_g = x.segment<2>(xLM_IDX);
-  const Eigen::Vector2d p_i_g_v = R_I_g.transpose() * p_i_g_g;
-  const Eigen::Vector2d p_i_v_v_2d =
-      p_i_g_v + x.segment<2>(Estimator::xGOAL_POS);
+  const Eigen::Vector3d p_i_g_g = x.segment<3>(xLM_IDX);
+  const Eigen::Vector3d p_i_g_v = R_I_g.transpose() * p_i_g_g;
+  //const Eigen::Vector3d p_i_v_v_2d =
+      //p_i_g_v.segment<2>(0) + x.segment<2>(Estimator::xGOAL_POS);
 
-  const double rho_i = x(xLM_IDX + 2);
-  const Eigen::Vector3d p_i_v_v(p_i_v_v_2d(0), p_i_v_v_2d(1), 1. / rho_i);
+  const double rho = x(Estimator::xGOAL_RHO);
+  const Eigen::Vector3d p_g_v_v(x(Estimator::xGOAL_POS), x(Estimator::xGOAL_POS + 1), 1. / rho);
+  const Eigen::Vector3d p_i_v_v = p_i_g_v + p_g_v_v;
 
   const Eigen::Vector3d p_i_c_c = R_b_c * R_I_b * p_i_v_v;
 
@@ -228,7 +229,7 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
   const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
   const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
-  const Eigen::Matrix2d d_R_d_theta_g = dR2DdTheta(theta_g);
+  const Eigen::Matrix3d d_R_d_theta_g = dR3DdTheta(theta_g);
 
   const Eigen::Vector3d RdRdPhip = R_b_c * d_R_d_phi * p_i_v_v;
   const double dpx_dphi =
@@ -247,14 +248,14 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
       ((fx * e1.transpose() * R_b_c * R_I_b) / p_i_c_c(2)) -
       ((fx * e3.transpose() * R_b_c * R_I_b * p_i_c_c(0)) /
        (p_i_c_c(2) * p_i_c_c(2)));
-  const double dpx_drho_i = -(1. / rho_i / rho_i) * dpx_dp(2);
+  const double dpx_drho = -(1. / rho / rho) * dpx_dp(2);
 
   H.setZero();
+  H(0, Estimator::xGOAL_RHO) = dpx_drho;
   H(0, Estimator::xATT + 0) = dpx_dphi;
   H(0, Estimator::xATT + 1) = dpx_dtheta;
   H(0, Estimator::xATT + 2) = dpx_dpsi;
   H.block<1, 2>(0, Estimator::xGOAL_POS) = dpx_dp.head(2);
-  H(0, xLM_IDX + 2) = dpx_drho_i;
 
   const double dpy_dphi =
       (fy * RdRdPhip(1) / p_i_c_c(2)) -
@@ -270,18 +271,18 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
       ((fy * e2.transpose() * R_b_c * R_I_b) / p_i_c_c(2)) -
       ((fy * e3.transpose() * R_b_c * R_I_b * p_i_c_c(1)) /
        (p_i_c_c(2) * p_i_c_c(2)));
-  const double dpy_drho_i = -(1. / rho_i / rho_i) * dpy_dp(2);
+  const double dpy_drho = -(1. / rho / rho) * dpy_dp(2);
 
+  H(1, Estimator::xGOAL_RHO + 2) = dpy_drho;
   H(1, Estimator::xATT + 0) = dpy_dphi;
   H(1, Estimator::xATT + 1) = dpy_dtheta;
   H(1, Estimator::xATT + 2) = dpy_dpsi;
   H.block<1, 2>(1, Estimator::xGOAL_POS) = dpy_dp.head(2);
-  H(1, xLM_IDX + 2) = dpy_drho_i;
 
   // d / d theta_g
-  const Vector2d d_theta_p_i_v_v_2d = d_R_d_theta_g.transpose() * p_i_g_g;
-  const Vector3d d_theta_p_i_v_v(d_theta_p_i_v_v_2d(0), d_theta_p_i_v_v_2d(1),
-                                 0.);
+  const Vector3d d_theta_p_i_v_v = d_R_d_theta_g.transpose() * p_i_g_g;
+  //const Vector3d d_theta_p_i_v_v(d_theta_p_i_v_v_2d(0), d_theta_p_i_v_v_2d(1),
+                                 //0.);
 
   const Eigen::Vector3d RRdRdThetaP = R_b_c * R_I_b * d_theta_p_i_v_v;
   const double dpx_dtheta_g =
@@ -310,16 +311,19 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   // jac[1, 17:19] = d2drxy
 
   // d / d rxy
-  Eigen::Matrix<double, 3, 2> d_rxy_p_i_v_v;
-  d_rxy_p_i_v_v.block<2, 2>(0, 0) = R_I_g.transpose();
+  //Eigen::Matrix<double, 3, 2> d_rxy_p_i_v_v;
+  //d_rxy_p_i_v_v.block<2, 2>(0, 0) = R_I_g.transpose();
+  const Eigen::Matrix3d d_r_p_i_v_v = R_I_g.transpose();
+  //d_r_p_i_v_v.block<2, 2>(0, 0) = R_I_g.transpose();
 
-  const Eigen::Matrix<double, 3, 2> RRdRdrxyp = R_b_c * R_I_b * d_rxy_p_i_v_v;
-  const Eigen::Matrix<double, 1, 2> dpx_drxy =
-      (fx * RRdRdrxyp.block<1, 2>(0, 0) / p_i_c_c(2)) -
-      (fx * RRdRdrxyp.block<1, 2>(2, 0) * p_i_c_c(0) / p_i_c_c(2) / p_i_c_c(2));
-  const Eigen::Matrix<double, 1, 2> dpy_drxy =
-      (fy * RRdRdrxyp.block<1, 2>(1, 0) / p_i_c_c(2)) -
-      (fy * RRdRdrxyp.block<1, 2>(2, 0) * p_i_c_c(1) / p_i_c_c(2) / p_i_c_c(2));
-  H.block<1, 2>(0, xLM_IDX) = dpx_drxy;
-  H.block<1, 2>(1, xLM_IDX) = dpy_drxy;
+  //const Eigen::Matrix<double, 3, 2> RRdRdrxyp = R_b_c * R_I_b * d_rxy_p_i_v_v;
+  const Eigen::Matrix3d RRdRdrp = R_b_c * R_I_b * d_r_p_i_v_v;
+  const Eigen::Matrix<double, 1, 3> dpx_dr =
+      (fx * RRdRdrp.block<1, 3>(0, 0) / p_i_c_c(2)) -
+      (fx * RRdRdrp.block<1, 3>(2, 0) * p_i_c_c(0) / p_i_c_c(2) / p_i_c_c(2));
+  const Eigen::Matrix<double, 1, 3> dpy_dr =
+      (fy * RRdRdrp.block<1, 3>(1, 0) / p_i_c_c(2)) -
+      (fy * RRdRdrp.block<1, 3>(2, 0) * p_i_c_c(1) / p_i_c_c(2) / p_i_c_c(2));
+  H.block<1, 3>(0, xLM_IDX) = dpx_dr;
+  H.block<1, 3>(1, xLM_IDX) = dpy_dr;
 }
