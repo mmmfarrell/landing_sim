@@ -926,9 +926,10 @@ def test_landmark_pixel_model_jacobian():
 
     x = np.zeros((STATES, 1))
     # Simple State
+    # x[12] = 0.1
     # x[17] = 1.
     # x[18] = 0.5
-    # x[19] = 0.1
+    # x[19] = 1.
 
     # # Complex State
     x[3] = 0.1
@@ -944,20 +945,20 @@ def test_landmark_pixel_model_jacobian():
     jac_func = nd.Jacobian(landmark_pix_meas_model)
 
     meas = landmark_pix_meas_model(x)
-    # print('x = {}'.format(x))
-    # print('meas = {}'.format(meas))
+    print('x = {}'.format(x))
+    print('meas = {}'.format(meas))
     jac = jac_func(x)
     analytical_jac = analytical_landmark_pix_jac(x)
-    # print('jac = {}'.format(jac))
+    print('jac = {}'.format(jac))
 
     res = np.isclose(jac, analytical_jac)
     assert(np.all(res)), res
 
 
 if __name__ == '__main__':
-    # test_state_jacobian()
-    # test_input_jacobian()
-    # test_gps_model_jacobian()
-    # test_goal_pix_model_jacobian()
-    # test_goal_depth_model_jacobian()
+    test_state_jacobian()
+    test_input_jacobian()
+    test_gps_model_jacobian()
+    test_goal_pix_model_jacobian()
+    test_goal_depth_model_jacobian()
     test_landmark_pixel_model_jacobian()

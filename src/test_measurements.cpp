@@ -121,7 +121,7 @@ public:
     xhat(Estimator::xGOAL_RHO) = 0.1;
     xhat(Estimator::xGOAL_LM + 0) = 1.;
     xhat(Estimator::xGOAL_LM + 1) = 0.5;
-    xhat(Estimator::xGOAL_LM + 2) = 0.1;
+    xhat(Estimator::xGOAL_LM + 2) = 1.0;
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
@@ -181,11 +181,12 @@ TEST_F(SimpleState, landmarkPixelMeas_Correct)
   int meas_dims = 0;
   landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
 
-  const double true_px = 340.5;
-  const double true_py = 198.;
+  const double true_px = 338.6364;
+  const double true_py = 201.8182;
 
-  EXPECT_DOUBLE_EQ(zhat(0), true_px);
-  EXPECT_DOUBLE_EQ(zhat(1), true_py);
+  const double abs_tol = 1e-4;
+  EXPECT_NEAR(zhat(0), true_px, abs_tol);
+  EXPECT_NEAR(zhat(1), true_py, abs_tol);
 }
 
 TEST_F(SimpleState, landmarkPixelJac_CorrectValues)
@@ -194,46 +195,50 @@ TEST_F(SimpleState, landmarkPixelJac_CorrectValues)
   int meas_dims = 0;
   landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
 
-  const double true_dpx_dphi = 411.025;
-  const double true_dpx_dtheta = -2.05;
-  const double true_dpx_dpsi = -41.;
+  const double true_dpx_dphi = 410.8471;
+  const double true_dpx_dtheta = -1.6942;
+  const double true_dpx_dpsi = -37.2728;
   const double true_dpx_dgoalx = 0.;
-  const double true_dpx_dgoaly = 41.;
-  const double true_dpx_dtheta_g = 41.;
+  const double true_dpx_dgoaly = 37.2728;
+  const double true_dpx_drho = 169.4215;
+  const double true_dpx_dtheta_g = 37.2728;
   const double true_dpx_dlmx = 0.;
-  const double true_dpx_dlmy = 41.;
-  const double true_dpx_drho_i = 205.;
+  const double true_dpx_dlmy = 37.2728;
+  const double true_dpx_dlmz = -1.6942;
 
-  const double true_dpy_dphi = -2.1;
-  const double true_dpy_dtheta = 424.2;
-  const double true_dpy_dpsi = -21.;
-  const double true_dpy_dgoalx = -42.;
+  const double true_dpy_dphi = -1.7355;
+  const double true_dpy_dtheta = 423.4711;
+  const double true_dpy_dpsi = -19.0909;
+  const double true_dpy_dgoalx = -38.1818;
   const double true_dpy_dgoaly = 0.;
-  const double true_dpy_dtheta_g = 21.;
-  const double true_dpy_dlmx = -42.;
+  const double true_dpy_drho = -347.1074;
+  const double true_dpy_dtheta_g = 19.0909;
+  const double true_dpy_dlmx = -38.1818;
   const double true_dpy_dlmy = 0.;
-  const double true_dpy_drho_i = -420.;
+  const double true_dpy_dlmz = 3.4711;
 
-  const double abs_tol = 1e-7;
+  const double abs_tol = 1e-4;
   EXPECT_NEAR(H(0, Estimator::xATT + 0), true_dpx_dphi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 1), true_dpx_dtheta, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 2), true_dpx_dpsi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_dpx_dgoalx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_dpx_dgoaly, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_RHO), true_dpx_drho, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_ATT), true_dpx_dtheta_g, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 0), true_dpx_dlmx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 1), true_dpx_dlmy, abs_tol);
-  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_drho_i, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_dlmz, abs_tol);
 
   EXPECT_NEAR(H(1, Estimator::xATT + 0), true_dpy_dphi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 1), true_dpy_dtheta, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 2), true_dpy_dpsi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpy_dgoalx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpy_dgoaly, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_RHO), true_dpy_drho, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_ATT), true_dpy_dtheta_g, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 0), true_dpy_dlmx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 1), true_dpy_dlmy, abs_tol);
-  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_drho_i, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_dlmz, abs_tol);
 }
 
 class ComplexState : public ::testing::Test
@@ -255,7 +260,7 @@ public:
 
     xhat(Estimator::xGOAL_LM + 0) = 2.34;
     xhat(Estimator::xGOAL_LM + 1) = -0.75;
-    xhat(Estimator::xGOAL_LM + 2) = 0.134;
+    xhat(Estimator::xGOAL_LM + 2) = 1.134;
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
@@ -348,8 +353,8 @@ TEST_F(ComplexState, landmarkPixelMeas_Correct)
   int meas_dims = 0;
   landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
 
-  const double true_px = 311.484946;
-  const double true_py = -84.758426;
+  const double true_px = 329.1128;
+  const double true_py = -15.8178;
 
   const double abs_tol = 1e-4;
   EXPECT_NEAR(zhat(0), true_px, abs_tol);
@@ -362,46 +367,50 @@ TEST_F(ComplexState, landmarkPixelJac_CorrectValues)
   int meas_dims = 0;
   landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
 
-  const double true_dpx_dphi = 410.1768;
-  const double true_dpx_dtheta = 38.2010;
-  const double true_dpx_dpsi = -179.5100;
-  const double true_dpx_dgoalx = -60.6827;
-  const double true_dpx_dgoaly = 21.1214;
-  const double true_dpx_dtheta_g = 114.3750;
-  const double true_dpx_dlmx = -27.9740;
-  const double true_dpx_dlmy = 57.8442;
-  const double true_dpx_drho_i = -414.5959;
+  const double true_dpx_dphi = 410.2025;
+  const double true_dpx_dtheta = 19.4083;
+  const double true_dpx_dpsi = -116.6876;
+  const double true_dpx_dgoalx = -39.1146;
+  const double true_dpx_dgoaly = 14.1791;
+  const double true_dpx_drho = -309.6847;
+  const double true_dpx_dtheta_g = 74.9573;
+  const double true_dpx_dlmx = -17.6320;
+  const double true_dpx_dlmy = 37.6843;
+  const double true_dpx_dlmz = 3.0968;
 
-  const double true_dpy_dphi = 6.7447;
-  const double true_dpy_dtheta = 666.8908;
-  const double true_dpy_dpsi = 74.2919;
-  const double true_dpy_dgoalx = -23.6244;
-  const double true_dpy_dgoaly = -74.8782;
-  const double true_dpy_dtheta_g = -137.0451;
-  const double true_dpy_dlmx = -69.6519;
-  const double true_dpy_dlmy = -36.2420;
-  const double true_dpy_drho_i = -1621.4416;
+  const double true_dpy_dphi = -5.6859;
+  const double true_dpy_dtheta = 573.8714;
+  const double true_dpy_dpsi = 44.3643;
+  const double true_dpy_dgoalx = -15.1424;
+  const double true_dpy_dgoaly = -46.1187;
+  const double true_dpy_drho = -1211.1447;
+  const double true_dpy_dtheta_g = -83.7430;
+  const double true_dpy_dlmx = -43.3182;
+  const double true_dpy_dlmy = -21.9036;
+  const double true_dpy_dlmz = 12.1114;
 
-  const double abs_tol = 1e-2;
+  const double abs_tol = 1e-4;
   EXPECT_NEAR(H(0, Estimator::xATT + 0), true_dpx_dphi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 1), true_dpx_dtheta, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 2), true_dpx_dpsi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_dpx_dgoalx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_dpx_dgoaly, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_RHO), true_dpx_drho, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_ATT), true_dpx_dtheta_g, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 0), true_dpx_dlmx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 1), true_dpx_dlmy, abs_tol);
-  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_drho_i, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_LM + 2), true_dpx_dlmz, abs_tol);
 
   EXPECT_NEAR(H(1, Estimator::xATT + 0), true_dpy_dphi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 1), true_dpy_dtheta, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 2), true_dpy_dpsi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpy_dgoalx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpy_dgoaly, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_RHO), true_dpy_drho, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_ATT), true_dpy_dtheta_g, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 0), true_dpy_dlmx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 1), true_dpy_dlmy, abs_tol);
-  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_drho_i, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_LM + 2), true_dpy_dlmz, abs_tol);
 }
 
 class ComplexStateWithLM2 : public ::testing::Test
@@ -423,7 +432,7 @@ public:
 
     xhat(Estimator::xGOAL_LM + 6 + 0) = 2.34;
     xhat(Estimator::xGOAL_LM + 6 + 1) = -0.75;
-    xhat(Estimator::xGOAL_LM + 6 + 2) = 0.134;
+    xhat(Estimator::xGOAL_LM + 6 + 2) = 1.134;
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
@@ -438,44 +447,48 @@ TEST_F(ComplexStateWithLM2, landmarkPixelJac_CorrectLocationWithLMIdx)
   int meas_dims = 0;
   landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
 
-  const double true_dpx_dphi = 410.1768;
-  const double true_dpx_dtheta = 38.2010;
-  const double true_dpx_dpsi = -179.5100;
-  const double true_dpx_dgoalx = -60.6827;
-  const double true_dpx_dgoaly = 21.1214;
-  const double true_dpx_dtheta_g = 114.3750;
-  const double true_dpx_dlmx = -27.9740;
-  const double true_dpx_dlmy = 57.8442;
-  const double true_dpx_drho_i = -414.5959;
+  const double true_dpx_dphi = 410.2025;
+  const double true_dpx_dtheta = 19.4083;
+  const double true_dpx_dpsi = -116.6876;
+  const double true_dpx_dgoalx = -39.1146;
+  const double true_dpx_dgoaly = 14.1791;
+  const double true_dpx_drho = -309.6847;
+  const double true_dpx_dtheta_g = 74.9573;
+  const double true_dpx_dlmx = -17.6320;
+  const double true_dpx_dlmy = 37.6843;
+  const double true_dpx_dlmz = 3.0968;
 
-  const double true_dpy_dphi = 6.7447;
-  const double true_dpy_dtheta = 666.8908;
-  const double true_dpy_dpsi = 74.2919;
-  const double true_dpy_dgoalx = -23.6244;
-  const double true_dpy_dgoaly = -74.8782;
-  const double true_dpy_dtheta_g = -137.0451;
-  const double true_dpy_dlmx = -69.6519;
-  const double true_dpy_dlmy = -36.2420;
-  const double true_dpy_drho_i = -1621.4416;
-
+  const double true_dpy_dphi = -5.6859;
+  const double true_dpy_dtheta = 573.8714;
+  const double true_dpy_dpsi = 44.3643;
+  const double true_dpy_dgoalx = -15.1424;
+  const double true_dpy_dgoaly = -46.1187;
+  const double true_dpy_drho = -1211.1447;
+  const double true_dpy_dtheta_g = -83.7430;
+  const double true_dpy_dlmx = -43.3182;
+  const double true_dpy_dlmy = -21.9036;
+  const double true_dpy_dlmz = 12.1114;
   const double abs_tol = 1e-2;
+
   EXPECT_NEAR(H(0, Estimator::xATT + 0), true_dpx_dphi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 1), true_dpx_dtheta, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xATT + 2), true_dpx_dpsi, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 0), true_dpx_dgoalx, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_POS + 1), true_dpx_dgoaly, abs_tol);
+  EXPECT_NEAR(H(0, Estimator::xGOAL_RHO), true_dpx_drho, abs_tol);
   EXPECT_NEAR(H(0, Estimator::xGOAL_ATT), true_dpx_dtheta_g, abs_tol);
   EXPECT_NEAR(H(0, xLM_IDX + 0), true_dpx_dlmx, abs_tol);
   EXPECT_NEAR(H(0, xLM_IDX + 1), true_dpx_dlmy, abs_tol);
-  EXPECT_NEAR(H(0, xLM_IDX + 2), true_dpx_drho_i, abs_tol);
+  EXPECT_NEAR(H(0, xLM_IDX + 2), true_dpx_dlmz, abs_tol);
 
   EXPECT_NEAR(H(1, Estimator::xATT + 0), true_dpy_dphi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 1), true_dpy_dtheta, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xATT + 2), true_dpy_dpsi, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 0), true_dpy_dgoalx, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_POS + 1), true_dpy_dgoaly, abs_tol);
+  EXPECT_NEAR(H(1, Estimator::xGOAL_RHO), true_dpy_drho, abs_tol);
   EXPECT_NEAR(H(1, Estimator::xGOAL_ATT), true_dpy_dtheta_g, abs_tol);
   EXPECT_NEAR(H(1, xLM_IDX + 0), true_dpy_dlmx, abs_tol);
   EXPECT_NEAR(H(1, xLM_IDX + 1), true_dpy_dlmy, abs_tol);
-  EXPECT_NEAR(H(1, xLM_IDX + 2), true_dpy_drho_i, abs_tol);
+  EXPECT_NEAR(H(1, xLM_IDX + 2), true_dpy_dlmz, abs_tol);
 }

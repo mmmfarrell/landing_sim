@@ -281,7 +281,7 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   H(1, Estimator::xATT + 1) = dpy_dtheta;
   H(1, Estimator::xATT + 2) = dpy_dpsi;
   H.block<1, 2>(1, Estimator::xGOAL_POS) = dpy_dp.head(2);
-  H(1, Estimator::xGOAL_RHO + 2) = dpy_drho;
+  H(1, Estimator::xGOAL_RHO) = dpy_drho;
 
   // d / d theta_g
   const Eigen::Matrix3d d_R_d_theta_g = dR3DdTheta(theta_g);
