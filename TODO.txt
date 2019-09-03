@@ -1,6 +1,7 @@
 TODO
   - Sim
-    - estimate drag
+    - latex for imu biases
+      - jacobians for state and inputs
     - estimate IMU biases
     - Random landmarks that come and go
   - Gazebo sim

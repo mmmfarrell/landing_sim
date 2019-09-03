@@ -1,0 +1,523 @@
+% !TEX root=./root.tex
+
+\section{UAV + IMU Biases + Landing Vehicle Estimator}
+Now assume that in addition to estimating the UAV states, we also want to
+estimate the location of a landing target as it moves on the ground. As a first
+pass, we assume that the landing target is constrained to move on a plane so
+that it only has three degrees of freedom. The only information we receive about
+the landing vehicle are visual observations of landmark points and a full
+transform from the camera to the landing marker.
+
+Let us clarify some refernce frames.
+\begin{itemize}
+  \item $I$ - Inertial frame. The inertial frame is an inertially fixed, North,
+    East, Down coordinate frame.
+  \item $b$ - Body frame. The body frame is a Forward, Right, Down (NED) frame
+    that is attached to the UAV. It rotates and moves with the UAV.
+  \item $c$ - Camera frame. The camera frame is rigidly attached to the body
+    frame at a constant offset and rotation. The $z$ axis of the camera frame
+    points out the lens of the camera, the $x$ axis points to the right in the
+    camera image, and the $y$ axis down in the camera image.
+  \item $v$ - Vehicle frame. The vehicle frame frame is colocated with the body
+    frame, but is aligned with the $I$ frame.
+  \item $g$ - Goal frame. The goal frame is a Forward, Right, Down (NED) frame
+    that is attached to the landing vehicle. It rotates and moves with the UAV.
+    The position (0, 0, 0) in the $g$ frame is the desired landing position for
+    the UAV.
+\end{itemize}
+
+\subsection{State}
+The state of the combined system can be separated into the individual parts for
+the UAV and the landing goal
+\begin{equation}
+  \x =
+  \begin{bmatrix}
+    \left(\x_{\text{UAV}}\right)^\transpose & \left(\x_{\text{Goal}}\right)^\transpose
+  \end{bmatrix}^\transpose.
+\end{equation}
+These individual components are expressed as
+\begin{align}
+  \x_{\text{UAV}} &=
+  \begin{bmatrix}
+    \vect{p}_{b/I}^I &
+    \phi & \theta & \psi &
+    \vect{v}_{b/I}^b &
+    \mu & \vect{\beta}_a & \vect{\beta}_\omega
+    %p_n & p_e & p_d &
+    %\phi & \theta & \psi &
+    %u & v & w &
+    %\mu & \vect{\beta}_a & \vect{\beta}_\omega
+  \end{bmatrix}^\transpose \\
+  \x_{\text{Goal}} & =
+    \begin{bmatrix}
+      \vect{p}_{g/v}^{v} & \rho & \vect{v}_{g/I}^{g} & \theta_{I}^{g} &
+      \omega_{g/I}^{g} &
+      \vect{r}_{1}^{g} & \dots & \vect{r}_{n}^{g}
+    \end{bmatrix}^{\transpose}.
+\end{align}
+The UAV states are self explanatory, covering position, attitude and velocity.
+The Goal states, however, are a little more unique. They are described here:
+\begin{itemize}
+  \item $\vect{p}_{g/v}^{v}$ - The position of the goal frame w.r.t. vehicle
+    frame, expressed in the vehicle frame. This position does not change as
+    either the UAV or the goal rotates because the vehicle frame never rotates.
+  \item $\rho$ - The inverse depth from the vehicle frame to the goal frame.
+    Also note that rotation does not affect this state.
+  \item $\vect{v}_{g/I}^{g}$ - The velocity of the goal frame w.r.t. inertial
+    frame, expressed in the goal frame. The motion of the goal is most easily
+    defined in the goal frame.
+  \item $\theta_I^g$ - The angle that represents the rotation from the inertial
+    frame to the goal frame. Note that this is only one value as the goal frame
+    can only yaw while it is constrained to motion on the plane.
+  \item $\omega_{g/I}^g$ - The angular rate of the goal frame w.r.t. inertial
+    frame, expressed in the goal frame. This is the rate at which $\theta_I^g$
+    changes.
+  \item $\vect{r}_{i/g}^g$ - The location of landmark $i$ w.r.t. the goal frame,
+    expressed in the goal frame. These landmarks are rigidly attached to the
+    same landing vehicle as the goal frame, and therefore $\vect{r}_{i/g}^g$
+    does not change, but is a constant.
+\end{itemize}
+
+\subsection{UAV State Dynamics}
+We use common UAV dynamics with the addition of a linear drag term as explained
+in~\cite{leishman2014accel}. The UAV dynamics are given by
+\begin{align}
+  \dot{\vect{p}}_{b/I}^I
+  &=
+  R_b^I \vect{v}_{b/I}^b 
+  \\
+  \begin{bmatrix}
+    \dot{\phi} \\
+    \dot{\theta} \\
+    \dot{\psi}
+  \end{bmatrix}
+  &=
+  \begin{bmatrix}
+    1 & \sin\phi\tan\theta & \cos\phi\tan\theta \\
+    0 & \cos\phi & -\sin\phi \\
+    0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+  \end{bmatrix}
+  \left( \bar{\vect{\omega}}_{b/I}^b - \vect{\beta}_\omega \right)
+  \\
+  \dot{\vect{v}}_{b/I}^b 
+  &=
+  R_I^b \vect{g}
+  +
+  \skewmat{\vect{v}_{b/I}^b}
+  \left( \bar{\vect{\omega}}_{b/I}^b - \vect{\beta}_\omega \right)
+  -
+  \left( \bar{a}_z - \beta_{a_z} \right) \e_3
+  -
+  \begin{bmatrix}
+    \mu u \\
+    \mu v \\
+    0
+  \end{bmatrix}
+  \\
+  \dot{\mu} &= 0
+  \\
+  \dot{\vect{\beta}}_a &= \vect{0} + \vect{\eta}_{\beta_a}
+  \\
+  \dot{\vect{\beta}}_\omega &= \vect{0} + \vect{\eta}_{\beta_\omega}
+\end{align}
+
+\subsection{Goal State Dynamics}
+We assume that the landing vehicle moves with a constant velocity and a constant
+angular velocity. The dynamics of the goal states are expressed as
+\begin{align}
+  \dot{\vect{p}}_{g/v}^{v} &= \left(R_{v}^{g}\right)^\transpose
+  \vect{v}_{g/I}^{g} - I_{2 \times 3}\left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b} \\
+  \dot{\rho} &= \rho^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b} \\
+  \dot{\vect{v}}_{g/I}^{g} &= \vect{0} + \eta_{v} \\
+  \dot{\theta}_{I}^{g} &= \omega_{g/I}^g \\
+  \dot{\omega}_{g/I}^{g} &= 0 + \eta_{\omega} \\
+  \dot{\vect r}_{i}^{b} &= \vect{0}.
+\end{align}.
+
+Note that the rotation from the vehicle frame to the goal frame is given by
+\begin{equation}
+  R_v^g =
+  \begin{bmatrix}
+    \ctheta & \stheta \\
+    -\stheta & \ctheta
+  \end{bmatrix}.
+\end{equation}
+
+\subsection{Motion Model Jacobians}
+The full state jacobian is given by
+\begin{equation}
+  A =
+  \begin{bmatrix}
+    \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{UAV}}} &
+    \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{Goal}}} \\
+    \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{UAV}}} &
+    \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{Goal}}} 
+  \end{bmatrix}.
+\end{equation}
+We have defined the first term, $\frac{\partial \dot{\x}_{\text{UAV}}}{\partial
+\x_{\text{UAV}}}$ above in the previous section. We also note that
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{UAV}}}{\partial \x_{\text{Goal}}} = \vect{0}
+\end{equation}
+as the UAV dynamics do not depend on the landing vehicle dynamics. We define the
+remaining terms here below.
+
+\subsubsection{Jacobian w.r.t. UAV State}
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{UAV}}}
+  =
+  \begin{bmatrix}
+    \vect{0} & \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}} & \frac{\partial
+      \dot{\vect{p}}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}} & \frac{\partial
+      \dot{\rho}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}} & 0 \\
+      \vect{0} & 0 & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+    \vect{0} & \vect{0} & \vect{0} & 0 \\
+  \end{bmatrix}
+\end{equation}
+\begin{align}
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}}
+      &=
+      - I_{2 \times 3} \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
+      \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}}
+      &=
+      - I_{2 \times 3}\left(R_{v}^{b}\right)^\transpose
+      \\
+    \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial
+      \vect{\theta}_{\text{UAV}}}
+      &=
+      \rho^{2} \vect{e}_{3}^\transpose
+        \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
+        \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\rho}_{\text{Goal}}}{\partial \vect{v}_{\text{UAV}}}
+      &=
+      \rho^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose
+      \\
+\end{align}
+
+\subsubsection{Jacobian w.r.t. Goal State}
+\begin{equation}
+  \frac{\partial \dot{\x}_{\text{Goal}}}{\partial \x_{\text{Goal}}}
+  =
+  \begin{bmatrix}
+    \vect{0} & 0 & \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{v}_{\text{Goal}}} & \frac{\partial
+      \dot{\vect{p}}_{\text{Goal}}}{\partial \theta_{\text{Goal}}} & 0 & \vect{0} & 0 \\
+    \vect{0} & \frac{\partial \dot{\rho}}{\partial \rho} & \vect{0} & 0 & 0
+             & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & \frac{\partial
+      \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}} & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0
+  \end{bmatrix}
+\end{equation}
+\begin{align}
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial
+      \vect{v}_{\text{Goal}}}
+      &=
+      \left(R_{v}^{g}\right)^\transpose
+      \\
+    \frac{\partial \dot{\vect{p}}_{\text{Goal}}}{\partial \theta_{\text{Goal}}}
+      &=
+      \frac{\partial}{\partial \theta_{\text{Goal}}} \left(R_{v}^{g}\right)^\transpose \vect{v}_{g/I}^{g}
+      \\
+    \frac{\partial \dot{\rho}}{\partial \rho}
+      &=
+      2 \rho \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
+      \\
+    \frac{\partial \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}}
+      &=
+      1
+\end{align}
+
+\subsection{Goal Pixel Measurement}
+\subsubsection{Measurement model}
+We assume that the UAV is equiped with a downward facing camera that is rigidly
+attached to the UAV. From this camera, we can get a measurement of the pixel
+location of the goal landing location in the image frame
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose.
+\end{equation}
+We can expand this measurements using our estimated states
+\begin{align}
+  \vect{z} &=
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose \\
+  \vect{z} &=
+  \begin{bmatrix}
+    f_x \frac{\e_1 \vect{p}_{g/c}^c}{\e_3 \vect{p}_{g/c}^c} + c_x \\
+    f_y \frac{\e_2 \vect{p}_{g/c}^c}{\e_3 \vect{p}_{g/c}^c} + c_y
+  \end{bmatrix},
+\end{align}
+where $f_x$, $f_y$, $c_x$, and $c_y$ are constant parameters of the camera. We
+can then express the position of the goal with respect to the camera in the
+camera frame 
+\begin{align}
+  \vect{p}_{g/c}^c &= R_b^c R_v^b \left(\vect{p}_{g/v}^v -
+    \vect{p}_{c/v}^v\right) \\
+    \vect{p}_{g/c}^c &= R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)
+\end{align}
+where $R_b^c$ and $p_{c/b}^b$ are constant, known values and
+\begin{equation}
+  \vect{p}_{g/v}^v =
+    \begin{bmatrix}
+      \vect{p}_{g/v}^v(0) \\
+      \vect{p}_{g/v}^v(1) \\
+      1 / \rho
+    \end{bmatrix}
+\end{equation}
+Therefore, the measurement model expanded looks like this
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    f_x \frac{\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)}{\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)} + c_x \\
+    f_y \frac{\e_2 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)}{\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)} + c_y
+  \end{bmatrix}.
+\end{equation}
+\TODO Come back and take a look at this. In simulation I am assuming the camera
+is not offset from the body frame.
+
+\subsubsection{Jacobian}
+To derive  the jacobian of this measurement model, we first look at just the
+first measurement, $p_x$ which can be written as
+\begin{equation}
+    p_x = f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+      \vect{p}_{c/b}^b\right)\right) \left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+      \vect{p}_{c/b}^b\right)\right)^{-1} + c_x.
+\end{equation}
+Note that all values are constants except for $\vect{p}_{g/v}^v$ and $R_v^b$.
+The individual parts of the jacobian are given here:
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{g/v}^v} =
+  \frac{f_x \e_1 R_b^c R_v^b}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where only the first two (of three) entries of the vector are used. The third
+entry is used for the jacobian w.r.t. $\rho$ as
+\begin{equation}
+  \frac{\partial p_x}{\partial \rho} = -\frac{1}{\rho^2} \frac{\partial p_x}{\partial
+  \vect{p}_{g/v}^v}\left(2\right).
+\end{equation}
+The derivatives for the euler angles are given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \phi} =
+  \frac{f_x \e_1 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{g/v}^v}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{g/v}^v \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where the jacobians for the other angles are similar, just substituting in. The
+jacobians for the y pixel measurement, $p_y$ are similar to the ones derived
+above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.
+
+
+% Python code
+%d1 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, R_I_b)) \
+                %/ p_g_c_c[2]
+%d2 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FY * (p_g_c_c[1] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, R_I_b)) \
+                %/ p_g_c_c[2]
+%jac[0, 10:12] = d1[0:2]
+%jac[1, 10:12] = d2[0:2]
+
+%# d / d rho
+%jac[0, 12] = -d1[2] / rho_g / rho_g
+%jac[1, 12] = -d2[2] / rho_g / rho_g
+
+%d1dphi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPhi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPhi,
+            %p_g_v_v))) / p_g_c_c[2]
+%d1dtheta = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdTheta, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdTheta,
+            %p_g_v_v))) / p_g_c_c[2]
+%d1dpsi = -np.matmul(E3, np.matmul(RBC, np.matmul(dRdPsi, p_g_v_v))) * FX * (p_g_c_c[0] / p_g_c_c[2] /
+        %p_g_c_c[2]) + FX * np.matmul(E1, np.matmul(RBC, np.matmul(dRdPsi,
+            %p_g_v_v))) / p_g_c_c[2]
+
+%jac[0, 3] = d1dphi
+%jac[0, 4] = d1dtheta
+%jac[0, 5] = d1dpsi
+
+\subsection{Goal Depth Measurement}
+We assume that the camera also provides a measurement of the distance to the
+goal. This is given in the form of the z coordinate of the goal location in the
+camera frame.
+
+\subsubsection{Measurement Model}
+We can express the goal depth measurement as
+\begin{equation}
+  \vect{z} = \e_3^\transpose \vect{p}_{g/c}^c.
+\end{equation}
+We can expand this to be in terms of our estimated state as
+\begin{align}
+  \vect{z} &= \e_3^\transpose \vect{p}_{g/c}^c \\
+  \vect{z} &= \e_3^\transpose R_b^c R_v^b \vect{p}_{g/c}^v \\
+  %\vect{z} &= \e_3^\transpose R_b^c R_v^b \left( \vect{p}_{g/v}^v \right) \\
+  \vect{z} &= \e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v -
+    \vect{p}_{c/b}^b\right).
+\end{align}
+
+\subsubsection{Measurement Jacobian}
+As seen in the measurement model above, the measurement is dependent on the UAV
+attitude as well as the goal position. The jacobian terms for these parts are
+given by
+\begin{align}
+  \frac{\partial \vect{z}}{\partial \phi} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \phi} \left( \vect{p}_{g/v}^v \right) \\
+  \frac{\partial \vect{z}}{\partial \theta} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \theta} \left( \vect{p}_{g/v}^v \right) \\
+  \frac{\partial \vect{z}}{\partial \psi} &= \e_3^\transpose R_b^c \frac{
+    \partial R_v^b}{\partial \psi} \left( \vect{p}_{g/v}^v \right) \\
+    \frac{\partial \vect{z}}{\partial \vect{p}_{g/v}^v} &= \e_3^\transpose R_b^c
+    R_v^b \\
+  \frac{\partial \vect{z}}{\partial \rho} &= -\frac{1}{\rho^2}
+    \frac{\partial \vect{z}}{\partial \vect{p}_{g/v}^v}\left(2\right).
+\end{align}
+
+\subsection{Landmark Pixel Measurement}
+We assume that landmark locations that are rigidly attached to the landing
+vehicle are tracked in the camera image. For now we will just have a fixed
+number of landmarks that are tracked for the entire duration of the flight, even
+when they leave the FOV of the camera and reenter. In real life, however, the
+landmarks must be dynamically added and removed from the estimated states vector
+as they leave the FOV of the camera and more are acquired.
+
+\subsubsection{Measurement Model}
+The measurement is a pixel location of each landmark in the camera image
+\begin{equation}
+  \vect{z} =
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose.
+\end{equation}
+We can expand this measurements using our estimated states
+\begin{align}
+  \vect{z} &=
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose \\
+  \vect{z} &=
+  \begin{bmatrix}
+    f_x \frac{\e_1 \vect{p}_{i/c}^c}{\e_3 \vect{p}_{i/c}^c} + c_x \\
+    f_y \frac{\e_2 \vect{p}_{i/c}^c}{\e_3 \vect{p}_{i/c}^c} + c_y
+  \end{bmatrix},
+\end{align}
+where $f_x$, $f_y$, $c_x$, and $c_y$ are constant parameters of the camera. We
+can then express the position of the landmark $i$ with respect to the camera in the
+camera frame as
+\begin{align}
+  \vect{p}_{i/c}^c &= R_b^c R_v^b \left(\vect{p}_{i/v}^v -
+    \vect{p}_{c/v}^v\right) \\
+    \vect{p}_{i/c}^c &= R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)
+\end{align}
+This is actually a little bit weird because of the state parameters, but
+\begin{equation}
+  \vect{p}_{i/v}^v =
+  \begin{bmatrix}
+    \e_1^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
+    \e_2^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
+    \left( \e_3^\transpose \vect{p}_{i/g}^g + 1 / \rho \right)
+  \end{bmatrix}.
+\end{equation}
+
+\subsubsection{Measurement Jacobian}
+For the purpose of deriving the jacobians, we will just look at the jacobians
+with respect to $p_x$, the pixel location along the $x$ axis of the camera
+frame. From above we have that
+\begin{align}
+  p_x &= f_x \frac{\e_1^\transpose \vect{p}_{i/c}^c}{\e_3^\transpose \vect{p}_{i/c}^c} + c_x \\ 
+  p_x &= f_x \frac{\e_1^\transpose R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+      \vect{p}_{c/b}^b\right) }{\e_3^\transpose R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right) } + c_x 
+\end{align}
+Note that all values are constants except for $\vect{p}_{i/v}^v$ and $R_v^b$.
+The individual parts of the jacobian are given here:
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{g/v}^v} =
+  \frac{f_x \e_1 R_b^c R_v^b}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where only the first two (of three) entries of the vector are used. The third
+entry is used for the jacobian w.r.t. $\rho$ as
+\begin{equation}
+  \frac{\partial p_x}{\partial \rho} = -\frac{1}{\rho^2} \frac{\partial p_x}{\partial
+  \vect{p}_{g/v}^v}\left(2\right).
+\end{equation}
+The derivatives for the euler angles are given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \phi} =
+  \frac{f_x \e_1 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{i/v}^v}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c \frac{\partial R_v^b}{\partial \phi} \vect{p}_{i/v}^v \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+where the jacobians for the other angles are similar, just substituting in.
+The derivative for the goal angle, $\theta_g$ is given by using
+\begin{equation}
+  \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g} =
+  \begin{bmatrix}
+    \e_1^\transpose \frac{\partial R_g^v}{\partial \theta_g} \vect{p}_{i/g}^g \\
+    \e_2^\transpose \frac{\partial R_g^v}{\partial \theta_g} \vect{p}_{i/g}^g \\
+    0
+  \end{bmatrix}
+\end{equation}
+in the jacobian given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \theta_g} =
+  \frac{f_x \e_1 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g}}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g} \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+Similarly, the derivative for the landmark offset, $\vect{r}_i$ or
+$\vect{p}_{i/g}^g$ is given by using
+\begin{equation}
+  \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g} =
+  \begin{bmatrix}
+    \e_1^\transpose R_g^v \\
+    \e_2^\transpose R_g^v \\
+    \e_3^\transpose
+  \end{bmatrix}
+\end{equation}
+in the jacobian given by
+\begin{equation}
+  \frac{\partial p_x}{\partial \vect{p}_{i/g}^g} =
+  \frac{f_x \e_1 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g}}
+    {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+    \vect{p}_{c/b}^b\right)\right)}
+    - \frac{\left(\e_3 R_b^c R_v^b \frac{\partial \vect{p}_{i/v}^v}{\partial \vect{p}_{i/g}^g} \right) f_x \left(\e_1 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+        \vect{p}_{c/b}^b\right)\right)} {\left(\e_3 R_b^c \left(R_v^b \vect{p}_{i/v}^v -
+  \vect{p}_{c/b}^b\right)\right)^2}
+\end{equation}
+The jacobians for the y pixel measurement, $p_y$ are similar to the ones derived
+above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.
