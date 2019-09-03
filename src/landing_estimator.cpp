@@ -29,7 +29,7 @@ Estimator::Estimator(std::string filename)
   xhat_(xGOAL_LM + 9 + 2) = rho_init;
 
   P_.setIdentity();
-  P_(xMU, xMU) = 0.;
+  //P_(xMU, xMU) = 0.;
   P_(xGOAL_ATT, xGOAL_ATT) = 0.;
   P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
   P_(xGOAL_LM + 3 * 0 + 2, xGOAL_LM + 3 * 0 + 2) = phat_rho_init;

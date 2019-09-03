@@ -11,5 +11,7 @@ landmarks_body_frame: [0., 0., 0.,
 
 # Motion model
 seed: 0
-omega_walk_std: 10.
-vel_walk_std: 10.
+omega_walk_std: 5.
+vel_walk_std: 5.
+#omega_walk_std: 10.
+#vel_walk_std: 10.

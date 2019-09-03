@@ -126,55 +126,58 @@ ylabel = [r'$p_x$', r'$p_y$', r'$\rho$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(3):
-    plt.suptitle("Goal Position")
+    plt.suptitle("Goal Position", fontsize=20, fontweight='bold')
     starting_idx = 10
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
     plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
     plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
-    plt.ylabel(ylabel[i])
+    plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
     if i == 0:
-        plt.legend()
+        plt.legend(fontsize=16)
+plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
 pw.addPlot("Goal Position", f)
 
 ylabel = [r'$v_x$', r'$v_y$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(2):
-    plt.suptitle("Goal Vel")
+    plt.suptitle("Goal Vel", fontsize=20, fontweight='bold')
     starting_idx = 13
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
     plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
     plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
-    plt.ylabel(ylabel[i])
+    plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
     if i == 0:
-        plt.legend()
+        plt.legend(fontsize=16)
+plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
 pw.addPlot("Goal Vel", f)
 
 ylabel = [r'$\theta_g$', r'$\omega_g$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(2):
-    plt.suptitle("Goal Att")
+    plt.suptitle("Goal Att", fontsize=20, fontweight='bold')
     starting_idx = 15
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
     plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
     plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
-    plt.ylabel(ylabel[i])
+    plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
     if i == 0:
-        plt.legend()
+        plt.legend(fontsize=16)
+plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
 pw.addPlot("Goal Att", f)
 
 ylabel = [r'$r_x$', r'$r_y$', r'$\rho$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(3):
-    plt.suptitle("Goal LMs")
+    plt.suptitle("Goal LMs", fontsize=20, fontweight='bold')
     for j in range(4):
         plt.subplot(3, 4, 4*i + j+1)
         starting_idx = 17 + 3*j
@@ -185,9 +188,11 @@ for i in range(3):
         plt.plot(t, xhat[i+starting_idx,:] - 2.
                 * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
         if j == 0:
-            plt.ylabel(ylabel[i])
+            plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
             if i == 0:
-                plt.legend()
+                plt.legend(fontsize=16)
+        if i == 2:
+            plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
 pw.addPlot("Goal LMs", f)
 
 # f = plt.figure(dpi=150)

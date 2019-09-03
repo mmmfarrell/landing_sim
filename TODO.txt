@@ -1,5 +1,6 @@
 TODO
   - Sim
+    - Change relative position to landmark vector to 3 vector
     - estimate drag
     - estimate IMU biases
     - partial update?
