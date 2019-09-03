@@ -175,8 +175,7 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
   }
 
   // Update Landmark Pixels
-  //static const int num_landmarks = 4;
-  static const int num_landmarks = 1;
+  static const int num_landmarks = 4;
   for (int i = 0; i < num_landmarks; i++)
   {
     int lm_pix_dims = 0;
@@ -185,9 +184,9 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     z_resid_.head(lm_pix_dims) = z.pixs[i + 1] - lm_pix_zhat.head(lm_pix_dims);
     // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
     // Eigen::Matrix2d::Identity();
-    PRINTMAT(z_resid_);
+    //PRINTMAT(z_resid_);
     z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
-    //update(lm_pix_dims, z_resid_, z_R_, H_);
+    update(lm_pix_dims, z_resid_, z_R_, H_);
   }
 }
 
