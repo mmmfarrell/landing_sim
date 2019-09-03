@@ -2,7 +2,7 @@ TODO
   - Sim
     - estimate drag
     - estimate IMU biases
-    - partial update?
+    - Random landmarks that come and go
   - Gazebo sim
 
 PAPER
