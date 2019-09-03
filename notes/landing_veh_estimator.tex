@@ -47,7 +47,7 @@ These individual components are expressed as
     \begin{bmatrix}
       \vect{p}_{g/v}^{v} & \rho & \vect{v}_{g/I}^{g} & \theta_{I}^{g} &
       \omega_{g/I}^{g} &
-      \vect{r}_{1}^{g} & \rho_{1} & \dots & \vect{r}_{n}^{g} & \rho_{n}
+      \vect{r}_{1}^{g} & \dots & \vect{r}_{n}^{g}
     \end{bmatrix}^{\transpose}.
 \end{align}
 The UAV states are self explanatory, covering position, attitude and velocity.
@@ -71,9 +71,6 @@ The Goal states, however, are a little more unique. They are described here:
     expressed in the goal frame. These landmarks are rigidly attached to the
     same landing vehicle as the goal frame, and therefore $\vect{r}_{i/g}^g$
     does not change, but is a constant.
-  \item $\rho_i$ - The inverse depth from the vehicle frame to landmark $i$.
-    This differs from $\rho$ because we cannot guarantee that all of the
-    landmarks and the goal frame lie in the same plane.
 \end{itemize}
 
 \subsection{Goal State Dynamics}
@@ -86,9 +83,7 @@ angular velocity. The dynamics of the goal states are expressed as
   \dot{\vect{v}}_{g/I}^{g} &= \vect{0} + \eta_{v} \\
   \dot{\theta}_{I}^{g} &= \omega_{g/I}^g \\
   \dot{\omega}_{g/I}^{g} &= 0 + \eta_{\omega} \\
-  \dot{\vect r}_{i}^{b} &= \vect{0} \\
-  \dot{\rho_i} &= \rho_i^{2} \vect{e}_{3}^\transpose
-    \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}.
+  \dot{\vect r}_{i}^{b} &= \vect{0}.
 \end{align}.
 
 Note that the rotation from the vehicle frame to the goal frame is given by
@@ -134,9 +129,6 @@ remaining terms here below.
     \vect{0} & \vect{0} & \vect{0} & 0 \\
     \vect{0} & \vect{0} & \vect{0} & 0 \\
     \vect{0} & \vect{0} & \vect{0} & 0 \\
-    \vect{0} & \frac{\partial \dot{\rho}_{i}}{\partial
-      \vect{\theta}_{\text{UAV}}} & \frac{\partial
-      \dot{\rho}_{i}}{\partial \vect{v}_{\text{UAV}}} & 0
   \end{bmatrix}
 \end{equation}
 \begin{align}
@@ -161,17 +153,6 @@ remaining terms here below.
       &=
       \rho^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose
       \\
-    \frac{\partial \dot{\rho}_i}{\partial
-      \vect{\theta}_{\text{UAV}}}
-      &=
-      \rho_i^{2} \vect{e}_{3}^\transpose
-        \frac{\partial}{\partial \vect{\theta}_{\text{UAV}}}
-        \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
-      \\
-    \frac{\partial \dot{\rho}_i}{\partial \vect{v}_{\text{UAV}}}
-      &=
-      \rho_i^{2} \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose
-      \\
 \end{align}
 
 \subsubsection{Jacobian w.r.t. Goal State}
@@ -188,8 +169,7 @@ remaining terms here below.
     \vect{0} & 0 & \vect{0} & 0 & \frac{\partial
       \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}} & \vect{0} & 0 \\
     \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
-    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0 \\
-    \vect{0} & \frac{\partial \dot{\rho}_i}{\partial \rho_i} & \vect{0} & 0 & 0 & \vect{0} & 0
+    \vect{0} & 0 & \vect{0} & 0 & 0 & \vect{0} & 0
   \end{bmatrix}
 \end{equation}
 \begin{align}
@@ -209,10 +189,6 @@ remaining terms here below.
     \frac{\partial \dot{\theta}_{\text{Goal}}}{\partial \omega_{Goal}}
       &=
       1
-      \\
-    \frac{\partial \dot{\rho}_i}{\partial \rho_i}
-      &=
-      2 \rho_i \vect{e}_{3}^\transpose \left(R_{v}^{b}\right)^\transpose \vect{v}_{b/I}^{b}
 \end{align}
 
 \subsection{Goal Pixel Measurement}
@@ -414,7 +390,7 @@ This is actually a little bit weird because of the state parameters, but
   \begin{bmatrix}
     \e_1^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
     \e_2^\transpose \left( R_g^v \vect{p}_{i/g}^g + \vect{p}_{g/v}^v \right) \\
-    1 / \rho_i
+    \left( \e_3^\transpose \vect{p}_{i/g}^g + 1 / \rho \right)
   \end{bmatrix}.
 \end{equation}
 
@@ -440,9 +416,9 @@ The individual parts of the jacobian are given here:
   \vect{p}_{c/b}^b\right)\right)^2}
 \end{equation}
 where only the first two (of three) entries of the vector are used. The third
-entry is used for the jacobian w.r.t. $\rho_i$ as
+entry is used for the jacobian w.r.t. $\rho$ as
 \begin{equation}
-  \frac{\partial p_x}{\partial \rho_i} = -\frac{1}{\rho_i^2} \frac{\partial p_x}{\partial
+  \frac{\partial p_x}{\partial \rho} = -\frac{1}{\rho^2} \frac{\partial p_x}{\partial
   \vect{p}_{g/v}^v}\left(2\right).
 \end{equation}
 The derivatives for the euler angles are given by
@@ -456,7 +432,7 @@ The derivatives for the euler angles are given by
   \vect{p}_{c/b}^b\right)\right)^2}
 \end{equation}
 where the jacobians for the other angles are similar, just substituting in.
-The derivative for the goal angle, $theta_g$ is given by using
+The derivative for the goal angle, $\theta_g$ is given by using
 \begin{equation}
   \frac{\partial \vect{p}_{i/v}^v}{\partial \theta_g} =
   \begin{bmatrix}
@@ -482,7 +458,7 @@ $\vect{p}_{i/g}^g$ is given by using
   \begin{bmatrix}
     \e_1^\transpose R_g^v \\
     \e_2^\transpose R_g^v \\
-    0
+    \e_3^\transpose
   \end{bmatrix}
 \end{equation}
 in the jacobian given by
