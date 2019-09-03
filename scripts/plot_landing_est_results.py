@@ -173,7 +173,7 @@ for i in range(2):
 plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
 pw.addPlot("Goal Att", f)
 
-ylabel = [r'$r_x$', r'$r_y$', r'$\rho$']
+ylabel = [r'$r_x$', r'$r_y$', r'$r_z$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(3):

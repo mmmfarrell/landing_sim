@@ -65,10 +65,10 @@ int main()
     {
       const int veh_lms_idx = i + 1;
       const int lms_vec_idx = 3 * i;
-      const int lms_rho_idx = 3 * i + 2;
+      //const int lms_rho_idx = 3 * i + 2;
       
-      landmarks.block<2, 1>(lms_vec_idx, 0) = veh.landmarks_body_.block<1, 2>(veh_lms_idx, 0).transpose();
-      landmarks(lms_rho_idx) = 1. / (-sim.state().p(2) + veh.landmarks_body_(veh_lms_idx, 2));
+      landmarks.block<3, 1>(lms_vec_idx, 0) = veh.landmarks_body_.block<1, 3>(veh_lms_idx, 0).transpose();
+      //landmarks(lms_rho_idx) = 1. / (-sim.state().p(2) + veh.landmarks_body_(veh_lms_idx, 2));
     }
 
     log.logVectors(p_g_v, rho, v_g_I, goal_theta_omega, landmarks);

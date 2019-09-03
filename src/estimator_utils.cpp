@@ -145,6 +145,8 @@ Eigen::Matrix3d rotm3dItoB(const double theta)
 
   // Inertial frame to body frame from UAV book
   Eigen::Matrix3d rotm;
+  rotm.setZero();
+
   rotm(0, 0) = ct;
   rotm(0, 1) = st;
 
@@ -163,6 +165,8 @@ Eigen::Matrix3d dR3DdTheta(const double theta)
 
   // Inertial frame to body frame from UAV book
   Eigen::Matrix3d rotm;
+  rotm.setZero();
+
   rotm(0, 0) = -st;
   rotm(0, 1) = ct;
 
