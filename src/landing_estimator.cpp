@@ -12,6 +12,41 @@ using namespace multirotor_sim;
 
 Estimator::Estimator(std::string filename)
 {
+  // Memory Allocation on Heap
+  // Init StateVecs
+  xhat_.resize(xZ, 1);
+  xdot_.resize(xZ, 1);
+  lambda_.resize(xZ, 1);
+
+  // Init StateMats
+  P_.resize(xZ, xZ);
+  Qx_.resize(xZ, xZ);
+  A_.resize(xZ, xZ);
+  lambda_mat_.resize(xZ, xZ);
+
+  I_.resize(xZ, xZ);
+  I_.setIdentity();
+
+  // Temporary ones vector
+  StateVec ones;
+  ones.resize(xZ, 1);
+  ones.setOnes();
+
+  // Init InputVec
+  u_.resize(uZ, 1);
+
+  // Init InputMat
+  Qu_.resize(uZ, uZ);
+
+  // Init StateInputMat
+  G_.resize(xZ, uZ);
+
+  // Init measurement stuff
+  H_.resize(zDIMS, xZ);
+  K_.resize(xZ, zDIMS);
+
+  // End Memory Allocation
+
   last_prop_time_ = -999.;
 
   // Load yaml params
@@ -51,7 +86,7 @@ Estimator::Estimator(std::string filename)
   Qx_.setZero();
   Qx_.block<xGOAL_LM, xGOAL_LM>(0, 0) = Qx_states.asDiagonal();
 
-  InputVec Qu;
+  Eigen::Matrix<double, uZ, 1> Qu;
   get_yaml_eigen("Qu", filename, Qu);
   Qu_ = Qu.asDiagonal();
 
@@ -72,7 +107,7 @@ Estimator::Estimator(std::string filename)
     lambda_.block<3, 1>(LM_IDX, 0) = lambda_landmarks;
   }
 
-  const StateVec ones = StateVec::Constant(1.0);
+
   lambda_mat_ = ones * lambda_.transpose() + lambda_ * ones.transpose() -
                 lambda_ * lambda_.transpose();
 }

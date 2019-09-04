@@ -28,7 +28,9 @@ public:
     xGOAL_ATT = 21,
     xGOAL_OMEGA = 22,
     xGOAL_LM = 23,
-    xZ = 35
+    //xZ = 35  // xGOAL_LM + 3 * MAXLANDMARKS
+    xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKS
+    //xZ = 143  // xGOAL_LM + 3 * MAXLANDMARKS
   };
 
   enum
@@ -40,7 +42,9 @@ public:
 
   enum
   {
-    MAXLANDMARKS = 4
+    //MAXLANDMARKS = 4
+    MAXLANDMARKS = 20
+    //MAXLANDMARKS = 40
   };
 
   enum
@@ -48,16 +52,28 @@ public:
     zDIMS = 3
   };
 
-  typedef Eigen::Matrix<double, xZ, 1> StateVec;
-  typedef Eigen::Matrix<double, xZ, xZ> StateMat;
-  typedef Eigen::Matrix<double, uZ, 1> InputVec;
-  typedef Eigen::Matrix<double, uZ, uZ> InputMat;
-  typedef Eigen::Matrix<double, xZ, uZ> StateInputMat;
+  typedef Eigen::VectorXd StateVec;
+  typedef Eigen::MatrixXd StateMat;
+  typedef Eigen::VectorXd InputVec;
+  typedef Eigen::MatrixXd InputMat;
+  typedef Eigen::MatrixXd StateInputMat;
+
+  typedef Eigen::MatrixXd MeasH;
+  typedef Eigen::MatrixXd MeasK;
+
+   //typedef Eigen::Matrix<double, xZ, 1> StateVec;
+  //typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, 0, xZ, 1> StateVec;
+   //typedef Eigen::Matrix<double, xZ, xZ> StateMat;
+  //typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, 0, xZ, xZ>
+      //StateMat;
+  //typedef Eigen::Matrix<double, uZ, 1> InputVec;
+  //typedef Eigen::Matrix<double, uZ, uZ> InputMat;
+  //typedef Eigen::Matrix<double, xZ, uZ> StateInputMat;
 
   typedef Eigen::Matrix<double, zDIMS, 1> MeasVec;
   typedef Eigen::Matrix<double, zDIMS, zDIMS> MeasMat;
-  typedef Eigen::Matrix<double, zDIMS, xZ> MeasH;
-  typedef Eigen::Matrix<double, xZ, zDIMS> MeasK;
+  //typedef Eigen::Matrix<double, zDIMS, xZ> MeasH;
+  //typedef Eigen::Matrix<double, xZ, zDIMS> MeasK;
 
   Estimator(std::string filename);
   virtual ~Estimator();
@@ -104,7 +120,8 @@ public:
   StateVec lambda_;
   StateMat lambda_mat_;
 
-  const StateMat I_ = StateMat::Identity();
+  // const StateMat I_ = StateMat::Identity();
+  StateMat I_;
 
   double last_prop_time_;
   double use_goal_stop_time_;
