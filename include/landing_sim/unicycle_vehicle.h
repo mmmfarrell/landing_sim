@@ -36,8 +36,8 @@ public:
 
   enum
   {
-     SIZE = 4
-    //SIZE = 20
+    // SIZE = 4
+    SIZE = 20
   };
 
   typedef Eigen::Matrix<double, xZ, 1> StateVec;
@@ -109,7 +109,8 @@ public:
       if (rand_num < lm_disappear_prob_)
       {
         // landmark disappears, go to next
-        std::cout << "Unicycle lm disappear # " << landmark_ids_(i) << std::endl;
+        // std::cout << "Unicycle lm disappear # " << landmark_ids_(i) <<
+        // std::endl;
         continue;
       }
 

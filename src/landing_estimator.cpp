@@ -241,7 +241,8 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
       }
       else
       {
-        std::cout << "Update lm id: " << lm_id << " idx: " << idx << std::endl;
+        //std::cout << "Update lm id: " << lm_id << " idx: " << idx << std::endl;
+        updateLandmark(idx, lm_pix, R_pix);
         idx++;
       }
     }
@@ -593,17 +594,18 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
 
   // initialize estimator xhat and phat
   const int xLM_IDX = xGOAL_LM + 3 * lm_idx;
-  // xhat_.block<3, 1>(xLM_IDX, 0) = x0_landmarks_;
-  xhat_.block<3, 1>(xLM_IDX, 0) = Eigen::Vector3d::Constant(id);
-  //P_.block<3, 3>(xLM_IDX, xLM_IDX) = P0_landmarks_.asDiagonal();
-  P_.block<3, 3>(xLM_IDX, xLM_IDX) = Eigen::Vector3d::Constant(id).asDiagonal();
+  xhat_.block<3, 1>(xLM_IDX, 0) = x0_landmarks_;
+  // xhat_.block<3, 1>(xLM_IDX, 0) = Eigen::Vector3d::Constant(id);
+  P_.block<3, 3>(xLM_IDX, xLM_IDX) = P0_landmarks_.asDiagonal();
+  // P_.block<3, 3>(xLM_IDX, xLM_IDX) =
+  // Eigen::Vector3d::Constant(id).asDiagonal();
 
   // std::cout << "Estimator:: Added lm id # " << id << " idx: " << lm_idx <<
   // std::endl;
 
-  printLmIDs();
-  printLmXhat();
-  printLmPhat();
+  // printLmIDs();
+  // printLmXhat();
+  // printLmPhat();
 }
 
 void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
@@ -633,8 +635,21 @@ void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
   P_.bottomRightCorner(3, xZ).setZero();
   P_.bottomRightCorner(xZ, 3).setZero();
 
+  // printLmIDs();
+  // printLmXhat();
+  // printLmPhat();
+}
 
-  printLmIDs();
-  printLmXhat();
-  printLmPhat();
+void Estimator::updateLandmark(const int& idx,
+                               const Vector2d& pix, const Matrix2d& R_pix)
+{
+  int lm_pix_dims = 0;
+  MeasVec lm_pix_zhat;
+  landmarkPixelMeasModel(idx, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+  z_resid_.head(lm_pix_dims) = pix - lm_pix_zhat.head(lm_pix_dims);
+  // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
+  // Eigen::Matrix2d::Identity();
+  // PRINTMAT(z_resid_);
+  z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
+  update(lm_pix_dims, z_resid_, z_R_, H_);
 }
