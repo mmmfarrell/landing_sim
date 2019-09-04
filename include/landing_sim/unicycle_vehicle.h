@@ -36,12 +36,13 @@ public:
 
   enum
   {
-    //SIZE = 4
+    // SIZE = 4
     SIZE = 20
   };
 
   typedef Eigen::Matrix<double, xZ, 1> StateVec;
   typedef Eigen::Matrix<double, SIZE, 3> LandmarkVec;
+  typedef Eigen::Matrix<double, SIZE, 1> IdVec;
 
   UnicycleVehicle(std::string filename)
   {
@@ -51,6 +52,8 @@ public:
     get_yaml_node("omega_walk_std", filename, omega_walk_std_);
     get_yaml_node("vel_walk_std", filename, vel_walk_std_);
 
+    get_yaml_node("landmark_disappear_prob", filename, lm_disappear_prob_);
+
     get_yaml_node("seed", filename, seed_);
     if (seed_ == 0)
     {
@@ -59,11 +62,8 @@ public:
     rng_.seed(seed_);
     srand(seed_);
 
-    init_landmarks(filename);
-  }
+    lm_id_counter_ = 0;
 
-  void init_landmarks(std::string filename)
-  {
     double landmarks_xy_min;
     double landmarks_xy_max;
     double landmarks_z_min;
@@ -73,17 +73,63 @@ public:
     get_yaml_node("landmarks_z_min", filename, landmarks_z_min);
     get_yaml_node("landmarks_z_max", filename, landmarks_z_max);
 
-    std::uniform_real_distribution<double> xy_dist(landmarks_xy_min,
-                                                   landmarks_xy_max);
-    std::uniform_real_distribution<double> z_dist(landmarks_z_min,
-                                                  landmarks_z_max);
+    lm_xy_dist_ = std::uniform_real_distribution<double>(landmarks_xy_min,
+                                                         landmarks_xy_max);
+    lm_z_dist_ = std::uniform_real_distribution<double>(landmarks_z_min,
+                                                        landmarks_z_max);
 
+    initLandmarks(filename);
+
+    uniform_ = std::uniform_real_distribution<double>(0., 1.);
+  }
+
+  void initLandmarks(std::string filename)
+  {
     for (int i = 0; i < SIZE; ++i)
     {
-      landmarks_body_(i, 0) = xy_dist(rng_);
-      landmarks_body_(i, 1) = xy_dist(rng_);
-      landmarks_body_(i, 2) = z_dist(rng_);
+      lm_id_counter_++;
+      landmark_ids_(i) = lm_id_counter_;
+      landmarks_body_(i, 0) = lm_xy_dist_(rng_);
+      landmarks_body_(i, 1) = lm_xy_dist_(rng_);
+      landmarks_body_(i, 2) = lm_z_dist_(rng_);
     }
+  }
+
+  void updateLandmarks()
+  {
+    LandmarkVec new_landmarks;
+    IdVec new_ids;
+
+    int new_idx = 0;
+    for (int i = 0; i < SIZE; ++i)
+    {
+      const double rand_num = uniform_(rng_);
+      // get random number from uniform(0., 1.)
+      // if random number is less than prob, landmark dissappears
+      if (rand_num < lm_disappear_prob_)
+      {
+        // landmark disappears, go to next
+        continue;
+      }
+
+      // If landmark is still around, add it to the new landmarks
+      new_ids(new_idx) = landmark_ids_(i);
+      new_landmarks.block<1, 3>(new_idx, 0) = landmarks_body_.block<1, 3>(i, 0);
+      new_idx++;
+    }
+
+    while (new_idx < SIZE)
+    {
+      lm_id_counter_++;
+      new_ids(new_idx) = lm_id_counter_;
+      new_landmarks(new_idx, 0) = lm_xy_dist_(rng_);
+      new_landmarks(new_idx, 1) = lm_xy_dist_(rng_);
+      new_landmarks(new_idx, 2) = lm_z_dist_(rng_);
+      new_idx++;
+    }
+
+    landmark_ids_ = new_ids;
+    landmarks_body_ = new_landmarks;
   }
 
   void step(const double& dt)
@@ -130,8 +176,10 @@ public:
     pt = R_I_b.transpose() * aruco_body_ + pos_I;
   }
 
-  void landmarkLocations(std::vector<Vector3d>& pts)
+  void landmarkLocations(std::vector<int>& ids, std::vector<Vector3d>& pts)
   {
+    updateLandmarks();
+
     // Grab position and append a zero for altitude
     Vector3d pos_I;
     pos_I.setZero();
@@ -143,12 +191,15 @@ public:
     toRot(theta, R_I_b);
 
     // For each landmark point, rotate and translate into inertial frame
+    ids.clear();
     pts.clear();
     for (int i = 0; i < SIZE; i++)
     {
       Vector3d pt_b(landmarks_body_.block<1, 3>(i, 0));
       Vector3d pt_I = R_I_b.transpose() * pt_b + pos_I;
       pts.push_back(pt_I);
+
+      ids.push_back(landmark_ids_(i));
     }
   }
 
@@ -160,6 +211,12 @@ public:
   StateVec x_;
   Vector3d aruco_body_;
   LandmarkVec landmarks_body_;
+  IdVec landmark_ids_;
+
+  int lm_id_counter_;
+  double lm_disappear_prob_;
+  std::uniform_real_distribution<double> lm_xy_dist_;
+  std::uniform_real_distribution<double> lm_z_dist_;
 
   double omega_walk_std_;
   double vel_walk_std_;
@@ -167,6 +224,7 @@ public:
   uint64_t seed_;
   std::default_random_engine rng_;
   std::normal_distribution<double> normal_;
+  std::uniform_real_distribution<double> uniform_;
 };
 
 }  // namespace multirotor_sim

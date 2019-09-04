@@ -216,6 +216,8 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
     // PRINTMAT(z_resid_);
     z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
     update(lm_pix_dims, z_resid_, z_R_, H_);
+
+    std::cout << "lm id: " << z.feat_ids[i] << std::endl;
   }
 }
 

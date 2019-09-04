@@ -10,6 +10,8 @@ landmarks_xy_max: 5
 landmarks_z_min: -1
 landmarks_z_max: 1
 
+landmark_disappear_prob: 0.01
+
 # Motion model
 seed: 0
 omega_walk_std: 5.
