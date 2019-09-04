@@ -542,16 +542,22 @@ def goal_pix_meas_model(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
 
@@ -572,16 +578,22 @@ def analytical_goal_pix_jac(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
 
@@ -601,12 +613,12 @@ def analytical_goal_pix_jac(x):
     d2 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FY * (p_g_c_c[1] / p_g_c_c[2] /
             p_g_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, R_I_b)) \
                     / p_g_c_c[2]
-    jac[0, 10:12] = d1[0:2]
-    jac[1, 10:12] = d2[0:2]
+    jac[0, 16:18] = d1[0:2]
+    jac[1, 16:18] = d2[0:2]
 
     # d / d rho
-    jac[0, 12] = -d1[2] / rho_g / rho_g
-    jac[1, 12] = -d2[2] / rho_g / rho_g
+    jac[0, 18] = -d1[2] / rho_g / rho_g
+    jac[1, 18] = -d2[2] / rho_g / rho_g
 
     # d / d (phi, theta, psi)
     dRdPhi = RotI2BdPhi(phi, theta, psi)
@@ -651,16 +663,22 @@ def goal_depth_meas_model(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
 
@@ -680,16 +698,22 @@ def analytical_goal_depth_jac(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
 
@@ -711,8 +735,8 @@ def analytical_goal_depth_jac(x):
         p_g_v_v)))
 
     dzdp = np.matmul(E3.transpose(), np.matmul(RBC, R_I_b))
-    jac[0, 10:12] = dzdp[0:2]
-    jac[0, 12] = (-1. / rho_g / rho_g) * dzdp[2]
+    jac[0, 16:18] = dzdp[0:2]
+    jac[0, 18] = (-1. / rho_g / rho_g) * dzdp[2]
 
     return jac
 
@@ -724,16 +748,22 @@ def landmark_pix_meas_model(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
     R_v_g = Rot3DInertial2Body(theta_g)
@@ -759,16 +789,22 @@ def analytical_landmark_pix_jac(x):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    px_g = x[10]
-    py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    px_g = x[16]
+    py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     R_I_b = RotInertial2Body(phi, theta, psi)
     R_v_g = Rot3DInertial2Body(theta_g)
@@ -793,12 +829,12 @@ def analytical_landmark_pix_jac(x):
     d2 = -np.matmul(E3, np.matmul(RBC, R_I_b)) * FY * (p_i_c_c[1] / p_i_c_c[2] /
             p_i_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, R_I_b)) \
                     / p_i_c_c[2]
-    jac[0, 10:12] = d1[0:2]
-    jac[1, 10:12] = d2[0:2]
+    jac[0, 16:18] = d1[0:2]
+    jac[1, 16:18] = d2[0:2]
 
     # # d / d rho_g
-    jac[0, 12] = -d1[2] / rho_g / rho_g
-    jac[1, 12] = -d2[2] / rho_g / rho_g
+    jac[0, 18] = -d1[2] / rho_g / rho_g
+    jac[1, 18] = -d2[2] / rho_g / rho_g
 
     # d / d (phi, theta, psi)
     dRdPhi = RotI2BdPhi(phi, theta, psi)
@@ -851,8 +887,8 @@ def analytical_landmark_pix_jac(x):
             p_i_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(R_I_b,
                 d_theta_p_i_v_v))) / p_i_c_c[2]
 
-    jac[0, 15] = d1dtheta_g
-    jac[1, 15] = d2dtheta_g
+    jac[0, 21] = d1dtheta_g
+    jac[1, 21] = d2dtheta_g
 
     # d / d p_i_g_g
     d_rxy_p_i_v_v = R_v_g.transpose()
@@ -866,8 +902,8 @@ def analytical_landmark_pix_jac(x):
             p_i_c_c[2]) + FY * np.matmul(E2, np.matmul(RBC, np.matmul(R_I_b,
                 d_rxy_p_i_v_v))) / p_i_c_c[2]
 
-    jac[0, 17:20] = d1drxy
-    jac[1, 17:20] = d2drxy
+    jac[0, 23:26] = d1drxy
+    jac[1, 23:26] = d2drxy
 
     return jac
 
@@ -940,9 +976,9 @@ def test_goal_depth_model_jacobian():
     # x[3] = 0.1
     # x[4] = -0.3
     # x[5] = 1.2
-    # x[10] = -0.45
-    # x[11] = 1.23
-    # x[12] = 0.1
+    # x[16] = -0.45
+    # x[17] = 1.23
+    # x[18] = 0.1
     jac_func = nd.Jacobian(goal_depth_meas_model)
 
     meas = goal_depth_meas_model(x)
@@ -960,22 +996,22 @@ def test_landmark_pixel_model_jacobian():
 
     x = np.zeros((STATES, 1))
     # Simple State
-    # x[12] = 0.1
-    # x[17] = 1.
-    # x[18] = 0.5
-    # x[19] = 1.
+    # x[18] = 0.1
+    # x[23] = 1.
+    # x[24] = 0.5
+    # x[25] = 1.
 
     # # Complex State
     x[3] = 0.1
     x[4] = -0.3
     x[5] = 1.2
-    x[10] = -0.45
-    x[11] = 1.23
-    x[12] = 0.1
-    x[15] = np.pi / 4. # theta_g
-    x[17] = 2.34
-    x[18] = -0.75
-    x[19] = 1.134
+    x[16] = -0.45
+    x[17] = 1.23
+    x[18] = 0.1
+    x[21] = np.pi / 4. # theta_g
+    x[23] = 2.34
+    x[24] = -0.75
+    x[25] = 1.134
     jac_func = nd.Jacobian(landmark_pix_meas_model)
 
     meas = landmark_pix_meas_model(x)
@@ -992,7 +1028,7 @@ def test_landmark_pixel_model_jacobian():
 if __name__ == '__main__':
     test_state_jacobian()
     test_input_jacobian()
-    # test_gps_model_jacobian()
-    # test_goal_pix_model_jacobian()
-    # test_goal_depth_model_jacobian()
-    # test_landmark_pixel_model_jacobian()
+    test_gps_model_jacobian()
+    test_goal_pix_model_jacobian()
+    test_goal_depth_model_jacobian()
+    test_landmark_pixel_model_jacobian()
