@@ -151,14 +151,14 @@ raw_gnss_enabled: false
 
 ## IMU
 imu_update_rate: 250
-accel_init_stdev: 0.0
+accel_init_stdev: 0.01
 accel_noise_stdev: 0.2
-#accel_bias_walk: 0.05
-accel_bias_walk: 0.0
-gyro_init_stdev: 0.0
+accel_bias_walk: 0.05
+#accel_bias_walk: 0.0
+gyro_init_stdev: 0.01
 gyro_noise_stdev: 0.1
-#gyro_bias_walk: 0.01
-gyro_bias_walk: 0.0
+gyro_bias_walk: 0.01
+#gyro_bias_walk: 0.0
 p_b_u: [0.0, 0.0, 0.0 ]
 q_b_u: [1.0, 0.0, 0.0, 0.0]
 
