@@ -1,8 +1,6 @@
 TODO
   - Sim
-    - latex for imu biases
-      - jacobians for state and inputs
-    - estimate IMU biases
+    - IMU biases dont track that well...???
     - Random landmarks that come and go
   - Gazebo sim
 
