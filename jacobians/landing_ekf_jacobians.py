@@ -3,7 +3,7 @@ import numpy as np
 import numdifftools as nd
 
 GRAV = 9.81
-STATES = 10 + 10
+STATES = 16 + 10
 INPUTS = 4
 
 RBC = np.array([[0., 1., 0.],
@@ -210,22 +210,33 @@ def dynamics(x_and_u):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    # px_g = x[10]
-    # py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    # px_g = x[16]
+    # py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     u = x_and_u[STATES:, 0]
-    az = u[0]
-    p = u[1]
-    q = u[2]
-    r = u[3]
+    az_bar = u[0]
+    p_bar = u[1]
+    q_bar = u[2]
+    r_bar = u[3]
+
+    az = az_bar - ba_z
+    p = p_bar - bw_x
+    q = q_bar - bw_y
+    r = r_bar - bw_z
 
     R_I_b = RotInertial2Body(phi, theta, psi)
     wmat = WMat(phi, theta, psi)
@@ -234,7 +245,7 @@ def dynamics(x_and_u):
     grav_b = np.matmul(R_I_b, grav_I)
 
     vel_b = x[6:9]
-    pqr = u[1:4]
+    pqr = np.array([p, q, r])
 
     xdot = np.zeros_like(x)
 
@@ -246,20 +257,22 @@ def dynamics(x_and_u):
     xdot[7] = grav_b[1] + vel_w * p - vel_u * r - mu * vel_v
     xdot[8] = grav_b[2] + vel_u * q - vel_v * p - az
 
-    xdot[9] = 0
+    # xdot[9] = 0
+    # xdot[10:13] = 0
+    # xdot[13:16] = 0
 
     # Landing target dynamics
     R_v_g = Rot2DInertial2Body(theta_g)
-    vel_g = x[13:15]
+    vel_g = x[19:21]
     I_2x3 = np.eye(3)[0:2, :]
     e3 = np.eye(3)[2, :]
 
-    xdot[10:12] = np.matmul(R_v_g.transpose(), vel_g) - np.matmul(I_2x3,
+    xdot[16:18] = np.matmul(R_v_g.transpose(), vel_g) - np.matmul(I_2x3,
         np.matmul(R_I_b.transpose(), vel_b))
-    xdot[12] = rho_g * rho_g * np.matmul(e3.transpose(),
+    xdot[18] = rho_g * rho_g * np.matmul(e3.transpose(),
             np.matmul(R_I_b.transpose(), vel_b))
     # xdot[13:15] = 0
-    xdot[15] = omega_g
+    xdot[21] = omega_g
     # xdot[16] = 0
     # xdot[17:20] = 0
 
@@ -274,22 +287,33 @@ def analytical_state_jac(x_and_u):
     vel_v = x[7]
     vel_w = x[8]
     mu = x[9]
-    # px_g = x[10]
-    # py_g = x[11]
-    rho_g = x[12]
-    vx_g = x[13]
-    vy_g = x[14]
-    theta_g = x[15]
-    omega_g = x[16]
-    rx_i = x[17]
-    ry_i = x[18]
-    rz_i = x[19]
+    ba_x = x[10]
+    ba_y = x[11]
+    ba_z = x[12]
+    bw_x = x[13]
+    bw_y = x[14]
+    bw_z = x[15]
+    # px_g = x[16]
+    # py_g = x[17]
+    rho_g = x[18]
+    vx_g = x[19]
+    vy_g = x[20]
+    theta_g = x[21]
+    omega_g = x[22]
+    rx_i = x[23]
+    ry_i = x[24]
+    rz_i = x[25]
 
     u = x_and_u[STATES:]
-    az = u[0]
-    p = u[1]
-    q = u[2]
-    r = u[3]
+    az_bar = u[0]
+    p_bar = u[1]
+    q_bar = u[2]
+    r_bar = u[3]
+
+    az = az_bar - ba_z
+    p = p_bar - bw_x
+    q = q_bar - bw_y
+    r = r_bar - bw_z
 
     sp = np.sin(phi)
     cp = np.cos(phi)
@@ -300,7 +324,12 @@ def analytical_state_jac(x_and_u):
     cpsi = np.cos(psi)
 
     R_I_b = RotInertial2Body(phi, theta, psi)
+    wmat = WMat(phi, theta, psi)
     vel_b = x[6:9]
+
+    vel_skew = np.array([[0., -vel_w, vel_v],
+                         [vel_w, 0., -vel_u],
+                         [-vel_v, vel_u, 0.]])
 
     jac = np.zeros((STATES, STATES))
 
@@ -324,6 +353,8 @@ def analytical_state_jac(x_and_u):
     jac[5, 3] = (cp / ct) * q + (-sp / ct) * r
     jac[5, 4] = (sp / ct) * tt * q + (cp  / ct) * tt * r
     jac[5, 5] = 0.
+
+    jac[3:6, 13:16] = -wmat
 
     # vel dot
     jac[6, 3] = 0.
@@ -349,42 +380,45 @@ def analytical_state_jac(x_and_u):
     jac[8, 7] = -p
     jac[8, 8] = 0.
     jac[8, 9] = 0.
+    jac[8, 12] = 1.
+
+    jac[6:9, 13:16] = -vel_skew
 
     # dUAV / dGOAL = 0
 
     # Landing target dynamics
     R_v_g = Rot2DInertial2Body(theta_g)
     dRdTheta = Rot2DdTheta(theta_g)
-    vel_g = x[13:15]
+    vel_g = x[19:21]
     I_2x3 = np.eye(3)[0:2, :]
     e3 = np.eye(3)[2, :]
 
     # dGOAL / dUAV
-    jac[10:12, 3] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdPhi(phi,
+    jac[16:18, 3] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdPhi(phi,
         theta, psi).transpose()), vel_b))
-    jac[10:12, 4] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdTheta(phi,
+    jac[16:18, 4] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdTheta(phi,
         theta, psi).transpose()), vel_b))
-    jac[10:12, 5] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdPsi(phi,
-        theta, psi).transpose()), vel_b))
-
-    jac[10:12, 6:9] = np.matmul(-I_2x3, R_I_b.transpose())
-
-    jac[12, 3] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdPhi(phi,
-        theta, psi).transpose()), vel_b))
-    jac[12, 4] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdTheta(phi,
-        theta, psi).transpose()), vel_b))
-    jac[12, 5] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdPsi(phi,
+    jac[16:18, 5] = np.squeeze(np.matmul(np.matmul(-I_2x3, RotI2BdPsi(phi,
         theta, psi).transpose()), vel_b))
 
-    jac[12, 6:9] = rho_g * rho_g * np.matmul(e3.transpose(), R_I_b.transpose())
+    jac[16:18, 6:9] = np.matmul(-I_2x3, R_I_b.transpose())
+
+    jac[18, 3] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdPhi(phi,
+        theta, psi).transpose()), vel_b))
+    jac[18, 4] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdTheta(phi,
+        theta, psi).transpose()), vel_b))
+    jac[18, 5] = rho_g * rho_g * np.squeeze(np.matmul(np.matmul(e3.transpose(), RotI2BdPsi(phi,
+        theta, psi).transpose()), vel_b))
+
+    jac[18, 6:9] = rho_g * rho_g * np.matmul(e3.transpose(), R_I_b.transpose())
 
     # dGOAL / dGOAL
-    jac[10:12, 13:15] = R_v_g.transpose()
-    jac[10:12, 15] = np.matmul(dRdTheta.transpose(), vel_g)
+    jac[16:18, 19:21] = R_v_g.transpose()
+    jac[16:18, 21] = np.matmul(dRdTheta.transpose(), vel_g)
 
-    jac[12, 12] = 2. * rho_g * np.matmul(e3.transpose(),
+    jac[18, 18] = 2. * rho_g * np.matmul(e3.transpose(),
             np.matmul(R_I_b.transpose(), vel_b))
-    jac[15, 16] = 1.
+    jac[21, 22] = 1.
 
     return jac
 
@@ -957,8 +991,8 @@ def test_landmark_pixel_model_jacobian():
 
 if __name__ == '__main__':
     test_state_jacobian()
-    test_input_jacobian()
-    test_gps_model_jacobian()
-    test_goal_pix_model_jacobian()
-    test_goal_depth_model_jacobian()
-    test_landmark_pixel_model_jacobian()
+    # test_input_jacobian()
+    # test_gps_model_jacobian()
+    # test_goal_pix_model_jacobian()
+    # test_goal_depth_model_jacobian()
+    # test_landmark_pixel_model_jacobian()
