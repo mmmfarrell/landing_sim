@@ -432,11 +432,11 @@ def analytical_input_jac(x_and_u):
     vel_w = x[8]
     mu = x[9]
 
-    u = x_and_u[STATES:]
-    az = u[0]
-    p = u[1]
-    q = u[2]
-    r = u[3]
+    # u = x_and_u[STATES:]
+    # az = u[0]
+    # p = u[1]
+    # q = u[2]
+    # r = u[3]
 
     sp = np.sin(phi)
     cp = np.cos(phi)
@@ -991,7 +991,7 @@ def test_landmark_pixel_model_jacobian():
 
 if __name__ == '__main__':
     test_state_jacobian()
-    # test_input_jacobian()
+    test_input_jacobian()
     # test_gps_model_jacobian()
     # test_goal_pix_model_jacobian()
     # test_goal_depth_model_jacobian()

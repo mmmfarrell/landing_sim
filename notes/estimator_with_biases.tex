@@ -211,83 +211,34 @@ The partial jacobians are then given by:
   \frac{\partial \dot{\vect{v}}}{\partial \vect{\beta}_\omega} &= 
   - \skewmat{\vect{v}_{b/I}^b}
 \end{align*}
-The partial jacobians are then given by:
-\begin{align*}
-  \dot{p_n} &= (\ctheta \cpsi)u + (\sphi \stheta \cpsi - \cphi \spsi)v +
-    (\cphi \stheta \cpsi + \sphi \spsi)w \\
-  \frac{\partial \dot{p_n}}{\partial \phi} &= (\cphi \stheta \cpsi + \sphi
-    \spsi) v + (-\sphi \stheta \cpsi + \cphi \spsi) w \\
-  \frac{\partial \dot{p_n}}{\partial \theta} &= (-\stheta \cpsi) u + (\sphi
-    \ctheta \cpsi) v + (\cphi \ctheta \cpsi) w \\
-  \frac{\partial \dot{p_n}}{\partial \psi} &= (-\ctheta \spsi) u +(-\sphi
-    \stheta \spsi - \cphi \cpsi) v + (-\cphi \stheta \spsi + \sphi \cpsi)
-    w \\
-  \\
-  \dot{p_e} &= (\ctheta \spsi)u + (\sphi \stheta \spsi + \cphi \cpsi)v +
-    (\cphi \stheta \spsi - \sphi \cpsi)w \\
-  \frac{\partial \dot{p_e}}{\partial \phi} &= (\cphi \stheta \spsi - \sphi
-    \cpsi) v + (-\sphi \stheta \spsi - \cphi \cpsi) w \\
-  \frac{\partial \dot{p_e}}{\partial \theta} &= (-\stheta \spsi)u + (\sphi
-    \ctheta \spsi)v + (\cphi \ctheta \spsi)w \\
-  \frac{\partial \dot{p_e}}{\partial \psi} &= (\ctheta \cpsi) u + (\sphi \stheta
-    \cpsi - \cphi \spsi) v + (\cphi \stheta \cpsi + \sphi \spsi) w \\
-  \\
-  \dot{p_d} &= (-\stheta)u + (\sphi \ctheta)v + (\cphi \ctheta)w \\
-  \frac{\partial \dot{p_d}}{\partial \phi} &= (\cphi \ctheta) v + (-\sphi
-    \ctheta) w \\
-  \frac{\partial \dot{p_d}}{\partial \theta} &= (-\ctheta) u + (-\sphi \stheta)
-    v + (-\cphi \stheta) w \\
-  \frac{\partial \dot{p_d}}{\partial \psi} &= 0 \\
-  \\
-  \frac{\partial \dot{\vect{p}}}{\partial {\vect{v}}} &= R_b^I \\
-  \\
-  \dot{\phi} &= p + \sphi \ttheta q + \cphi \ttheta r \\
-  \frac{\partial \dot{\phi}}{\partial \phi} &= \cphi \ttheta q -
-    \sphi \ttheta r \\
-  \frac{\partial \dot{\phi}}{\partial \theta} &= \frac{\sphi}{\ctheta \ctheta} q
-    + \frac{\cphi}{\ctheta \ctheta} r \\
-  \frac{\partial \dot{\phi}}{\partial \psi} &= 0 \\
-  \\
-  \dot{\theta} &= \cphi q - \sphi r \\
-  \frac{\partial \dot{\theta}}{\partial \phi} &= -\sphi q - \cphi r \\
-  \frac{\partial \dot{\theta}}{\partial \theta} &= 0 \\
-  \frac{\partial \dot{\theta}}{\partial \psi} &= 0 \\
-  \\
-  \dot{\psi} &= \frac{\sphi}{\ctheta} q + \frac{\cphi}{\ctheta} r \\
-  \frac{\partial \dot{\psi}}{\partial \phi} &= \frac{\cphi}{\ctheta} q +
-    \frac{-\sphi}{\ctheta} r \\
-  \frac{\partial \dot{\psi}}{\partial \theta} &= \frac{\sphi}{\ctheta} \ttheta q +
-  \frac{\cphi}{\ctheta}\ttheta r \\
-  \frac{\partial \dot{\psi}}{\partial \psi} &= 0 \\
-\end{align*}
+
+\subsubsection{Input Jacobians}
+\begin{equation}
+  B =
+  \begin{bmatrix}
+    0 & \vect{0} \\
+    0 & \frac{\partial \dot{\vect{\theta}}}{\partial \vect{\omega}} \\
+    \frac{\partial \dot{\vect{v}}}{\partial a_z} & \frac{\partial
+      \dot{\vect{v}}}{\partial \vect{\omega}} \\
+    0 & \vect{0} \\
+    0 & \vect{0} \\
+    0 & \vect{0}
+  \end{bmatrix}
+\end{equation}
 
 \begin{align*}
-  \dot{u} &= -\stheta g + vr - wq - \mu u \\
-  \frac{\partial \dot{u}}{\partial \phi} &= 0 \\
-  \frac{\partial \dot{u}}{\partial \theta} &= -\ctheta g \\
-  \frac{\partial \dot{u}}{\partial \psi} &= 0 \\
-  \frac{\partial \dot{u}}{\partial u} &= -\mu \\
-  \frac{\partial \dot{u}}{\partial v} &= r \\
-  \frac{\partial \dot{u}}{\partial w} &= -q \\
-  \frac{\partial \dot{u}}{\partial \mu} &= -u \\
-  \\
-  \dot{v} &= \sphi \ctheta g + wp - ur - \mu v \\
-  \frac{\partial \dot{v}}{\partial \phi} &= \cphi \ctheta g \\
-  \frac{\partial \dot{v}}{\partial \theta} &= -\sphi \stheta g \\
-  \frac{\partial \dot{v}}{\partial \psi} &= 0 \\
-  \frac{\partial \dot{v}}{\partial u} &= -r \\
-  \frac{\partial \dot{v}}{\partial v} &= -\mu \\
-  \frac{\partial \dot{v}}{\partial w} &= p \\
-  \frac{\partial \dot{v}}{\partial \mu} &= -v \\
-  \\
-  \dot{w} &= \cphi \ctheta g + uq - vp - a_z \\
-  \frac{\partial \dot{w}}{\partial \phi} &= -\sphi \ctheta g \\
-  \frac{\partial \dot{w}}{\partial \theta} &= -\cphi \stheta g \\
-  \frac{\partial \dot{w}}{\partial \psi} &= 0 \\
-  \frac{\partial \dot{w}}{\partial u} &= q \\
-  \frac{\partial \dot{w}}{\partial v} &= -p \\
-  \frac{\partial \dot{w}}{\partial w} &= 0 \\
-  \frac{\partial \dot{w}}{\partial \mu} &= 0 \\
+  \frac{\partial \dot{\vect{\theta}}}{\partial \vect{\omega}} &=
+  \begin{bmatrix}
+    1 & \sin\phi\tan\theta & \cos\phi\tan\theta \\
+    0 & \cos\phi & -\sin\phi \\
+    0 & \frac{\sin\phi}{\cos\theta} & \frac{\cos\phi}{\cos\theta}
+  \end{bmatrix} \\
+  \frac{\partial \dot{\vect{v}}}{\partial a_z} &= 
+  \begin{bmatrix}
+    0 & 0 & -1
+  \end{bmatrix}^\transpose \\
+  \frac{\partial \dot{\vect{v}}}{\partial \vect{\omega}} &=
+  \skewmat{\vect{v}_{b/I}^b}
 \end{align*}
 
 \subsection{Goal State Dynamics}
