@@ -43,7 +43,10 @@ int main()
 
     // Uav States
     Matrix1d mu_true(0.1);
-    log.logVectors(sim.state().p, sim.state().q.euler(), sim.state().v, mu_true);
+    //log.logVectors(sim.state().p, sim.state().q.euler(), sim.state().v, mu_true);
+    log.logVectors(sim.state().p, sim.state().q.euler(), sim.state().v);
+    log.log(sim.dyn_.get_drag());
+    log.logVectors(sim.accel_bias_, sim.gyro_bias_);
 
     //// Landing Goal states
     //// log x = [ px, py, vx, vy, theta, omega ]

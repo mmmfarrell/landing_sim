@@ -18,5 +18,6 @@ Eigen::Matrix3d rotm3dItoB(const double theta);
 Eigen::Matrix3d dR3DdTheta(const double theta);
 
 Eigen::Matrix3d wMat(const double phi, const double theta, const double psi);
+Eigen::Matrix3d skewMat(const Eigen::Vector3d& vec);
 
 #endif /* ifndef ESTIMATOR_UTILS_H */

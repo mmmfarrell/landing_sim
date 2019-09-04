@@ -20,13 +20,15 @@ public:
     xATT = 3,
     xVEL = 6,
     xMU = 9,
-    xGOAL_POS = 10,
-    xGOAL_RHO = 12,
-    xGOAL_VEL = 13,
-    xGOAL_ATT = 15,
-    xGOAL_OMEGA = 16,
-    xGOAL_LM = 17,
-    xZ = 29
+    xBA = 10,
+    xBW = 13,
+    xGOAL_POS = 16,
+    xGOAL_RHO = 18,
+    xGOAL_VEL = 19,
+    xGOAL_ATT = 21,
+    xGOAL_OMEGA = 22,
+    xGOAL_LM = 23,
+    xZ = 35
   };
 
   enum

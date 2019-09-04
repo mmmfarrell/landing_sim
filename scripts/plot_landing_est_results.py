@@ -14,7 +14,7 @@ plt.rc('font', family='serif')
 # UAV_STATE = 9
 # LANDING_VEH_STATES = 6
 # LANDING_VEH_LMS = 5 * 3 # 5 LMs here b/c (0, 0, 0) is a LM
-EST_STATE = 10 + 7 + 4 * 3
+EST_STATE = 16 + 7 + 4 * 3
 # LOG_WIDTH = 1 + UAV_STATE + LANDING_VEH_STATES + LANDING_VEH_LMS + 2 * EST_STATE
 LOG_WIDTH = 1 + 3 * EST_STATE
 
@@ -122,12 +122,46 @@ for i in range(1):
         plt.legend()
 pw.addPlot("Drag", f)
 
+ylabel = [r'$\beta_{ax}$', r'$\beta_{ay}$', r'$\beta_{az}$']
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(3):
+    plt.suptitle("Accel Bias", fontsize=20, fontweight='bold')
+    starting_idx = 10
+    plt.subplot(3, 1, i+1)
+    plt.plot(t, x[i+starting_idx, :], label="x")
+    plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+    plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
+    if i == 0:
+        plt.legend(fontsize=16)
+plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
+pw.addPlot("Accel Bias", f)
+
+ylabel = [r'$\beta_{\omega_x}$', r'$\beta_{\omega_y}$', r'$\beta_{\omega_z}$']
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(3):
+    plt.suptitle("Gyro Bias", fontsize=20, fontweight='bold')
+    starting_idx = 13
+    plt.subplot(3, 1, i+1)
+    plt.plot(t, x[i+starting_idx, :], label="x")
+    plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+starting_idx,:] + 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+    plt.plot(t, xhat[i+starting_idx,:] - 2. * np.sqrt(phat[i+starting_idx, :]), 'r', label=r"$2\sigma$")
+    plt.ylabel(ylabel[i], fontsize=16, fontweight='bold')
+    if i == 0:
+        plt.legend(fontsize=16)
+plt.xlabel('Time (s)', fontsize=16, fontweight='bold')
+pw.addPlot("Gyro Bias", f)
+
 ylabel = [r'$p_x$', r'$p_y$', r'$\rho$']
 f = plt.figure(dpi=150)
 plt.plot()
 for i in range(3):
     plt.suptitle("Goal Position", fontsize=20, fontweight='bold')
-    starting_idx = 10
+    starting_idx = 16
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
@@ -144,7 +178,7 @@ f = plt.figure(dpi=150)
 plt.plot()
 for i in range(2):
     plt.suptitle("Goal Vel", fontsize=20, fontweight='bold')
-    starting_idx = 13
+    starting_idx = 19
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
@@ -161,7 +195,7 @@ f = plt.figure(dpi=150)
 plt.plot()
 for i in range(2):
     plt.suptitle("Goal Att", fontsize=20, fontweight='bold')
-    starting_idx = 15
+    starting_idx = 21
     plt.subplot(3, 1, i+1)
     plt.plot(t, x[i+starting_idx, :], label="x")
     plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
@@ -180,7 +214,7 @@ for i in range(3):
     plt.suptitle("Goal LMs", fontsize=20, fontweight='bold')
     for j in range(4):
         plt.subplot(3, 4, 4*i + j+1)
-        starting_idx = 17 + 3*j
+        starting_idx = 23 + 3*j
         plt.plot(t, x[i+starting_idx, :], label="x")
         plt.plot(t, xhat[i+starting_idx,:], label=r"$\hat{x}$")
         plt.plot(t, xhat[i+starting_idx,:] + 2.

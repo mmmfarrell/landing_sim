@@ -359,6 +359,24 @@ remaining terms here below.
       1
 \end{align}
 
+\subsection{Accelerometer Measurement Update}
+As in~\cite{leishman2014accel} we use the accelerometer measurements from the
+$x$ and $y$ axes as a measurement update. The expected measurement due to drag
+is expressed as
+\begin{align}
+  \bar{a}_x &= -\mu u + \beta_{a_x} \\
+  \bar{a}_y &= -\mu v + \beta_{a_y}.
+\end{align}
+The measurement jacobian therefore is given by
+\begin{align}
+  \frac{\partial h_x}{\partial u} &= -\mu \\
+  \frac{\partial h_x}{\partial \mu} &= -u \\
+  \frac{\partial h_x}{\partial \beta_x} &= 1 \\
+  \frac{\partial h_y}{\partial v} &= -\mu \\
+  \frac{\partial h_y}{\partial \mu} &= -v \\
+  \frac{\partial h_y}{\partial \beta_y} &= 1.
+\end{align}
+
 \subsection{Goal Pixel Measurement}
 \subsubsection{Measurement model}
 We assume that the UAV is equiped with a downward facing camera that is rigidly
