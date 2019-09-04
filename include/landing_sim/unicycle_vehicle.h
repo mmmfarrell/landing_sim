@@ -12,20 +12,16 @@
 
 void toRot(const double theta, Matrix2d& R)
 {
-  R << cos(theta), sin(theta),
-       -sin(theta), cos(theta);
+  R << cos(theta), sin(theta), -sin(theta), cos(theta);
 }
 
 void toRot(const double theta, Matrix3d& R)
 {
-  R << cos(theta), sin(theta), 0.,
-       -sin(theta), cos(theta), 0.,
-       0., 0., 1.;
+  R << cos(theta), sin(theta), 0., -sin(theta), cos(theta), 0., 0., 0., 1.;
 }
 
-namespace  multirotor_sim
+namespace multirotor_sim
 {
-
 class UnicycleVehicle : public VehicleBase
 {
 public:
@@ -40,7 +36,7 @@ public:
 
   enum
   {
-    SIZE = 5
+    SIZE = 20
   };
 
   typedef Eigen::Matrix<double, xZ, 1> StateVec;
@@ -49,7 +45,7 @@ public:
   UnicycleVehicle(std::string filename)
   {
     get_yaml_eigen("x0", filename, x_);
-    get_yaml_eigen("landmarks_body_frame", filename, landmarks_body_);
+    get_yaml_eigen("aruco_body_frame", filename, aruco_body_);
 
     get_yaml_node("omega_walk_std", filename, omega_walk_std_);
     get_yaml_node("vel_walk_std", filename, vel_walk_std_);
@@ -61,6 +57,32 @@ public:
     }
     rng_.seed(seed_);
     srand(seed_);
+
+    init_landmarks(filename);
+  }
+
+  void init_landmarks(std::string filename)
+  {
+    double landmarks_xy_min;
+    double landmarks_xy_max;
+    double landmarks_z_min;
+    double landmarks_z_max;
+    get_yaml_node("landmarks_xy_min", filename, landmarks_xy_min);
+    get_yaml_node("landmarks_xy_max", filename, landmarks_xy_max);
+    get_yaml_node("landmarks_z_min", filename, landmarks_z_min);
+    get_yaml_node("landmarks_z_max", filename, landmarks_z_max);
+
+    std::uniform_real_distribution<double> xy_dist(landmarks_xy_min,
+                                                   landmarks_xy_max);
+    std::uniform_real_distribution<double> z_dist(landmarks_z_min,
+                                                  landmarks_z_max);
+
+    for (int i = 0; i < SIZE; ++i)
+    {
+      landmarks_body_(i, 0) = xy_dist(rng_);
+      landmarks_body_(i, 1) = xy_dist(rng_);
+      landmarks_body_(i, 2) = z_dist(rng_);
+    }
   }
 
   void step(const double& dt)
@@ -91,6 +113,21 @@ public:
     }
   }
 
+  void arucoLocation(Vector3d& pt)
+  {
+    // Grab position and append a zero for altitude
+    Vector3d pos_I;
+    pos_I.setZero();
+    pos_I.block<2, 1>(0, 0) = x_.block<2, 1>(xPOS, 0);
+
+    // Get current rotation matrix
+    const double theta = x_(xATT);
+    Matrix3d R_I_b;
+    toRot(theta, R_I_b);
+
+    // return the aruco point rotated into the inertial frame
+    pt = R_I_b.transpose() * aruco_body_ + pos_I;
+  }
 
   void landmarkLocations(std::vector<Vector3d>& pts)
   {
@@ -120,6 +157,7 @@ public:
   }
 
   StateVec x_;
+  Vector3d aruco_body_;
   LandmarkVec landmarks_body_;
 
   double omega_walk_std_;
@@ -130,4 +168,4 @@ public:
   std::normal_distribution<double> normal_;
 };
 
-}
+}  // namespace multirotor_sim

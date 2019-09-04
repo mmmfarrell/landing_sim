@@ -175,9 +175,8 @@ void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
 {
 }
 
-void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
-                                  const Matrix2d& R_pix,
-                                  const Matrix1d& R_depth)
+void Estimator::arucoCallback(const double& t, const Vector2d& pix, const double& depth,
+                   const Matrix2d& R_pix, const Matrix1d& R_depth)
 {
   if (t < use_goal_stop_time_)
   {
@@ -185,7 +184,7 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     int depth_dims = 0;
     MeasVec depth_zhat;
     goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
-    z_resid_(0) = z.depths[0] - depth_zhat(0);
+    z_resid_(0) = depth - depth_zhat(0);
     // z_R_.topLeftCorner(depth_dims, depth_dims) = 1.0 * Matrix1d::Identity();
     z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
     update(depth_dims, z_resid_, z_R_, H_);
@@ -194,21 +193,24 @@ void Estimator::simpleCamCallback(const double& t, const ImageFeat& z,
     int pix_dims = 0;
     MeasVec pix_zhat;
     goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
-    z_resid_.head(pix_dims) = z.pixs[0] - pix_zhat.head(pix_dims);
+    z_resid_.head(pix_dims) = pix - pix_zhat.head(pix_dims);
     // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
     // Eigen::Matrix2d::Identity();
     z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
     update(pix_dims, z_resid_, z_R_, H_);
   }
+}
 
-  // Update Landmark Pixels
-  static const int num_landmarks = 4;
+void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
+                       const Matrix2d& R_pix)
+{
+  const int num_landmarks = z.pixs.size();
   for (int i = 0; i < num_landmarks; i++)
   {
     int lm_pix_dims = 0;
     MeasVec lm_pix_zhat;
     landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
-    z_resid_.head(lm_pix_dims) = z.pixs[i + 1] - lm_pix_zhat.head(lm_pix_dims);
+    z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
     // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
     // Eigen::Matrix2d::Identity();
     // PRINTMAT(z_resid_);

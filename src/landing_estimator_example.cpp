@@ -66,7 +66,7 @@ int main()
     Eigen::Matrix<double, Estimator::MAXLANDMARKS * 3, 1> landmarks;
     for (unsigned int i = 0; i < Estimator::MAXLANDMARKS; i++)
     {
-      const int veh_lms_idx = i + 1;
+      const int veh_lms_idx = i;
       const int lms_vec_idx = 3 * i;
       //const int lms_rho_idx = 3 * i + 2;
       

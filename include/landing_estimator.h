@@ -28,7 +28,8 @@ public:
     xGOAL_ATT = 21,
     xGOAL_OMEGA = 22,
     xGOAL_LM = 23,
-    xZ = 35
+    // xZ = 35 // xGOAL_LM + 3 * MAXLANDMARKs
+    xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
   };
 
   enum
@@ -40,7 +41,8 @@ public:
 
   enum
   {
-    MAXLANDMARKS = 4
+    // MAXLANDMARKS = 4
+    MAXLANDMARKS = 20
   };
 
   enum
@@ -71,8 +73,10 @@ public:
   void velocityCallback(const double& t, const Vector3d& vel_b,
                         const Matrix3d& R);
 
-  void simpleCamCallback(const double& t, const ImageFeat& z,
-                         const Matrix2d& R_pix, const Matrix1d& R_depth);
+  void arucoCallback(const double& t, const Vector2d& pix, const double& depth,
+                     const Matrix2d& R_pix, const Matrix1d& R_depth);
+  void landmarksCallback(const double& t, const ImageFeat& z,
+                         const Matrix2d& R_pix);
 
   // t - current time (seconds)
   // z - gnss measurement [p_{b/I}^I v_{b/I}^I]
