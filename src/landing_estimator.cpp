@@ -28,17 +28,15 @@ Estimator::Estimator(std::string filename)
 
   // Init EKF State
   Eigen::Matrix<double, xGOAL_LM, 1> x0_states;
-  Eigen::Vector3d x0_landmarks;
   get_yaml_eigen("x0_states", filename, x0_states);
-  get_yaml_eigen("x0_landmarks", filename, x0_landmarks);
+  get_yaml_eigen("x0_landmarks", filename, x0_landmarks_);
 
   xhat_.block<xGOAL_LM, 1>(0, 0) = x0_states;
   xhat_(xGOAL_RHO) = rho_init;
 
   Eigen::Matrix<double, xGOAL_LM, 1> P0_states;
-  Eigen::Vector3d P0_landmarks;
   get_yaml_eigen("P0_states", filename, P0_states);
-  get_yaml_eigen("P0_landmarks", filename, P0_landmarks);
+  get_yaml_eigen("P0_landmarks", filename, P0_landmarks_);
 
   P_.block<xGOAL_LM, xGOAL_LM>(0, 0) = P0_states.asDiagonal();
   P_(xGOAL_RHO, xGOAL_RHO) = phat_rho_init;
@@ -66,8 +64,8 @@ Estimator::Estimator(std::string filename)
   for (int i = 0; i < MAXLANDMARKS; ++i)
   {
     int LM_IDX = xGOAL_LM + 3 * i;
-    xhat_.block<3, 1>(LM_IDX, 0) = x0_landmarks;
-    P_.block<3, 3>(LM_IDX, LM_IDX) = P0_landmarks.asDiagonal();
+    xhat_.block<3, 1>(LM_IDX, 0) = x0_landmarks_;
+    P_.block<3, 3>(LM_IDX, LM_IDX) = P0_landmarks_.asDiagonal();
     Qx_.block<3, 3>(LM_IDX, LM_IDX) = Qx_landmarks.asDiagonal();
     lambda_.block<3, 1>(LM_IDX, 0) = lambda_landmarks;
   }
@@ -161,7 +159,7 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
   // const Vector3d mocap_euler = z.q().euler();
   // z_resid_.head(att_dims) = mocap_euler.head(2) - xhat_.segment<2>(xATT);
   ////z_R_.topLeftCorner(att_dims, att_dims) = 0.001 *
-  ///Eigen::Matrix2d::Identity();
+  /// Eigen::Matrix2d::Identity();
   // z_R_.topLeftCorner(att_dims, att_dims) = R.block<2, 2>(3, 3);
 
   // H_.setZero();
@@ -175,8 +173,9 @@ void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
 {
 }
 
-void Estimator::arucoCallback(const double& t, const Vector2d& pix, const double& depth,
-                   const Matrix2d& R_pix, const Matrix1d& R_depth)
+void Estimator::arucoCallback(const double& t, const Vector2d& pix,
+                              const double& depth, const Matrix2d& R_pix,
+                              const Matrix1d& R_depth)
 {
   if (t < use_goal_stop_time_)
   {
@@ -202,7 +201,7 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix, const double
 }
 
 void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
-                       const Matrix2d& R_pix)
+                                  const Matrix2d& R_pix)
 {
   std::list<int>::iterator it = landmark_ids_.begin();
 
@@ -211,15 +210,15 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
   while (idx < num_landmarks)
   {
     // Update Landmark
-    //int lm_pix_dims = 0;
-    //MeasVec lm_pix_zhat;
-    //landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
-    //z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
+    // int lm_pix_dims = 0;
+    // MeasVec lm_pix_zhat;
+    // landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+    // z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
     //// z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
     //// Eigen::Matrix2d::Identity();
     //// PRINTMAT(z_resid_);
-    //z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
-    //update(lm_pix_dims, z_resid_, z_R_, H_);
+    // z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
+    // update(lm_pix_dims, z_resid_, z_R_, H_);
 
     const int lm_id = z.feat_ids[idx];
     const Eigen::Vector2d lm_pix = z.pixs[idx];
@@ -232,19 +231,22 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
     {
       const int expected_lm_id = *it;
       it++;
-      //std::cout << "expected: " << expected_lm_id << " actual: " << lm_id << std::endl;
+      // std::cout << "expected: " << expected_lm_id << " actual: " << lm_id <<
+      // std::endl;
       if (expected_lm_id != lm_id)
       {
-        //std::cout << "Need to remove # " << expected_lm_id << std::endl;
-        removeLandmark(expected_lm_id);
+        // std::cout << "Need to remove # " << expected_lm_id << std::endl;
+        // removeLandmark(expected_lm_id);
+        removeLandmark(idx, expected_lm_id);
       }
       else
       {
+        std::cout << "Update lm id: " << lm_id << " idx: " << idx << std::endl;
         idx++;
       }
     }
 
-    //std::cout << "lm id: " << z.feat_ids[i] << std::endl;
+    // std::cout << "lm id: " << z.feat_ids[i] << std::endl;
   }
 }
 
@@ -548,8 +550,8 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   // A(xRHOI, xATT + 0) = rho_i * rho_i * e3.transpose() * d_R_d_phi.transpose()
   // * vel_b; A(xRHOI, xATT + 1) = rho_i * rho_i * e3.transpose() *
   // d_R_d_theta.transpose() * vel_b; A(xRHOI, xATT + 2) = rho_i * rho_i *
-  // e3.transpose() * d_R_d_psi.transpose() * vel_b; A.block<1, 3>(xRHOI, xVEL) =
-  // rho_i * rho_i * e3.transpose() * R_I_b.transpose();
+  // e3.transpose() * d_R_d_psi.transpose() * vel_b; A.block<1, 3>(xRHOI, xVEL)
+  // = rho_i * rho_i * e3.transpose() * R_I_b.transpose();
 
   //// d goal / d goal
   // A(xRHOI, xRHOI) = 2. * rho_i * e3.transpose() * R_I_b.transpose() * vel_b;
@@ -566,23 +568,73 @@ void Estimator::printLmIDs()
     std::cout << *it << ", ";
   }
   std::cout << std::endl;
+}
 
+void Estimator::printLmXhat()
+{
+  std::cout << "lm xhat: " << std::endl
+            << xhat_.bottomRows(MAXLANDMARKS * 3) << std::endl;
+}
+
+void Estimator::printLmPhat()
+{
+  std::cout << "lm Phat: " << std::endl
+            << P_.bottomRightCorner(MAXLANDMARKS * 3, MAXLANDMARKS * 3)
+            << std::endl;
 }
 
 void Estimator::initLandmark(const int& id, const Vector2d& pix)
 {
+  // lm_idx is 0 indexed
+  const int lm_idx = landmark_ids_.size();
+
+  // add the id to the list of ids tracked
   landmark_ids_.push_back(id);
-  std::cout << "Estimator:: Added lm id # " << id << std::endl;
+
+  // initialize estimator xhat and phat
+  const int xLM_IDX = xGOAL_LM + 3 * lm_idx;
+  // xhat_.block<3, 1>(xLM_IDX, 0) = x0_landmarks_;
+  xhat_.block<3, 1>(xLM_IDX, 0) = Eigen::Vector3d::Constant(id);
+  //P_.block<3, 3>(xLM_IDX, xLM_IDX) = P0_landmarks_.asDiagonal();
+  P_.block<3, 3>(xLM_IDX, xLM_IDX) = Eigen::Vector3d::Constant(id).asDiagonal();
+
+  // std::cout << "Estimator:: Added lm id # " << id << " idx: " << lm_idx <<
+  // std::endl;
 
   printLmIDs();
-
+  printLmXhat();
+  printLmPhat();
 }
 
-void Estimator::removeLandmark(const int& lm_id)
+void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
 {
-  std::cout << "Estimator:: Remove lm id # " << lm_id << std::endl;
+  // std::cout << "Estimator:: Remove lm id" << std::endl;
+  // std::cout << "Estimator:: Remove lm id # " << lm_id << std::endl;
   landmark_ids_.remove(lm_id);
 
-  printLmIDs();
+  // Move up the bottom rows to cover up the values corresponding to the removed
+  // lm
+  const int xLM_IDX = xGOAL_LM + 3 * lm_idx;
+  const int num_rows = xZ - xLM_IDX - 3;
+  const int num_cols = num_rows;
 
+  // xhat_.block<num_rows, 1>(xLM_IDX, 0) = xhat_.bottomRows(num_rows);
+  // std::cout << "idx: " << lm_idx << std::endl;
+  // std::cout << "destimation block: " << xhat_.block(xLM_IDX, 0, num_rows, 1)
+  // << std::endl; std::cout << "source block: " << xhat_.bottomRows(num_rows);
+  xhat_.block(xLM_IDX, 0, num_rows, 1) = xhat_.bottomRows(num_rows);
+  // Zero out the unintialized xhat terms (NOT necessary)
+  xhat_.bottomRows(3).setZero();
+
+  // Move covariance up and then left to preserve cross terms
+  P_.block(xLM_IDX, 0, num_rows, xZ) = P_.bottomRightCorner(num_rows, xZ);
+  P_.block(0, xLM_IDX, xZ, num_cols) = P_.bottomRightCorner(xZ, num_cols);
+  // Zero out the unintialized covariance terms (necessary)
+  P_.bottomRightCorner(3, xZ).setZero();
+  P_.bottomRightCorner(xZ, 3).setZero();
+
+
+  printLmIDs();
+  printLmXhat();
+  printLmPhat();
 }

@@ -30,8 +30,8 @@ public:
     xGOAL_ATT = 21,
     xGOAL_OMEGA = 22,
     xGOAL_LM = 23,
-    //xZ = 35 // xGOAL_LM + 3 * MAXLANDMARKs
-    xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
+    xZ = 35 // xGOAL_LM + 3 * MAXLANDMARKs
+    //xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
   };
 
   enum
@@ -43,8 +43,8 @@ public:
 
   enum
   {
-    //MAXLANDMARKS = 4
-    MAXLANDMARKS = 20
+    MAXLANDMARKS = 4
+    //MAXLANDMARKS = 20
   };
 
   enum
@@ -92,8 +92,10 @@ public:
                 StateMat& A, StateInputMat& G);
 
   void printLmIDs();
+  void printLmXhat();
+  void printLmPhat();
   void initLandmark(const int& id, const Vector2d& pix);
-  void removeLandmark(const int& id);
+  void removeLandmark(const int& idx, const int& lm_id);
 
   // EKF Member variables
   StateVec xhat_;
@@ -113,6 +115,10 @@ public:
 
   StateVec lambda_;
   StateMat lambda_mat_;
+
+  // Landmark Initialization stuff
+  Vector3d x0_landmarks_;
+  Vector3d P0_landmarks_;
 
   const StateMat I_ = StateMat::Identity();
 
