@@ -204,20 +204,47 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix, const double
 void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
                        const Matrix2d& R_pix)
 {
-  const int num_landmarks = z.pixs.size();
-  for (int i = 0; i < num_landmarks; i++)
-  {
-    int lm_pix_dims = 0;
-    MeasVec lm_pix_zhat;
-    landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
-    z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
-    // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
-    // Eigen::Matrix2d::Identity();
-    // PRINTMAT(z_resid_);
-    z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
-    update(lm_pix_dims, z_resid_, z_R_, H_);
+  std::list<int>::iterator it = landmark_ids_.begin();
 
-    std::cout << "lm id: " << z.feat_ids[i] << std::endl;
+  int idx = 0;
+  const int num_landmarks = z.pixs.size();
+  while (idx < num_landmarks)
+  {
+    // Update Landmark
+    //int lm_pix_dims = 0;
+    //MeasVec lm_pix_zhat;
+    //landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+    //z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
+    //// z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
+    //// Eigen::Matrix2d::Identity();
+    //// PRINTMAT(z_resid_);
+    //z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
+    //update(lm_pix_dims, z_resid_, z_R_, H_);
+
+    const int lm_id = z.feat_ids[idx];
+    const Eigen::Vector2d lm_pix = z.pixs[idx];
+    if (it == landmark_ids_.end())
+    {
+      initLandmark(lm_id, lm_pix);
+      idx++;
+    }
+    else
+    {
+      const int expected_lm_id = *it;
+      it++;
+      //std::cout << "expected: " << expected_lm_id << " actual: " << lm_id << std::endl;
+      if (expected_lm_id != lm_id)
+      {
+        //std::cout << "Need to remove # " << expected_lm_id << std::endl;
+        removeLandmark(expected_lm_id);
+      }
+      else
+      {
+        idx++;
+      }
+    }
+
+    //std::cout << "lm id: " << z.feat_ids[i] << std::endl;
   }
 }
 
@@ -529,3 +556,33 @@ void Estimator::dynamics(const StateVec& x, const InputVec& u_in,
   //}
 }
 
+void Estimator::printLmIDs()
+{
+  std::list<int>::iterator it;
+
+  std::cout << "List: ";
+  for (it = landmark_ids_.begin(); it != landmark_ids_.end(); it++)
+  {
+    std::cout << *it << ", ";
+  }
+  std::cout << std::endl;
+
+}
+
+void Estimator::initLandmark(const int& id, const Vector2d& pix)
+{
+  landmark_ids_.push_back(id);
+  std::cout << "Estimator:: Added lm id # " << id << std::endl;
+
+  printLmIDs();
+
+}
+
+void Estimator::removeLandmark(const int& lm_id)
+{
+  std::cout << "Estimator:: Remove lm id # " << lm_id << std::endl;
+  landmark_ids_.remove(lm_id);
+
+  printLmIDs();
+
+}

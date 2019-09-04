@@ -2,6 +2,8 @@
 #define ESTIMATOR_H
 
 #include <iostream>
+
+#include <list>
 #include "multirotor_sim/estimator_base.h"
 #include "geometry/quat.h"
 
@@ -89,6 +91,10 @@ public:
   void dynamics(const StateVec& x, const InputVec& u_in, StateVec& xdot,
                 StateMat& A, StateInputMat& G);
 
+  void printLmIDs();
+  void initLandmark(const int& id, const Vector2d& pix);
+  void removeLandmark(const int& id);
+
   // EKF Member variables
   StateVec xhat_;
   StateMat P_;
@@ -113,6 +119,8 @@ public:
   double last_prop_time_;
   double use_goal_stop_time_;
   bool use_partial_update_;
+
+  std::list<int> landmark_ids_;
 };
 
 #endif /* ESTIMATOR_H */

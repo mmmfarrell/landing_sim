@@ -109,6 +109,7 @@ public:
       if (rand_num < lm_disappear_prob_)
       {
         // landmark disappears, go to next
+        std::cout << "Unicycle lm disappear # " << landmark_ids_(i) << std::endl;
         continue;
       }
 
