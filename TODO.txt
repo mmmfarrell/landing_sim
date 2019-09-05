@@ -1,7 +1,8 @@
 TODO
   - Sim
-    - Tune so that disappearing landmarks track well
+    - Camera intrinsic / extrinsic parameter for measurement models
     - IMU biases dont track that well...???
+  - MonteCarlo Results?
   - Gazebo sim
 
 PAPER
