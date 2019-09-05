@@ -5,8 +5,8 @@ x0: [0., 0.,    # POS
 
 aruco_body_frame: [0., 0., 0.]
 
-landmarks_xy_min: -5
-landmarks_xy_max: 5
+landmarks_xy_min: -1
+landmarks_xy_max: 1
 landmarks_z_min: -1
 landmarks_z_max: 1
 

@@ -1,7 +1,7 @@
 TODO
   - Sim
+    - Tune so that disappearing landmarks track well
     - IMU biases dont track that well...???
-    - Random landmarks that come and go
   - Gazebo sim
 
 PAPER
