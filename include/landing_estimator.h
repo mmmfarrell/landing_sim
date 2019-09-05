@@ -30,8 +30,8 @@ public:
     xGOAL_ATT = 21,
     xGOAL_OMEGA = 22,
     xGOAL_LM = 23,
-    // xZ = 35  // xGOAL_LM + 3 * MAXLANDMARKs
-    xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
+     xZ = 35  // xGOAL_LM + 3 * MAXLANDMARKs
+    //xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
   };
 
   enum
@@ -43,8 +43,8 @@ public:
 
   enum
   {
-    // MAXLANDMARKS = 4
-    MAXLANDMARKS = 20
+     MAXLANDMARKS = 4
+    //MAXLANDMARKS = 20
   };
 
   enum
