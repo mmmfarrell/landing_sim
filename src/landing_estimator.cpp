@@ -304,18 +304,54 @@ void Estimator::propagate(const double& dt, const InputVec& u_in)
   // P_ = A_ * P_ * A_.transpose() + Q_;
 
   // FROM VIEKF
-  G_ = (I_ + A_ * dt / 2.0 + A_ * A_ * dt * dt / 6.0) * G_ * dt;
-  A_ = I_ + A_ * dt + A_ * A_ * dt * dt / 2.0;
-  P_ = A_ * P_ * A_.transpose() + G_ * Qu_ * G_.transpose() + Qx_;
+  // G_ = (I_ + A_ * dt / 2.0 + A_ * A_ * dt * dt / 6.0) * G_ * dt;
+  // A_ = I_ + A_ * dt + A_ * A_ * dt * dt / 2.0;
+  // P_ = A_ * P_ * A_.transpose() + G_ * Qu_ * G_.transpose() + Qx_;
+
+  const int num_landmarks = landmark_ids_.size();
+  const int num_states = xGOAL_LM + 3 * num_landmarks;
+  auto Gsmall = G_.topRows(num_states);
+  auto Asmall = A_.topLeftCorner(num_states, num_states);
+  auto Psmall = P_.topLeftCorner(num_states, num_states);
+  auto Qxsmall = Qx_.topLeftCorner(num_states, num_states);
+  auto Ismall = I_.topLeftCorner(num_states, num_states);
+
+  Gsmall = (Ismall + Asmall * dt / 2.0 + Asmall * Asmall * dt * dt / 6.0) *
+           Gsmall * dt;
+  Asmall = Ismall + Asmall * dt + Asmall * Asmall * dt * dt / 2.0;
+  Psmall = Asmall * Psmall * Asmall.transpose() +
+           Gsmall * Qu_ * Gsmall.transpose() + Qxsmall;
 }
 
 void Estimator::update(const double dims, const MeasVec& residual,
                        const MeasMat& R, const MeasH& H)
 {
-  K_.leftCols(dims) = P_ * H.topRows(dims).transpose() *
-                      (H.topRows(dims) * P_ * H.topRows(dims).transpose() +
-                       R.topLeftCorner(dims, dims))
-                          .inverse();
+  const int num_landmarks = landmark_ids_.size();
+  const int num_states = xGOAL_LM + 3 * num_landmarks;
+  //std::cout << "number of landmarks: " << num_landmarks << std::endl;
+
+  // Create small versions of each matrix to only do math on valid states
+  // Note this is not necessary. Estimator works great without this, it just
+  // speeds it up a bunch when there are consistently less landmarks tracked
+  // than MAXLANDMARKS
+  auto Ksmall = K_.topRows(num_states);
+  auto Hsmall = H.leftCols(num_states);
+  auto Psmall = P_.topLeftCorner(num_states, num_states);
+  auto Asmall = A_.topLeftCorner(num_states, num_states);
+  auto xhatsmall = xhat_.topRows(num_states);
+  auto lambdasmall = lambda_.topRows(num_states);
+  auto lambdamatsmall = lambda_mat_.topLeftCorner(num_states, num_states);
+  auto Ismall = I_.topLeftCorner(num_states, num_states);
+
+  // K_.leftCols(dims) = P_ * H.topRows(dims).transpose() *
+  //(H.topRows(dims) * P_ * H.topRows(dims).transpose() +
+  // R.topLeftCorner(dims, dims))
+  //.inverse();
+  Ksmall.leftCols(dims) =
+      Psmall * Hsmall.topRows(dims).transpose() *
+      (Hsmall.topRows(dims) * Psmall * Hsmall.topRows(dims).transpose() +
+       R.topLeftCorner(dims, dims))
+          .inverse();
 
   if (use_partial_update_)
   {
@@ -325,22 +361,36 @@ void Estimator::update(const double dims, const MeasVec& residual,
     // boxplus(x_[i_], lambda_.asDiagonal() * K * residual.topRows(meas.rdim),
     // xp_);
     // x_[i_] = xp_;
-    xhat_ += lambda_.asDiagonal() * K_.leftCols(dims) * residual.head(dims);
-    A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
-    P_ += lambda_mat_.cwiseProduct(A_ * P_ * A_.transpose() +
-                                   K_.leftCols(dims) *
-                                       R.topLeftCorner(dims, dims) *
-                                       K_.leftCols(dims).transpose() -
-                                   P_);
+    // xhat_ += lambda_.asDiagonal() * K_.leftCols(dims) * residual.head(dims);
+    // A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
+    // P_ += lambda_mat_.cwiseProduct(A_ * P_ * A_.transpose() +
+    // K_.leftCols(dims) *
+    // R.topLeftCorner(dims, dims) *
+    // K_.leftCols(dims).transpose() -
+    // P_);
+    xhatsmall +=
+        lambdasmall.asDiagonal() * Ksmall.leftCols(dims) * residual.head(dims);
+    Asmall = Ismall - Ksmall.leftCols(dims) * Hsmall.topRows(dims);
+    Psmall += lambdamatsmall.cwiseProduct(
+        Asmall * Psmall * Asmall.transpose() +
+        Ksmall.leftCols(dims) * R.topLeftCorner(dims, dims) *
+            Ksmall.leftCols(dims).transpose() -
+        Psmall);
   }
   else
   {
-    xhat_ += K_.leftCols(dims) * residual.head(dims);
+    // xhat_ += K_.leftCols(dims) * residual.head(dims);
+    //// just reuse A_ to save memory
+    // A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
+    // P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
+    // R.topLeftCorner(dims, dims) *
+    // K_.leftCols(dims).transpose();
+    xhatsmall += Ksmall.leftCols(dims) * residual.head(dims);
     // just reuse A_ to save memory
-    A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
-    P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
-                                        R.topLeftCorner(dims, dims) *
-                                        K_.leftCols(dims).transpose();
+    Asmall = Ismall - Ksmall.leftCols(dims) * Hsmall.topRows(dims);
+    Psmall = Asmall * Psmall * Asmall.transpose() +
+             Ksmall.leftCols(dims) * R.topLeftCorner(dims, dims) *
+                 Ksmall.leftCols(dims).transpose();
   }
 }
 
@@ -606,7 +656,7 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
 
   Eigen::Matrix3d K;
   K << 410., 0., 320., 0., 420., 240., 0., 0., 1.;
-  //PRINTMAT(K);
+  // PRINTMAT(K);
   Eigen::Matrix3d Kinv = K.inverse();
 
   Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
@@ -637,11 +687,10 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
   p_g_v_v(1) = xhat_(xGOAL_POS + 1);
   p_g_v_v(2) = 1. / xhat_(xGOAL_RHO);
   Eigen::Vector3d p_i_g_g = R_v_g * (p_i_v_v - p_g_v_v);
-  //PRINTMAT(p_i_g_g);
+  // PRINTMAT(p_i_g_g);
 
   // Init state with estimate
   xhat_.block<3, 1>(xLM_IDX, 0) = p_i_g_g;
-
 
   // printLmIDs();
   // printLmXhat();
