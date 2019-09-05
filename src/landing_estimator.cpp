@@ -96,7 +96,6 @@ void Estimator::imuCallback(const double& t, const Vector6d& z,
   // update with ax, ay
   const double imu_dims = 2;
   const double xhat_mu = xhat_(xMU);
-  // const Eigen::Vector2d xhat_accel = -xhat_mu * xhat_.segment<2>(xVEL);
   const Eigen::Vector2d xhat_accel =
       -xhat_mu * xhat_.segment<2>(xVEL) + xhat_.segment<2>(xBA);
   z_resid_.head(imu_dims) = z.head(2) - xhat_accel;
@@ -184,7 +183,6 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix,
     MeasVec depth_zhat;
     goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
     z_resid_(0) = depth - depth_zhat(0);
-    // z_R_.topLeftCorner(depth_dims, depth_dims) = 1.0 * Matrix1d::Identity();
     z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
     update(depth_dims, z_resid_, z_R_, H_);
 
@@ -193,8 +191,6 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix,
     MeasVec pix_zhat;
     goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
     z_resid_.head(pix_dims) = pix - pix_zhat.head(pix_dims);
-    // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
-    // Eigen::Matrix2d::Identity();
     z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
     update(pix_dims, z_resid_, z_R_, H_);
   }
@@ -209,17 +205,6 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
   const int num_landmarks = z.pixs.size();
   while (idx < num_landmarks)
   {
-    // Update Landmark
-    // int lm_pix_dims = 0;
-    // MeasVec lm_pix_zhat;
-    // landmarkPixelMeasModel(i, xhat_, lm_pix_dims, lm_pix_zhat, H_);
-    // z_resid_.head(lm_pix_dims) = z.pixs[i] - lm_pix_zhat.head(lm_pix_dims);
-    //// z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
-    //// Eigen::Matrix2d::Identity();
-    //// PRINTMAT(z_resid_);
-    // z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
-    // update(lm_pix_dims, z_resid_, z_R_, H_);
-
     const int lm_id = z.feat_ids[idx];
     const Eigen::Vector2d lm_pix = z.pixs[idx];
     if (it == landmark_ids_.end())
@@ -231,24 +216,16 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
     {
       const int expected_lm_id = *it;
       it++;
-      // std::cout << "expected: " << expected_lm_id << " actual: " << lm_id <<
-      // std::endl;
       if (expected_lm_id != lm_id)
       {
-        // std::cout << "Need to remove # " << expected_lm_id << std::endl;
-        // removeLandmark(expected_lm_id);
         removeLandmark(idx, expected_lm_id);
       }
       else
       {
-        // std::cout << "Update lm id: " << lm_id << " idx: " << idx <<
-        // std::endl;
         updateLandmark(idx, lm_pix, R_pix);
         idx++;
       }
     }
-
-    // std::cout << "lm id: " << z.feat_ids[i] << std::endl;
   }
 }
 
@@ -259,7 +236,6 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
   const double pos_dims = 3;
   const Vector3d gnss_pos = z.head(pos_dims);
   z_resid_.head(pos_dims) = gnss_pos - xhat_.segment<3>(xPOS);
-  // z_R_.topLeftCorner(pos_dims, pos_dims) = 0.1 * Eigen::Matrix3d::Identity();
   z_R_.topLeftCorner(pos_dims, pos_dims) = R.topLeftCorner(pos_dims, pos_dims);
 
   H_.setZero();
@@ -280,7 +256,6 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
 
   z_resid_.head(vel_dims) = gnss_vel_I - zhat_vel_I;
   z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
-  // z_R_.topLeftCorner(vel_dims, vel_dims) = 0.1 * Eigen::Matrix3d::Identity();
 
   const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
   const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
@@ -299,14 +274,6 @@ void Estimator::propagate(const double& dt, const InputVec& u_in)
   dynamics(xhat_, u_, xdot_, A_, G_);
 
   xhat_ += xdot_ * dt;
-
-  // A_ = I_ + A_ * dt;
-  // P_ = A_ * P_ * A_.transpose() + Q_;
-
-  // FROM VIEKF
-  // G_ = (I_ + A_ * dt / 2.0 + A_ * A_ * dt * dt / 6.0) * G_ * dt;
-  // A_ = I_ + A_ * dt + A_ * A_ * dt * dt / 2.0;
-  // P_ = A_ * P_ * A_.transpose() + G_ * Qu_ * G_.transpose() + Qx_;
 
   const int num_landmarks = landmark_ids_.size();
   const int num_states = xGOAL_LM + 3 * num_landmarks;
@@ -328,7 +295,6 @@ void Estimator::update(const double dims, const MeasVec& residual,
 {
   const int num_landmarks = landmark_ids_.size();
   const int num_states = xGOAL_LM + 3 * num_landmarks;
-  //std::cout << "number of landmarks: " << num_landmarks << std::endl;
 
   // Create small versions of each matrix to only do math on valid states
   // Note this is not necessary. Estimator works great without this, it just
@@ -343,10 +309,6 @@ void Estimator::update(const double dims, const MeasVec& residual,
   auto lambdamatsmall = lambda_mat_.topLeftCorner(num_states, num_states);
   auto Ismall = I_.topLeftCorner(num_states, num_states);
 
-  // K_.leftCols(dims) = P_ * H.topRows(dims).transpose() *
-  //(H.topRows(dims) * P_ * H.topRows(dims).transpose() +
-  // R.topLeftCorner(dims, dims))
-  //.inverse();
   Ksmall.leftCols(dims) =
       Psmall * Hsmall.topRows(dims).transpose() *
       (Hsmall.topRows(dims) * Psmall * Hsmall.topRows(dims).transpose() +
@@ -358,16 +320,6 @@ void Estimator::update(const double dims, const MeasVec& residual,
     // Apply Fixed Gain Partial update per
     // "Partial-Update Schmidt-Kalman Filter" by Brink
     // Modified to operate inline and on the manifold
-    // boxplus(x_[i_], lambda_.asDiagonal() * K * residual.topRows(meas.rdim),
-    // xp_);
-    // x_[i_] = xp_;
-    // xhat_ += lambda_.asDiagonal() * K_.leftCols(dims) * residual.head(dims);
-    // A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
-    // P_ += lambda_mat_.cwiseProduct(A_ * P_ * A_.transpose() +
-    // K_.leftCols(dims) *
-    // R.topLeftCorner(dims, dims) *
-    // K_.leftCols(dims).transpose() -
-    // P_);
     xhatsmall +=
         lambdasmall.asDiagonal() * Ksmall.leftCols(dims) * residual.head(dims);
     Asmall = Ismall - Ksmall.leftCols(dims) * Hsmall.topRows(dims);
@@ -379,12 +331,6 @@ void Estimator::update(const double dims, const MeasVec& residual,
   }
   else
   {
-    // xhat_ += K_.leftCols(dims) * residual.head(dims);
-    //// just reuse A_ to save memory
-    // A_ = I_ - K_.leftCols(dims) * H.topRows(dims);
-    // P_ = A_ * P_ * A_.transpose() + K_.leftCols(dims) *
-    // R.topLeftCorner(dims, dims) *
-    // K_.leftCols(dims).transpose();
     xhatsmall += Ksmall.leftCols(dims) * residual.head(dims);
     // just reuse A_ to save memory
     Asmall = Ismall - Ksmall.leftCols(dims) * Hsmall.topRows(dims);
@@ -646,17 +592,10 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
   // initialize estimator xhat and phat
   const int xLM_IDX = xGOAL_LM + 3 * lm_idx;
   xhat_.block<3, 1>(xLM_IDX, 0) = x0_landmarks_;
-  // xhat_.block<3, 1>(xLM_IDX, 0) = Eigen::Vector3d::Constant(id);
   P_.block<3, 3>(xLM_IDX, xLM_IDX) = P0_landmarks_.asDiagonal();
-  // P_.block<3, 3>(xLM_IDX, xLM_IDX) =
-  // Eigen::Vector3d::Constant(id).asDiagonal();
-
-  // std::cout << "Estimator:: Added lm id # " << id << " idx: " << lm_idx <<
-  // std::endl;
 
   Eigen::Matrix3d K;
   K << 410., 0., 320., 0., 420., 240., 0., 0., 1.;
-  // PRINTMAT(K);
   Eigen::Matrix3d Kinv = K.inverse();
 
   Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
@@ -687,20 +626,13 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
   p_g_v_v(1) = xhat_(xGOAL_POS + 1);
   p_g_v_v(2) = 1. / xhat_(xGOAL_RHO);
   Eigen::Vector3d p_i_g_g = R_v_g * (p_i_v_v - p_g_v_v);
-  // PRINTMAT(p_i_g_g);
 
   // Init state with estimate
   xhat_.block<3, 1>(xLM_IDX, 0) = p_i_g_g;
-
-  // printLmIDs();
-  // printLmXhat();
-  // printLmPhat();
 }
 
 void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
 {
-  // std::cout << "Estimator:: Remove lm id" << std::endl;
-  // std::cout << "Estimator:: Remove lm id # " << lm_id << std::endl;
   landmark_ids_.remove(lm_id);
 
   // Move up the bottom rows to cover up the values corresponding to the removed
@@ -709,10 +641,6 @@ void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
   const int num_rows = xZ - xLM_IDX - 3;
   const int num_cols = num_rows;
 
-  // xhat_.block<num_rows, 1>(xLM_IDX, 0) = xhat_.bottomRows(num_rows);
-  // std::cout << "idx: " << lm_idx << std::endl;
-  // std::cout << "destimation block: " << xhat_.block(xLM_IDX, 0, num_rows, 1)
-  // << std::endl; std::cout << "source block: " << xhat_.bottomRows(num_rows);
   xhat_.block(xLM_IDX, 0, num_rows, 1) = xhat_.bottomRows(num_rows);
   // Zero out the unintialized xhat terms (NOT necessary)
   xhat_.bottomRows(3).setZero();
@@ -723,10 +651,6 @@ void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
   // Zero out the unintialized covariance terms (necessary)
   P_.bottomRightCorner(3, xZ).setZero();
   P_.bottomRightCorner(xZ, 3).setZero();
-
-  // printLmIDs();
-  // printLmXhat();
-  // printLmPhat();
 }
 
 void Estimator::updateLandmark(const int& idx, const Vector2d& pix,
@@ -736,9 +660,6 @@ void Estimator::updateLandmark(const int& idx, const Vector2d& pix,
   MeasVec lm_pix_zhat;
   landmarkPixelMeasModel(idx, xhat_, lm_pix_dims, lm_pix_zhat, H_);
   z_resid_.head(lm_pix_dims) = pix - lm_pix_zhat.head(lm_pix_dims);
-  // z_R_.topLeftCorner(pix_dims, pix_dims) = 4.0 *
-  // Eigen::Matrix2d::Identity();
-  // PRINTMAT(z_resid_);
   z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
   update(lm_pix_dims, z_resid_, z_R_, H_);
 }
