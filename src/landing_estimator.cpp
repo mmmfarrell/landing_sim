@@ -241,7 +241,8 @@ void Estimator::landmarksCallback(const double& t, const ImageFeat& z,
       }
       else
       {
-        //std::cout << "Update lm id: " << lm_id << " idx: " << idx << std::endl;
+        // std::cout << "Update lm id: " << lm_id << " idx: " << idx <<
+        // std::endl;
         updateLandmark(idx, lm_pix, R_pix);
         idx++;
       }
@@ -603,6 +604,45 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
   // std::cout << "Estimator:: Added lm id # " << id << " idx: " << lm_idx <<
   // std::endl;
 
+  Eigen::Matrix3d K;
+  K << 410., 0., 320., 0., 420., 240., 0., 0., 1.;
+  //PRINTMAT(K);
+  Eigen::Matrix3d Kinv = K.inverse();
+
+  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
+  q /= q.norm();
+  quat::Quatd q_b_c(q);
+  const Eigen::Matrix3d R_b_c = q_b_c.R();
+
+  const double phi = xhat_(xATT + 0);
+  const double theta = xhat_(xATT + 1);
+  const double psi = xhat_(xATT + 2);
+  const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
+
+  Eigen::Vector3d pix_homo(pix(0), pix(1), 1.);
+  Eigen::Vector3d unit_vec_veh_frame =
+      R_I_b.transpose() * R_b_c.transpose() * Kinv * pix_homo;
+
+  // TODO assumes zero body to camera postion offset
+  const double expected_altitude = 1. / xhat_(xGOAL_RHO);
+
+  Eigen::Vector3d scaled_vec_veh_frame =
+      (expected_altitude / unit_vec_veh_frame(2)) * unit_vec_veh_frame;
+  Eigen::Vector3d p_i_v_v = scaled_vec_veh_frame;
+
+  const double theta_g = xhat_(xGOAL_ATT);
+  const Eigen::Matrix3d R_v_g = rotm3dItoB(theta_g);
+  Eigen::Vector3d p_g_v_v;
+  p_g_v_v(0) = xhat_(xGOAL_POS + 0);
+  p_g_v_v(1) = xhat_(xGOAL_POS + 1);
+  p_g_v_v(2) = 1. / xhat_(xGOAL_RHO);
+  Eigen::Vector3d p_i_g_g = R_v_g * (p_i_v_v - p_g_v_v);
+  //PRINTMAT(p_i_g_g);
+
+  // Init state with estimate
+  xhat_.block<3, 1>(xLM_IDX, 0) = p_i_g_g;
+
+
   // printLmIDs();
   // printLmXhat();
   // printLmPhat();
@@ -640,8 +680,8 @@ void Estimator::removeLandmark(const int& lm_idx, const int& lm_id)
   // printLmPhat();
 }
 
-void Estimator::updateLandmark(const int& idx,
-                               const Vector2d& pix, const Matrix2d& R_pix)
+void Estimator::updateLandmark(const int& idx, const Vector2d& pix,
+                               const Matrix2d& R_pix)
 {
   int lm_pix_dims = 0;
   MeasVec lm_pix_zhat;
