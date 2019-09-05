@@ -659,3 +659,68 @@ in the jacobian given by
 \end{equation}
 The jacobians for the y pixel measurement, $p_y$ are similar to the ones derived
 above, just changing $f_y$ in place of $f_x$ and $\e_2$ instead of $\e_1$.
+
+\subsection{Landmark Initialization}
+Each time a new landmark is acquired and added to the estimated vector, we
+should initialize its location to something intelligent. Theoretically, we could
+just initialize the landmark's location to zero with a large enough associated
+covariance. However, by initializing the landmark to the location based on its
+initial pixel measurement, we can initialize the landmark with a smaller
+covariance.
+
+When we first acquire a landmark, the only information we have about it is a
+measurement of its pixel location in the image frame. This measurement, denoted
+by
+\begin{equation}
+  h \left( \x \right) = 
+  \begin{bmatrix}
+    p_x & p_y
+  \end{bmatrix}^\transpose
+\end{equation}
+can be used to deduce the landmark's relative position vector that is estimated.
+The easiest way to see this is by first creating a virtual image plane. This
+virtual image plane projects the landmark pixel location into the image plane as
+if the camera were perfectly aligned with the inertial, vehicle frame. We can
+derive this using the pin hole camera model where
+\begin{align}
+  \begin{bmatrix}
+    p_x \\ p_y \\ 1
+  \end{bmatrix} &= K
+  \begin{bmatrix}
+    X^c / Z^c \\
+    Y^c / Z^c \\
+    1
+  \end{bmatrix} \\
+  \begin{bmatrix}
+    X^c / Z^c \\
+    Y^c / Z^c \\
+    1
+  \end{bmatrix}
+   &= K^{-1}
+  \begin{bmatrix}
+    p_x \\ p_y \\ 1
+  \end{bmatrix} \\
+  \begin{bmatrix}
+    X^c / Z^c \\
+    Y^c / Z^c \\
+    1
+  \end{bmatrix}^v
+   &= R_b^v R_c^b K^{-1}
+  \begin{bmatrix}
+    p_x \\ p_y \\ 1
+  \end{bmatrix} \\
+\end{align}
+The resulting vector, $
+  \begin{bmatrix}
+    X^c / Z^c \\
+    Y^c / Z^c \\
+    1
+  \end{bmatrix}^v$
+can be scaled by assuming that the altitude of the landmark is equal to the
+altitude of the goal. This gives us the vector, $\vect{p}_{i/v}^v$.
+With this vector, we can then reach the estimated state vector,
+$\vect{p}_{i/g}^g$ with the following
+\begin{equation}
+  \vect{p}_{i/g}^g = R_v^g \left( \vect{p}_{i/v}^v - \vect{p}_{g/v}^v \right).
+\end{equation}
+
