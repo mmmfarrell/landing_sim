@@ -73,6 +73,12 @@ Estimator::Estimator(std::string filename)
   const StateVec ones = StateVec::Constant(1.0);
   lambda_mat_ = ones * lambda_.transpose() + lambda_ * ones.transpose() -
                 lambda_ * lambda_.transpose();
+
+  // Camera Parameters
+  get_yaml_eigen("cam_K", filename, cam_K_);
+  cam_K_inv_ = cam_K_.inverse();
+  get_yaml_eigen("q_b_c", filename, q_b_c_.arr_);
+  q_b_c_.normalize();
 }
 
 Estimator::~Estimator()
@@ -594,14 +600,7 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
   xhat_.block<3, 1>(xLM_IDX, 0) = x0_landmarks_;
   P_.block<3, 3>(xLM_IDX, xLM_IDX) = P0_landmarks_.asDiagonal();
 
-  Eigen::Matrix3d K;
-  K << 410., 0., 320., 0., 420., 240., 0., 0., 1.;
-  Eigen::Matrix3d Kinv = K.inverse();
-
-  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
-  q /= q.norm();
-  quat::Quatd q_b_c(q);
-  const Eigen::Matrix3d R_b_c = q_b_c.R();
+  const Eigen::Matrix3d R_b_c = q_b_c_.R();
 
   const double phi = xhat_(xATT + 0);
   const double theta = xhat_(xATT + 1);
@@ -610,7 +609,7 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
 
   Eigen::Vector3d pix_homo(pix(0), pix(1), 1.);
   Eigen::Vector3d unit_vec_veh_frame =
-      R_I_b.transpose() * R_b_c.transpose() * Kinv * pix_homo;
+      R_I_b.transpose() * R_b_c.transpose() * cam_K_inv_ * pix_homo;
 
   // TODO assumes zero body to camera postion offset
   const double expected_altitude = 1. / xhat_(xGOAL_RHO);

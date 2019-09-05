@@ -122,6 +122,11 @@ public:
   Vector3d x0_landmarks_;
   Vector3d P0_landmarks_;
 
+  // Camera parameters
+  Eigen::Matrix3d cam_K_;
+  Eigen::Matrix3d cam_K_inv_;
+  quat::Quatd q_b_c_;
+
   const StateMat I_ = StateMat::Identity();
 
   double last_prop_time_;
