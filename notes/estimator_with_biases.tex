@@ -377,6 +377,43 @@ The measurement jacobian therefore is given by
   \frac{\partial h_y}{\partial \beta_y} &= 1.
 \end{align}
 
+\subsection{Goal ArUco Measurement}
+\subsubsection{Measurement model}
+In the case that and ArUco marker is placed as the landing pad, and therefore
+defines the goal frame, we get a measurement of relative transfrom from the
+camera to the ArUco frame. If we assume that there is a known rotation offset
+between the ArUco frame and the goal frame, the measurements can be expressed as
+\begin{equation}
+  h \left( \x \right) = 
+  \begin{bmatrix}
+    \vect{p}_{a/c}^c \\
+    \vect{q}_c^a,
+  \end{bmatrix}
+\end{equation}
+where $F^a$ is the ArUco frame.
+We can expand this measurement model using our estimated state
+\begin{align}
+  \hat{h} \left( \x \right) &=
+  \begin{bmatrix}
+    \hat{\vect{p}}_{a/c}^c \\
+    \hat{\vect{q}}_c^a,
+  \end{bmatrix} \\
+  \hat{\vect{p}}_{a/c}^c  &= R_b^c \left( \hat{R}_I^b \hat{\vect{p}}_{g/v}^v -
+    \vect{p}_{c/v}^b \right) \\
+  \hat{\vect{q}}_{c}^a  &= R_g^a \hat{R}_I^g \hat{R}_b^I R_c^b
+\end{align}
+
+\subsubsection{Measurement Jacobians}
+\begin{align}
+  \frac{\partial \hat{\vect{p}}_{a/c}^c}{\partial \phi} =& R_b^c \frac{\partial
+  R_I^b}{\partial \phi} \hat{\vect{p}}_{g/v}^v \\
+  \frac{\partial \hat{\vect{p}}_{a/c}^c}{\partial \theta} =& R_b^c \frac{\partial
+  R_I^b}{\partial \theta} \hat{\vect{p}}_{g/v}^v \\
+  \frac{\partial \hat{\vect{p}}_{a/c}^c}{\partial \psi} =& R_b^c \frac{\partial
+  R_I^b}{\partial \psi} \hat{\vect{p}}_{g/v}^v \\
+    \frac{\partial \hat{\vect{p}}_{a/c}^c}{\partial \vect{p}_{g/v}^v} =& R_b^c \hat{R}_I^b
+\end{align}
+
 \subsection{Goal Pixel Measurement}
 \subsubsection{Measurement model}
 We assume that the UAV is equiped with a downward facing camera that is rigidly
@@ -426,8 +463,6 @@ Therefore, the measurement model expanded looks like this
     f_y \frac{\e_2 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)}{\e_3 R_b^c \left(R_v^b \vect{p}_{g/v}^v - \vect{p}_{c/b}^b\right)} + c_y
   \end{bmatrix}.
 \end{equation}
-\TODO Come back and take a look at this. In simulation I am assuming the camera
-is not offset from the body frame.
 
 \subsubsection{Jacobian}
 To derive  the jacobian of this measurement model, we first look at just the
