@@ -716,11 +716,21 @@ The resulting vector, $
     Y^c / Z^c \\
     1
   \end{bmatrix}^v$
-can be scaled by assuming that the altitude of the landmark is equal to the
-altitude of the goal. This gives us the vector, $\vect{p}_{i/v}^v$.
+  is the vector $\vect{p}_{i/c}^v$ up to a scale factor. The vector can be scaled by assuming that the altitude of the landmark is equal to the
+altitude of the goal. To get the expected altitude, we solve for
+\begin{align}
+  \e_3^\transpose \vect{p}_{g/c}^v &= \e_3^\transpose \vect{p}_{g/b}^v - \e_3^\transpose \vect{p}_{c/b}^v \\
+  \e_3^\transpose \vect{p}_{g/c}^v &= \e_3^\transpose \vect{p}_{g/b}^v -
+  \e_3^\transpose R_b^I \vect{p}_{c/b}^b \\
+  \e_3^\transpose \vect{p}_{g/c}^v &= \frac{1}{\rho_g} -
+  \e_3^\transpose R_b^I \vect{p}_{c/b}^b \\
+\end{align}
+
+This gives us the vector, $\vect{p}_{i/c}^v$.
 With this vector, we can then reach the estimated state vector,
 $\vect{p}_{i/g}^g$ with the following
-\begin{equation}
-  \vect{p}_{i/g}^g = R_v^g \left( \vect{p}_{i/v}^v - \vect{p}_{g/v}^v \right).
-\end{equation}
+\begin{align}
+  \vect{p}_{i/v}^v &= \vect{p}_{i/c}^v + R_b^I \vect{p}_{c/b}^b \\
+  \vect{p}_{i/g}^g &= R_v^g \left( \vect{p}_{i/v}^v - \vect{p}_{g/v}^v \right).
+\end{align}
 

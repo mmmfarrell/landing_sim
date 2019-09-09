@@ -36,8 +36,8 @@ public:
 
   enum
   {
-     //SIZE = 4
-    SIZE = 20
+     SIZE = 4
+    //SIZE = 20
   };
 
   typedef Eigen::Matrix<double, xZ, 1> StateVec;

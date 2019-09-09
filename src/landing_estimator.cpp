@@ -613,11 +613,15 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
       R_I_b.transpose() * R_b_c.transpose() * cam_K_inv_ * pix_homo;
 
   // TODO assumes zero body to camera postion offset
-  const double expected_altitude = 1. / xhat_(xGOAL_RHO);
+  const Eigen::Vector3d p_c_b_I = R_I_b * p_b_c_;
+  //const double expected_altitude = 1. / xhat_(xGOAL_RHO);
+  const double expected_altitude = 1. / xhat_(xGOAL_RHO) - p_c_b_I(2);
 
   Eigen::Vector3d scaled_vec_veh_frame =
       (expected_altitude / unit_vec_veh_frame(2)) * unit_vec_veh_frame;
-  Eigen::Vector3d p_i_v_v = scaled_vec_veh_frame;
+  //Eigen::Vector3d p_i_v_v = scaled_vec_veh_frame;
+  Eigen::Vector3d p_i_c_v = scaled_vec_veh_frame;
+  const Eigen::Vector3d p_i_v_v = p_i_c_v + p_c_b_I;
 
   const double theta_g = xhat_(xGOAL_ATT);
   const Eigen::Matrix3d R_v_g = rotm3dItoB(theta_g);
