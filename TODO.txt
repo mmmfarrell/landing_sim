@@ -1,7 +1,11 @@
 TODO
   - Sim
     - Camera intrinsic / extrinsic parameter for measurement models
+    - Camera position offset
     - IMU biases dont track that well...???
+  - Hardware Mocap
+    - Psuedo GPS & altimeter measurements
+    - Psuedo AHRS (rpy) measurement
   - MonteCarlo Results?
   - Gazebo sim
 

@@ -4,25 +4,26 @@
 #include "estimator_utils.h"
 
 void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
-                        Estimator::MeasVec& z, Estimator::MeasH& H)
+                        Estimator::MeasVec& z, Estimator::MeasH& H,
+                        const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c)
 {
   meas_dims = 1;
   z.setZero();
   H.setZero();
 
   // Camera Params
-  const double fx = 410.;
-  const double fy = 420.;
-  const double cx = 320.;
-  const double cy = 240.;
+  //const double fx = 410.;
+  //const double fy = 420.;
+  //const double cx = 320.;
+  //const double cy = 240.;
 
   // Constants
   static const Eigen::Vector3d e1(1., 0., 0.);
   static const Eigen::Vector3d e2(0., 1., 0.);
   static const Eigen::Vector3d e3(0., 0., 1.);
-  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
-  q /= q.norm();
-  quat::Quatd q_b_c(q);
+  //Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
+  //q /= q.norm();
+  //quat::Quatd q_b_c(q);
   const Eigen::Matrix3d R_b_c = q_b_c.R();
 
   const double phi = x(Estimator::xATT + 0);
@@ -57,25 +58,31 @@ void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
 }
 
 void goalPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
-                        Estimator::MeasVec& z, Estimator::MeasH& H)
+                        Estimator::MeasVec& z, Estimator::MeasH& H,
+                        const Eigen::Matrix3d& cam_K,
+                        const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c)
 {
   meas_dims = 2;
   z.setZero();
   H.setZero();
 
   // Camera Params
-  const double fx = 410.;
-  const double fy = 420.;
-  const double cx = 320.;
-  const double cy = 240.;
+  const double fx = cam_K(0, 0);
+  const double fy = cam_K(1, 1);
+  const double cx = cam_K(0, 2);
+  const double cy = cam_K(1, 2);
+  //const double fx = 410.;
+  //const double fy = 420.;
+  //const double cx = 320.;
+  //const double cy = 240.;
 
   // Constants
   static const Eigen::Vector3d e1(1., 0., 0.);
   static const Eigen::Vector3d e2(0., 1., 0.);
   static const Eigen::Vector3d e3(0., 0., 1.);
-  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
-  q /= q.norm();
-  quat::Quatd q_b_c(q);
+  //Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
+  //q /= q.norm();
+  //quat::Quatd q_b_c(q);
   const Eigen::Matrix3d R_b_c = q_b_c.R();
 
   const double phi = x(Estimator::xATT + 0);
@@ -154,7 +161,9 @@ void goalPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
 
 void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
                             int& meas_dims, Estimator::MeasVec& z,
-                            Estimator::MeasH& H)
+                            Estimator::MeasH& H, const Eigen::Matrix3d& cam_K,
+                            const Eigen::Vector3d& p_b_c,
+                            const quat::Quatd& q_b_c)
 {
   meas_dims = 2;
   z.setZero();
@@ -164,18 +173,22 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   const int xLM_IDX = Estimator::xGOAL_LM + 3 * lm_index;
 
   // Camera Params
-  const double fx = 410.;
-  const double fy = 420.;
-  const double cx = 320.;
-  const double cy = 240.;
+  const double fx = cam_K(0, 0);
+  const double fy = cam_K(1, 1);
+  const double cx = cam_K(0, 2);
+  const double cy = cam_K(1, 2);
+  //const double fx = 410.;
+  //const double fy = 420.;
+  //const double cx = 320.;
+  //const double cy = 240.;
 
   // Constants
   static const Eigen::Vector3d e1(1., 0., 0.);
   static const Eigen::Vector3d e2(0., 1., 0.);
   static const Eigen::Vector3d e3(0., 0., 1.);
-  Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
-  q /= q.norm();
-  quat::Quatd q_b_c(q);
+  //Eigen::Vector4d q(0.7071, 0., 0., 0.7071);
+  //q /= q.norm();
+  //quat::Quatd q_b_c(q);
   const Eigen::Matrix3d R_b_c = q_b_c.R();
 
   const double phi = x(Estimator::xATT + 0);

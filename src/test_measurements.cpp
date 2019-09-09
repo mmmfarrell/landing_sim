@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <Eigen/Core>
+#include "geometry/quat.h"
+
 #include "landing_estimator.h"
 #include "measurement_models.h"
 
@@ -9,16 +12,32 @@ public:
   RandomState()
   {
     xhat.setRandom();
+
+    cam_K.setZero();
+    cam_K(0, 0) = 410.;
+    cam_K(1, 1) = 420.;
+    cam_K(0, 2) = 320.;
+    cam_K(1, 2) = 240.;
+    cam_K(2, 2) = 1.;
+
+    p_b_c.setZero();
+    q_b_c = quat::Quatd(Eigen::Vector4d(0.7071, 0., 0., 0.7071));
+    q_b_c.normalize();
   }
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
   Estimator::MeasH H;
+
+  Eigen::Matrix3d cam_K;
+  Eigen::Vector3d p_b_c;
+  quat::Quatd q_b_c;
 };
 
 TEST_F(RandomState, goalPixelMeas_Dimension2)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
   const int true_meas_dims = 2;
   EXPECT_EQ(meas_dims, true_meas_dims);
@@ -27,14 +46,16 @@ TEST_F(RandomState, goalPixelMeas_Dimension2)
 TEST_F(RandomState, goalPixelMeas_NonZero)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
   EXPECT_TRUE((zhat.head(meas_dims).array() != 0.).all());
 }
 
 TEST_F(RandomState, goalPixelJac_ZerosWhereExpected)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
   // Goal meas model doesnt depend on UAV POS, VEL, DRAG or on GOAL ATT, OMEGA,
   // VEL, or LMS
@@ -66,7 +87,7 @@ TEST_F(RandomState, goalPixelJac_ZerosWhereExpected)
 TEST_F(RandomState, goalDepthMeas_Dimension1)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   const int true_meas_dims = 1;
   EXPECT_EQ(meas_dims, true_meas_dims);
@@ -75,14 +96,14 @@ TEST_F(RandomState, goalDepthMeas_Dimension1)
 TEST_F(RandomState, goalDepthMeas_NonZero)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
   EXPECT_TRUE((zhat.head(meas_dims).array() != 0.).all());
 }
 
 TEST_F(RandomState, goalDepthJac_ZerosWhereExpected)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   // Goal depth model doesnt depend on UAV POS, VEL, DRAG or on GOAL ATT, OMEGA,
   // VEL, or LMS
@@ -122,19 +143,36 @@ public:
     xhat(Estimator::xGOAL_LM + 0) = 1.;
     xhat(Estimator::xGOAL_LM + 1) = 0.5;
     xhat(Estimator::xGOAL_LM + 2) = 1.0;
+
+    cam_K.setZero();
+    cam_K(0, 0) = 410.;
+    cam_K(1, 1) = 420.;
+    cam_K(0, 2) = 320.;
+    cam_K(1, 2) = 240.;
+    cam_K(2, 2) = 1.;
+
+    p_b_c.setZero();
+    q_b_c = quat::Quatd(Eigen::Vector4d(0.7071, 0., 0., 0.7071));
+    q_b_c.normalize();
   }
+
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
   Estimator::MeasH H;
+
+  Eigen::Matrix3d cam_K;
+  Eigen::Vector3d p_b_c;
+  quat::Quatd q_b_c;
 };
 
 TEST_F(SimpleState, goalPixelMeas_DirectlyCentered)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
-  const double cx = 320.;
-  const double cy = 240.;
+  const double cx = this->cam_K(0, 2);
+  const double cy = this->cam_K(1, 2);
 
   EXPECT_EQ(zhat(0), cx);
   EXPECT_EQ(zhat(1), cy);
@@ -143,10 +181,11 @@ TEST_F(SimpleState, goalPixelMeas_DirectlyCentered)
 TEST_F(SimpleState, goalPixelJac_CorrectValues)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
-  const double fx = 410.;
-  const double fy = 420.;
+  const double fx = this->cam_K(0, 0);
+  const double fy = this->cam_K(1, 1);
   const double rho_g = xhat(Estimator::xGOAL_RHO);
 
   EXPECT_DOUBLE_EQ(H(0, Estimator::xATT + 0), fx);
@@ -158,7 +197,7 @@ TEST_F(SimpleState, goalPixelJac_CorrectValues)
 TEST_F(SimpleState, goalDepthMeas_Correct)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   const double true_depth = 10.;
   EXPECT_DOUBLE_EQ(zhat(0), true_depth);
@@ -167,7 +206,7 @@ TEST_F(SimpleState, goalDepthMeas_Correct)
 TEST_F(SimpleState, goalDepthJac_CorrectValues)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   const double rho_g = xhat(Estimator::xGOAL_RHO);
   const double true_jac_val = -(1. / rho_g / rho_g);
@@ -179,7 +218,8 @@ TEST_F(SimpleState, landmarkPixelMeas_Correct)
 {
   const int lm_idx = 0;
   int meas_dims = 0;
-  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
+  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H, this->cam_K,
+                         this->p_b_c, this->q_b_c);
 
   const double true_px = 338.6364;
   const double true_py = 201.8182;
@@ -193,7 +233,8 @@ TEST_F(SimpleState, landmarkPixelJac_CorrectValues)
 {
   const int lm_idx = 0;
   int meas_dims = 0;
-  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
+  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H, this->cam_K,
+                         this->p_b_c, this->q_b_c);
 
   const double true_dpx_dphi = 410.8471;
   const double true_dpx_dtheta = -1.6942;
@@ -261,16 +302,33 @@ public:
     xhat(Estimator::xGOAL_LM + 0) = 2.34;
     xhat(Estimator::xGOAL_LM + 1) = -0.75;
     xhat(Estimator::xGOAL_LM + 2) = 1.134;
+
+    cam_K.setZero();
+    cam_K(0, 0) = 410.;
+    cam_K(1, 1) = 420.;
+    cam_K(0, 2) = 320.;
+    cam_K(1, 2) = 240.;
+    cam_K(2, 2) = 1.;
+
+    p_b_c.setZero();
+    q_b_c = quat::Quatd(Eigen::Vector4d(0.7071, 0., 0., 0.7071));
+    q_b_c.normalize();
   }
+
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
   Estimator::MeasH H;
+
+  Eigen::Matrix3d cam_K;
+  Eigen::Vector3d p_b_c;
+  quat::Quatd q_b_c;
 };
 
 TEST_F(ComplexState, goalPixelMeas_Correct)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
   const double true_px = 400.18150;
   const double true_py = 60.84093;
@@ -283,7 +341,8 @@ TEST_F(ComplexState, goalPixelMeas_Correct)
 TEST_F(ComplexState, goalPixelJac_CorrectValues)
 {
   int meas_dims = 0;
-  goalPixelMeasModel(xhat, meas_dims, zhat, H);
+  goalPixelMeasModel(xhat, meas_dims, zhat, H, this->cam_K, this->p_b_c,
+                     this->q_b_c);
 
   const double true_dpxdphi = 425.68;
   const double true_dpxdtheta = -16.57;
@@ -318,7 +377,7 @@ TEST_F(ComplexState, goalPixelJac_CorrectValues)
 TEST_F(ComplexState, goalDepthMeas_DirectlyCentered)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   const double true_depth = 9.13012;
 
@@ -329,7 +388,7 @@ TEST_F(ComplexState, goalDepthMeas_DirectlyCentered)
 TEST_F(ComplexState, goalDepthJac_CorrectValues)
 {
   int meas_dims = 0;
-  goalDepthMeasModel(xhat, meas_dims, zhat, H);
+  goalDepthMeasModel(xhat, meas_dims, zhat, H, this->p_b_c, this->q_b_c);
 
   const double true_ddepthdphi = -1.786;
   const double true_ddepthdtheta = 3.875;
@@ -351,7 +410,8 @@ TEST_F(ComplexState, landmarkPixelMeas_Correct)
 {
   const int lm_idx = 0;
   int meas_dims = 0;
-  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
+  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H, this->cam_K,
+                         this->p_b_c, this->q_b_c);
 
   const double true_px = 329.1128;
   const double true_py = -15.8178;
@@ -365,7 +425,8 @@ TEST_F(ComplexState, landmarkPixelJac_CorrectValues)
 {
   const int lm_idx = 0;
   int meas_dims = 0;
-  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
+  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H, this->cam_K,
+                         this->p_b_c, this->q_b_c);
 
   const double true_dpx_dphi = 410.2025;
   const double true_dpx_dtheta = 19.4083;
@@ -433,10 +494,26 @@ public:
     xhat(Estimator::xGOAL_LM + 6 + 0) = 2.34;
     xhat(Estimator::xGOAL_LM + 6 + 1) = -0.75;
     xhat(Estimator::xGOAL_LM + 6 + 2) = 1.134;
+
+    cam_K.setZero();
+    cam_K(0, 0) = 410.;
+    cam_K(1, 1) = 420.;
+    cam_K(0, 2) = 320.;
+    cam_K(1, 2) = 240.;
+    cam_K(2, 2) = 1.;
+
+    p_b_c.setZero();
+    q_b_c = quat::Quatd(Eigen::Vector4d(0.7071, 0., 0., 0.7071));
+    q_b_c.normalize();
   }
+
   Estimator::StateVec xhat;
   Estimator::MeasVec zhat;
   Estimator::MeasH H;
+
+  Eigen::Matrix3d cam_K;
+  Eigen::Vector3d p_b_c;
+  quat::Quatd q_b_c;
 };
 
 TEST_F(ComplexStateWithLM2, landmarkPixelJac_CorrectLocationWithLMIdx)
@@ -445,7 +522,8 @@ TEST_F(ComplexStateWithLM2, landmarkPixelJac_CorrectLocationWithLMIdx)
   const int xLM_IDX = Estimator::xGOAL_LM + 3 * lm_idx;
 
   int meas_dims = 0;
-  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H);
+  landmarkPixelMeasModel(lm_idx, xhat, meas_dims, zhat, H, this->cam_K,
+                         this->p_b_c, this->q_b_c);
 
   const double true_dpx_dphi = 410.2025;
   const double true_dpx_dtheta = 19.4083;

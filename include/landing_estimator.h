@@ -72,8 +72,8 @@ public:
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
   void altCallback(const double& t, const Vector1d& z, const Matrix1d& R);
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
-  void velocityCallback(const double& t, const Vector3d& vel_b,
-                        const Matrix3d& R);
+  //void velocityCallback(const double& t, const Vector3d& vel_b,
+                        //const Matrix3d& R);
 
   void arucoCallback(const double& t, const Vector2d& pix, const double& depth,
                      const Matrix2d& R_pix, const Matrix1d& R_depth);
@@ -125,6 +125,7 @@ public:
   // Camera parameters
   Eigen::Matrix3d cam_K_;
   Eigen::Matrix3d cam_K_inv_;
+  Eigen::Vector3d p_b_c_;
   quat::Quatd q_b_c_;
 
   const StateMat I_ = StateMat::Identity();

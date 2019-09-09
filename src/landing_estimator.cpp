@@ -77,6 +77,7 @@ Estimator::Estimator(std::string filename)
   // Camera Parameters
   get_yaml_eigen("cam_K", filename, cam_K_);
   cam_K_inv_ = cam_K_.inverse();
+  get_yaml_eigen("p_b_c", filename, p_b_c_);
   get_yaml_eigen("q_b_c", filename, q_b_c_.arr_);
   q_b_c_.normalize();
 }
@@ -173,10 +174,10 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
   // update(att_dims, z_resid_, z_R_, H_);
 }
 
-void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
-                                 const Matrix3d& R)
-{
-}
+// void Estimator::velocityCallback(const double& t, const Vector3d& vel_b,
+// const Matrix3d& R)
+//{
+//}
 
 void Estimator::arucoCallback(const double& t, const Vector2d& pix,
                               const double& depth, const Matrix2d& R_pix,
@@ -187,7 +188,7 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix,
     // Update goal depth
     int depth_dims = 0;
     MeasVec depth_zhat;
-    goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_);
+    goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_, p_b_c_, q_b_c_);
     z_resid_(0) = depth - depth_zhat(0);
     z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
     update(depth_dims, z_resid_, z_R_, H_);
@@ -195,7 +196,7 @@ void Estimator::arucoCallback(const double& t, const Vector2d& pix,
     // Update goal pixel
     int pix_dims = 0;
     MeasVec pix_zhat;
-    goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_);
+    goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_, cam_K_, p_b_c_, q_b_c_);
     z_resid_.head(pix_dims) = pix - pix_zhat.head(pix_dims);
     z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
     update(pix_dims, z_resid_, z_R_, H_);
@@ -250,29 +251,29 @@ void Estimator::gnssCallback(const double& t, const Vector6d& z,
   update(pos_dims, z_resid_, z_R_, H_);
 
   // update velocity
-  const double vel_dims = 3;
-  const Eigen::Vector3d gnss_vel_I = z.segment<3>(3);
+  // const double vel_dims = 3;
+  // const Eigen::Vector3d gnss_vel_I = z.segment<3>(3);
 
-  const double phi = xhat_(xATT + 0);
-  const double theta = xhat_(xATT + 1);
-  const double psi = xhat_(xATT + 2);
-  const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
-  const Eigen::Vector3d xhat_vel_b = xhat_.segment<3>(xVEL);
-  const Eigen::Vector3d zhat_vel_I = R_I_b.transpose() * xhat_vel_b;
+  // const double phi = xhat_(xATT + 0);
+  // const double theta = xhat_(xATT + 1);
+  // const double psi = xhat_(xATT + 2);
+  // const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
+  // const Eigen::Vector3d xhat_vel_b = xhat_.segment<3>(xVEL);
+  // const Eigen::Vector3d zhat_vel_I = R_I_b.transpose() * xhat_vel_b;
 
-  z_resid_.head(vel_dims) = gnss_vel_I - zhat_vel_I;
-  z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
+  // z_resid_.head(vel_dims) = gnss_vel_I - zhat_vel_I;
+  // z_R_.topLeftCorner(vel_dims, vel_dims) = R.block<3, 3>(3, 3);
 
-  const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
-  const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
-  const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
-  H_.setZero();
-  H_.block<3, 1>(0, xATT + 0) = d_R_d_phi * xhat_vel_b;
-  H_.block<3, 1>(0, xATT + 1) = d_R_d_theta * xhat_vel_b;
-  H_.block<3, 1>(0, xATT + 2) = d_R_d_psi * xhat_vel_b;
-  H_.block<3, 3>(0, xVEL) = R_I_b.transpose();
+  // const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
+  // const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
+  // const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
+  // H_.setZero();
+  // H_.block<3, 1>(0, xATT + 0) = d_R_d_phi * xhat_vel_b;
+  // H_.block<3, 1>(0, xATT + 1) = d_R_d_theta * xhat_vel_b;
+  // H_.block<3, 1>(0, xATT + 2) = d_R_d_psi * xhat_vel_b;
+  // H_.block<3, 3>(0, xVEL) = R_I_b.transpose();
 
-  update(vel_dims, z_resid_, z_R_, H_);
+  // update(vel_dims, z_resid_, z_R_, H_);
 }
 
 void Estimator::propagate(const double& dt, const InputVec& u_in)
@@ -657,7 +658,8 @@ void Estimator::updateLandmark(const int& idx, const Vector2d& pix,
 {
   int lm_pix_dims = 0;
   MeasVec lm_pix_zhat;
-  landmarkPixelMeasModel(idx, xhat_, lm_pix_dims, lm_pix_zhat, H_);
+  landmarkPixelMeasModel(idx, xhat_, lm_pix_dims, lm_pix_zhat, H_, cam_K_,
+                         p_b_c_, q_b_c_);
   z_resid_.head(lm_pix_dims) = pix - lm_pix_zhat.head(lm_pix_dims);
   z_R_.topLeftCorner(lm_pix_dims, lm_pix_dims) = R_pix;
   update(lm_pix_dims, z_resid_, z_R_, H_);
