@@ -1,6 +1,5 @@
 TODO
   - Sim
-    - Camera position offset (meas models, landmakr init)
     - IMU biases dont track that well...???
   - Hardware Mocap
     - Psuedo GPS & altimeter measurements
