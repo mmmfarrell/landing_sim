@@ -1032,3 +1032,4 @@ if __name__ == '__main__':
     test_goal_pix_model_jacobian()
     test_goal_depth_model_jacobian()
     test_landmark_pixel_model_jacobian()
+    # test_goal_aruco_meas_model_jacobian()

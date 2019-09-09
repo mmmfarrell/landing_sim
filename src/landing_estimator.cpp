@@ -209,17 +209,16 @@ void Estimator::arucoCallback(const double& t, const xform::Xformd& x_c2a_meas,
     update(aruco_dims, z_resid_, z_R_, H_);
 
     // Update goal attitude (janky) TODO fixme
-    Eigen::Vector3d rel_eul = x_c2a_meas.q_.euler();
-    double ang_diff = -(xhat_(xATT + 2) + M_PI / 2.) + xhat_(xGOAL_ATT);
-    while (ang_diff > M_PI)
-      ang_diff -= 2 * M_PI;
-    while (ang_diff <= -M_PI)
-      ang_diff += 2 * M_PI;
-    z_resid_(0) = rel_eul(2) - ang_diff;
+    quat::Quatd q_c_a_meas = x_c2a_meas.q_;
+    quat::Quatd q_I_b = quat::Quatd(xhat_(xATT + 0), xhat_(xATT + 1), xhat_(xATT + 2));
+    quat::Quatd q_a_g = quat::Quatd(0, 0., 0.);
+    quat::Quatd q_I_g_meas = q_I_b * q_b_c_ * q_c_a_meas * q_a_g;
+    const double yaw_meas = q_I_g_meas.euler()(2);
+    const int yaw_dims = 1;
+    z_resid_(0) = yaw_meas - xhat_(xGOAL_ATT);
     H_.setZero();
     H_(0, xGOAL_ATT) = 1.;
-    H_(0, xATT + 2) = -1;
-    update(aruco_dims, z_resid_, z_R_, H_);
+    update(yaw_dims, z_resid_, z_R_, H_);
   }
 }
 
