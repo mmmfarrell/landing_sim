@@ -1,7 +1,7 @@
 # Vehicle Params
 x0: [0., 0.,    # POS
      0.5, 0.0,    # VEL
-     0., 0.5]    # ATT, OMEGA
+     1., 0.5]    # ATT, OMEGA
 
 aruco_body_frame: [0., 0., 0.]
 

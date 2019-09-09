@@ -1,5 +1,6 @@
 TODO
   - Sim
+    - Aruco relative orientation
     - IMU biases dont track that well...???
   - Hardware Mocap
     - Psuedo GPS & altimeter measurements

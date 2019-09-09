@@ -207,6 +207,19 @@ void Estimator::arucoCallback(const double& t, const xform::Xformd& x_c2a_meas,
     z_resid_.head(aruco_dims) = x_c2a_meas.t_ - aruco_zhat.head(aruco_dims);
     z_R_.topLeftCorner(aruco_dims, aruco_dims) = aruco_R.topLeftCorner(3, 3);
     update(aruco_dims, z_resid_, z_R_, H_);
+
+    // Update goal attitude (janky) TODO fixme
+    Eigen::Vector3d rel_eul = x_c2a_meas.q_.euler();
+    double ang_diff = -(xhat_(xATT + 2) + M_PI / 2.) + xhat_(xGOAL_ATT);
+    while (ang_diff > M_PI)
+      ang_diff -= 2 * M_PI;
+    while (ang_diff <= -M_PI)
+      ang_diff += 2 * M_PI;
+    z_resid_(0) = rel_eul(2) - ang_diff;
+    H_.setZero();
+    H_(0, xGOAL_ATT) = 1.;
+    H_(0, xATT + 2) = -1;
+    update(aruco_dims, z_resid_, z_R_, H_);
   }
 }
 

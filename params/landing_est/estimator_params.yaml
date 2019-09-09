@@ -33,7 +33,7 @@ P0_states: [1., 1., 1.,   # POS
                 1., 1.,       # GOAL_POS
                 1.,           # GOAL_RHO
                 1., 1.,       # GOAL_VEL
-                0.,           # GOAL_ATT
+                1.,           # GOAL_ATT
                 1.]           # GOAL_OMEGA
 
 P0_landmarks: [9., 9., 9.]   
