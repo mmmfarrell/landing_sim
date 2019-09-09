@@ -7,6 +7,10 @@
 #include "landing_estimator.h"
 #include "estimator_utils.h"
 
+void goalArucoMeasModel(const Estimator::StateVec& x, int& meas_dims,
+                        Estimator::MeasVec& z, Estimator::MeasH& H,
+                        const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c);
+
 void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
                         Estimator::MeasVec& z, Estimator::MeasH& H,
                         const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c);

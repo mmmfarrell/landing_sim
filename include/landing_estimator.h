@@ -30,7 +30,7 @@ public:
     xGOAL_ATT = 21,
     xGOAL_OMEGA = 22,
     xGOAL_LM = 23,
-     //xZ = 35  // xGOAL_LM + 3 * MAXLANDMARKs
+    // xZ = 35  // xGOAL_LM + 3 * MAXLANDMARKs
     xZ = 83  // xGOAL_LM + 3 * MAXLANDMARKs
   };
 
@@ -43,7 +43,7 @@ public:
 
   enum
   {
-     //MAXLANDMARKS = 4
+    // MAXLANDMARKS = 4
     MAXLANDMARKS = 20
   };
 
@@ -72,11 +72,11 @@ public:
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
   void altCallback(const double& t, const Vector1d& z, const Matrix1d& R);
   void mocapCallback(const double& t, const Xformd& z, const Matrix6d& R);
-  //void velocityCallback(const double& t, const Vector3d& vel_b,
-                        //const Matrix3d& R);
+  // void velocityCallback(const double& t, const Vector3d& vel_b,
+  // const Matrix3d& R);
 
-  void arucoCallback(const double& t, const Vector2d& pix, const double& depth,
-                     const Matrix2d& R_pix, const Matrix1d& R_depth);
+  void arucoCallback(const double& t, const xform::Xformd& x_c2a_meas,
+                     const Matrix6d& aruco_R);
   void landmarksCallback(const double& t, const ImageFeat& z,
                          const Matrix2d& R_pix);
 

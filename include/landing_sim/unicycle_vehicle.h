@@ -162,6 +162,11 @@ public:
     }
   }
 
+  void arucoOrientation(quat::Quatd& q_I_a)
+  {
+    q_I_a = quat::Quatd(0., 0., x_(xATT));
+  }
+
   void arucoLocation(Vector3d& pt)
   {
     // Grab position and append a zero for altitude

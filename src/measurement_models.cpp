@@ -3,6 +3,50 @@
 #include "landing_estimator.h"
 #include "estimator_utils.h"
 
+void goalArucoMeasModel(const Estimator::StateVec& x, int& meas_dims,
+                        Estimator::MeasVec& z, Estimator::MeasH& H,
+                        const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c)
+{
+  meas_dims = 3;
+
+  // Constants
+  static const Eigen::Vector3d e1(1., 0., 0.);
+  static const Eigen::Vector3d e2(0., 1., 0.);
+  static const Eigen::Vector3d e3(0., 0., 1.);
+  const Eigen::Matrix3d R_b_c = q_b_c.R();
+
+  const double phi = x(Estimator::xATT + 0);
+  const double theta = x(Estimator::xATT + 1);
+  const double psi = x(Estimator::xATT + 2);
+  const Eigen::Matrix3d R_I_b = rotmItoB(phi, theta, psi);
+
+  const double rho_g = x(Estimator::xGOAL_RHO);
+  Eigen::Vector3d p_g_v_v;
+  p_g_v_v(0) = x(Estimator::xGOAL_POS + 0);
+  p_g_v_v(1) = x(Estimator::xGOAL_POS + 1);
+  p_g_v_v(2) = 1. / rho_g;
+
+  const Eigen::Vector3d p_g_c_c = R_b_c * (R_I_b * p_g_v_v - p_b_c);
+
+  // Measurement Model
+  z.setZero();
+  z.head(3) = p_g_c_c;
+
+  // Measurement Model Jacobian
+  const Eigen::Matrix3d d_R_d_phi = dRIBdPhi(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_theta = dRIBdTheta(phi, theta, psi);
+  const Eigen::Matrix3d d_R_d_psi = dRIBdPsi(phi, theta, psi);
+
+  H.setZero();
+  H.block<3, 1>(0, Estimator::xATT + 0) = R_b_c * d_R_d_phi * p_g_v_v;
+  H.block<3, 1>(0, Estimator::xATT + 1) = R_b_c * d_R_d_theta * p_g_v_v;
+  H.block<3, 1>(0, Estimator::xATT + 2) = R_b_c * d_R_d_psi * p_g_v_v;
+
+  const Eigen::Matrix3d dzdp = R_b_c * R_I_b;
+  H.block<3, 2>(0, Estimator::xGOAL_POS) = dzdp.leftCols(2);
+  H.block<3, 1>(0, Estimator::xGOAL_RHO) = (-1. / rho_g / rho_g) * dzdp.rightCols(1);
+}
+
 void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
                         Estimator::MeasVec& z, Estimator::MeasH& H,
                         const Eigen::Vector3d& p_b_c, const quat::Quatd& q_b_c)

@@ -179,27 +179,34 @@ void Estimator::mocapCallback(const double& t, const Xformd& z,
 //{
 //}
 
-void Estimator::arucoCallback(const double& t, const Vector2d& pix,
-                              const double& depth, const Matrix2d& R_pix,
-                              const Matrix1d& R_depth)
+void Estimator::arucoCallback(const double& t, const xform::Xformd& x_c2a_meas,
+                              const Matrix6d& aruco_R)
 {
   if (t < use_goal_stop_time_)
   {
-    // Update goal depth
-    int depth_dims = 0;
-    MeasVec depth_zhat;
-    goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_, p_b_c_, q_b_c_);
-    z_resid_(0) = depth - depth_zhat(0);
-    z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
-    update(depth_dims, z_resid_, z_R_, H_);
+    //// Update goal depth
+    //int depth_dims = 0;
+    //MeasVec depth_zhat;
+    //goalDepthMeasModel(xhat_, depth_dims, depth_zhat, H_, p_b_c_, q_b_c_);
+    //z_resid_(0) = depth - depth_zhat(0);
+    //z_R_.topLeftCorner(depth_dims, depth_dims) = R_depth;
+    //update(depth_dims, z_resid_, z_R_, H_);
 
-    // Update goal pixel
-    int pix_dims = 0;
-    MeasVec pix_zhat;
-    goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_, cam_K_, p_b_c_, q_b_c_);
-    z_resid_.head(pix_dims) = pix - pix_zhat.head(pix_dims);
-    z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
-    update(pix_dims, z_resid_, z_R_, H_);
+    //// Update goal pixel
+    //int pix_dims = 0;
+    //MeasVec pix_zhat;
+    //goalPixelMeasModel(xhat_, pix_dims, pix_zhat, H_, cam_K_, p_b_c_, q_b_c_);
+    //z_resid_.head(pix_dims) = pix - pix_zhat.head(pix_dims);
+    //z_R_.topLeftCorner(pix_dims, pix_dims) = R_pix;
+    //update(pix_dims, z_resid_, z_R_, H_);
+
+    // Update goal position
+    int aruco_dims = 0;
+    MeasVec aruco_zhat;
+    goalArucoMeasModel(xhat_, aruco_dims, aruco_zhat, H_, p_b_c_, q_b_c_);
+    z_resid_.head(aruco_dims) = x_c2a_meas.t_ - aruco_zhat.head(aruco_dims);
+    z_R_.topLeftCorner(aruco_dims, aruco_dims) = aruco_R.topLeftCorner(3, 3);
+    update(aruco_dims, z_resid_, z_R_, H_);
   }
 }
 
@@ -614,12 +621,12 @@ void Estimator::initLandmark(const int& id, const Vector2d& pix)
 
   // TODO assumes zero body to camera postion offset
   const Eigen::Vector3d p_c_b_I = R_I_b * p_b_c_;
-  //const double expected_altitude = 1. / xhat_(xGOAL_RHO);
+  // const double expected_altitude = 1. / xhat_(xGOAL_RHO);
   const double expected_altitude = 1. / xhat_(xGOAL_RHO) - p_c_b_I(2);
 
   Eigen::Vector3d scaled_vec_veh_frame =
       (expected_altitude / unit_vec_veh_frame(2)) * unit_vec_veh_frame;
-  //Eigen::Vector3d p_i_v_v = scaled_vec_veh_frame;
+  // Eigen::Vector3d p_i_v_v = scaled_vec_veh_frame;
   Eigen::Vector3d p_i_c_v = scaled_vec_veh_frame;
   const Eigen::Vector3d p_i_v_v = p_i_c_v + p_c_b_I;
 
