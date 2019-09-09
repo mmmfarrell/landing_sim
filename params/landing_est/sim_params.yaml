@@ -176,7 +176,7 @@ landmarks_pixel_stdev: 1.
 #sc_pixel_noise_stdev: 0.001
 #sc_depth_noise_stdev: 0.001
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
-p_b_sc: [0.0, 0.0, 0.0 ]
+p_b_sc: [.1, .0, 0.0 ]
 
 ## Camera
 num_features: 50

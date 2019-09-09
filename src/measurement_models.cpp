@@ -37,7 +37,7 @@ void goalDepthMeasModel(const Estimator::StateVec& x, int& meas_dims,
   p_g_v_v(1) = x(Estimator::xGOAL_POS + 1);
   p_g_v_v(2) = 1. / rho_g;
 
-  const Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
+  const Eigen::Vector3d p_g_c_c = R_b_c * (R_I_b * p_g_v_v - p_b_c);
 
   // Measurement Model
   z(0) = p_g_c_c(2);
@@ -96,7 +96,7 @@ void goalPixelMeasModel(const Estimator::StateVec& x, int& meas_dims,
   p_g_v_v(1) = x(Estimator::xGOAL_POS + 1);
   p_g_v_v(2) = 1. / rho_g;
 
-  const Eigen::Vector3d p_g_c_c = R_b_c * R_I_b * p_g_v_v;
+  const Eigen::Vector3d p_g_c_c = R_b_c * (R_I_b * p_g_v_v - p_b_c);
 
   // Measurement Model
   const double px_hat = fx * (p_g_c_c(0) / p_g_c_c(2)) + cx;
@@ -213,7 +213,7 @@ void landmarkPixelMeasModel(const int& lm_index, const Estimator::StateVec& x,
   //std::cout << "p_g_v_v: " << p_g_v_v << std::endl;
 
   // TODO: this doesn't account for the position offset of a camera
-  const Eigen::Vector3d p_i_c_c = R_b_c * R_I_b * p_i_v_v;
+  const Eigen::Vector3d p_i_c_c = R_b_c * (R_I_b * p_i_v_v - p_b_c);
 
   // const double rho_g = x(Estimator::xGOAL_RHO);
   // Eigen::Vector3d p_g_v_v;
