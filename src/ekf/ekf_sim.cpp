@@ -342,14 +342,6 @@ void EKF_SIM::landmarksCallback(const double& t, const ImageFeat& z, const Matri
     return;
   const double time = t - start_time_;
 
-  // std::cout << "Lm callback ids: " << std::endl;
-  // for (int id : z.feat_ids)
-  // {
-    // std::cout << id << ", ";
-  // }
-  // std::cout << std::endl;
-
-
   ekf_.landmarksCallback(time, z);
 }
 

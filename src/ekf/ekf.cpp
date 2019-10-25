@@ -483,16 +483,6 @@ void EKF::landmarksCallback(const double& t, const ImageFeat& z)
 
   std::list<int>::iterator it = landmark_ids_.begin();
 
-  // std::cout << "EKF LM Callback start ids: " << std::endl;
-  // while (it != landmark_ids_.end())
-  // {
-    // std::cout << *it << ", ";
-    // it++;
-  // }
-  // std::cout << std::endl;
-  // it = landmark_ids_.begin();
-  // std::cout << "LMS: " << x().lms << std::endl;
-
   int idx = 0;
   int num_landmarks = z.pixs.size();
   if (num_landmarks > max_landmarks_)
@@ -558,8 +548,6 @@ void EKF::initLandmark(const int& id, const Vector2d& pix)
   // lm_idx is 0 indexed
   const int lm_idx = landmark_ids_.size();
 
-  std::cout << "init idx: " << lm_idx << std::endl;
-
   // add the id to the list of ids tracked
   landmark_ids_.push_back(id);
 
@@ -596,14 +584,10 @@ void EKF::initLandmark(const int& id, const Vector2d& pix)
   // xhat_.block<3, 1>(xLM_IDX, 0) = p_i_g_g;
   x().lms.block<3, 1>(0, lm_idx) = p_i_g_g.transpose();
   x().lms(2, lm_idx) = 0.;
-
-  std::cout << "lms: " << x().lms << std::endl;
 }
 
 void EKF::removeLandmark(const int& lm_idx, const std::list<int>::iterator it)
 {
-  std::cout << "Remove lm idx: " << lm_idx << std::endl;
-  std::cout << "lms before: " << x().lms << std::endl;
   landmark_ids_.erase(it);
 
   // Move up the bottom rows to cover up the values corresponding to the removed
@@ -636,8 +620,6 @@ void EKF::removeLandmark(const int& lm_idx, const std::list<int>::iterator it)
   // Zero out the unintialized covariance terms (necessary)
   Qx_.bottomRightCorner(3, E::SIZE).setZero();
   Qx_.bottomRightCorner(E::SIZE, 3).setZero();
-
-  std::cout << "lms after: " << x().lms << std::endl;
 }
 
 void EKF::landmarkUpdate(const int& idx, const Vector2d& pix)

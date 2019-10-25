@@ -58,7 +58,7 @@ P0: [10.0, 10.0, 10.0, # pos
      1.0,           # aruco attitude
      # 1.0]           # aruco angular vel
      0.0]           # aruco angular vel
-P0_lms: [1., 1., 0.]
+P0_lms: [1., 1., 1.]
 
 ## Additive Process Noise
 Qx: [0.000, 0.000, 0.000,       # pos
@@ -76,7 +76,7 @@ Qx: [0.000, 0.000, 0.000,       # pos
      0.00000001,                       # aruco attitude
      # 1.1]                       # aruco angular vel
      0.]                       # aruco angular vel
-Qx_lms: [0.1, 0.1, 0.0]
+Qx_lms: [0.1, 0.1, 0.1]
 
 ## Lambda (Partial Update)
 # 1.0 = use full update
