@@ -36,12 +36,10 @@ print('x')
 print(x.shape)
 print('xlms')
 print(x_lms.shape)
-print(x_lms[:, :, -1])
 print('xhat')
 print(xhat.shape)
 print('xhat_lms')
 print(xhat_lms.shape)
-print(xhat_lms[:, :, -1])
 print('phat')
 print(phat.shape)
 
@@ -178,8 +176,8 @@ ylabel = [r'$x$', r'$y$', r'$z$']
 f = plt.figure(dpi=150)
 plt.plot()
 plt.suptitle("Landmarks")
-for i in range(3):
-    for lm in range(4):
+for lm in range(4):
+    for i in range(3):
         plt.subplot(3, 4, lm+i*4+1)
         plt.plot(t, x_lms[lm, i, :], label="x")
         plt.plot(t, xhat_lms[lm, i, :], label=r"$\hat{x}$")
@@ -189,7 +187,7 @@ for i in range(3):
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
-pw.addPlot("Goal Attitude", f)
+pw.addPlot("Landmarks", f)
 
 pw.show()
 
