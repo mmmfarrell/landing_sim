@@ -21,7 +21,7 @@ using namespace multirotor_sim;
 int main()
 {
   // Setup sim
-  std::string sim_params_yaml_file = "../params/landing_est/sim_params.yaml";
+  std::string sim_params_yaml_file = "../params/ekf/sim_params.yaml";
   bool show_progress_bar = true;
   Simulator sim(show_progress_bar);
   sim.load(sim_params_yaml_file);
@@ -46,11 +46,17 @@ int main()
     log.logVectors(sim.state().p, sim.state().q.arr_, sim.state().q.euler(), sim.state().v);
     log.logVectors(sim.accel_bias_, sim.gyro_bias_);
 
+    // Landing vehicle states
+    const Eigen::Vector2d p_g_v = veh.x_.head(2) - sim.state().p.head(2);
+    const Eigen::Vector2d v_g_I = veh.x_.segment<2>(UnicycleVehicle::xVEL);
+    const Eigen::Vector2d goal_theta_omega = veh.x_.segment<2>(UnicycleVehicle::xATT);
+    log.logVectors(p_g_v, v_g_I, goal_theta_omega);
 
+    // Estimated States
     ekf::State est_state = estimator.getEstimate();
     log.logVectors(est_state.p, est_state.q.arr_, est_state.q.euler(), est_state.v);
     log.logVectors(est_state.ba, est_state.bg);
-    log.logVectors(est_state.gp, est_state.gv);
+    log.logVectors(est_state.gp.head(2), est_state.gv);
     log.log(est_state.gatt);
     log.log(est_state.gw);
 

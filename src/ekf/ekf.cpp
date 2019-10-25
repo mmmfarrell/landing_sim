@@ -1064,7 +1064,8 @@ void EKF::initGoal(const meas::Aruco& z)
   quat::Quatd q_a2g = quat::Quatd(M_PI, 0., M_PI / 2.);
   quat::Quatd q_I2g_meas = x().q * q_b2c_ * z.q_c2a * q_a2g;
   const double yaw_meas = q_I2g_meas.euler()(2);
-  x().gatt = yaw_meas;
+  // x().gatt = yaw_meas;
+  x().gatt = 0.;
 
   // P should already be initialized
   goal_initialized_ = true;

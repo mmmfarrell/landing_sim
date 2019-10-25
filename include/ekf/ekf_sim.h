@@ -47,7 +47,6 @@ public:
   ekf::State getEstimate() { return ekf_.x(); }
   ekf::dxVec getCovariance() { return ekf_.P().diagonal(); }
 
-
   // void imuCallback(const sensor_msgs::ImuConstPtr& msg);
   void imuCallback(const double& t, const Vector6d& z, const Matrix6d& R);
   // void baroCallback(const sensor_msgs::FluidPressureConstPtr& msg);

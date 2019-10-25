@@ -11,10 +11,8 @@ np.set_printoptions(linewidth=150)
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-#  NUM_LANDMARKS = 20
-#  EST_STATE = 16 + 7 + NUM_LANDMARKS * 3
-TRUTH = 3 + 4 + 3 + 3 + 3 + 3
-EST = 3 + 4 + 3 + 3 + 3 + 3 + 3 + 2 + 1 + 1
+TRUTH = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1
+EST = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1
 COV = 54
 LOG_WIDTH = 1 + TRUTH + EST + COV
 
@@ -29,29 +27,15 @@ print(data.shape)
 
 t = data[0,:]
 x = data[1 : 1 + TRUTH, : ]
-# x_goal = data[1 + UAV_STATE : 1 + UAV_STATE + LANDING_VEH_STATES, : ]
-# x_lms = data[1 + UAV_STATE + LANDING_VEH_STATES : 1 + UAV_STATE +
-        # LANDING_VEH_STATES + LANDING_VEH_LMS, : ]
 xhat = data[1 + TRUTH : 1 + TRUTH + EST, :]
-        # + LANDING_VEH_STATES + LANDING_VEH_LMS + EST_STATE, :]
-# phat = data[1 + UAV_STATE + LANDING_VEH_STATES + LANDING_VEH_LMS + EST_STATE : 1
-        # + UAV_STATE + LANDING_VEH_STATES + LANDING_VEH_LMS + 2 * EST_STATE, :]
 phat = data[1 + TRUTH + EST: 1 + TRUTH + EST + COV, :]
 
 print('x')
 print(x.shape)
-# print('x_goal')
-# print(x_goal.shape)
-# print('x_lms')
-# print(x_lms.shape)
 print('xhat')
 print(xhat.shape)
 print('phat')
 print(phat.shape)
-
-# print(x_lms[:, 0])
-# lms = x_lms[:, 0]
-# print(np.reshape(lms, (3, 5)).transpose())
 
 pw = plotWindow()
 
@@ -136,6 +120,51 @@ for i in range(3):
     if i == 0:
         plt.legend()
 pw.addPlot("Gyro Bias", f)
+
+ylabel = [r'$p_x$', r'$p_y$']
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Goal Position")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x[i+19,:], label="x")
+    plt.plot(t, xhat[i+19,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+19,:] + 2. * np.sqrt(phat[i+17, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.plot(t, xhat[i+19,:] - 2. * np.sqrt(phat[i+17, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("Goal Position", f)
+
+ylabel = [r'$v_x$', r'$v_y$']
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Goal Velocity")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x[i+21,:], label="x")
+    plt.plot(t, xhat[i+21,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+21,:] + 2. * np.sqrt(phat[i+20, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.plot(t, xhat[i+21,:] - 2. * np.sqrt(phat[i+20, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("Goal Velocity", f)
+
+ylabel = [r'$\theta$', r'$\omega$']
+f = plt.figure(dpi=150)
+plt.plot()
+for i in range(2):
+    plt.suptitle("Goal Attitude")
+    plt.subplot(2, 1, i+1)
+    plt.plot(t, x[i+23,:], label="x")
+    plt.plot(t, xhat[i+23,:], label=r"$\hat{x}$")
+    plt.plot(t, xhat[i+23,:] + 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.plot(t, xhat[i+23,:] - 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("Goal Attitude", f)
 
 pw.show()
 
