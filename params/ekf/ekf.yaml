@@ -1,0 +1,127 @@
+## Post-Process Information
+# bag_name: "/home/mmmfarrell/magicc/catkin_ws/src/bags/rock_canyon/rock_canyon_aruco2.bag"
+bag_name: "/home/mmmfarrell/magicc/catkin_ws/src/bags/mocap1.bag"
+# bag_name: "/home/mmmfarrell/magicc/catkin_ws/src/bags/moving_cart_control/jacob_circle_full_aruco.bag"
+status_topic: "/status"
+imu_topic: "/imu/data"
+baro_topic: "/baro"
+range_topic: ""
+pose_topic: "/mocap/planck_ned"
+odom_topic: ""
+gnss_topic: ""
+ublox_gnss_topic: ""
+inertial_sense_gnss_topic: "/gps"
+aruco_topic: "/aruco/estimate"
+landmarks_topic: "/image_features"
+
+start_time: 0
+duration: 1000
+
+## Is_flying checks
+enable_arm_check: false # require armed before checking for is_flying
+is_flying_threshold: 10.5 # if accel measurement exceed this magnitude, set is_flying
+update_baro_velocity_threshold: 0.0
+
+## Logging
+log_prefix: "/tmp/roscopter/ekf/"
+enable_log: true
+
+## Measurement Processing
+enable_partial_update: true
+enable_out_of_order: false # TODO this isnt fully implemented
+use_mocap: true
+use_gnss: true
+use_baro: true
+use_aruco: true
+use_lms: true
+use_range: false
+use_zero_vel: false
+
+R_zero_vel: [0.001, 0.001, 0.001, # vel
+              0.001] # Altitude
+R_pixel_lms: [9., 9.]
+
+max_landmarks: 10
+
+## Initial Uncertainty
+P0: [10.0, 10.0, 10.0, # pos
+     0.01, 0.01, 0.01, # att
+     0.001, 0.001, 0.001, # vel
+     0.01, 0.01, 0.01, # accel bias
+     0.001, 0.001, 0.001, # gyro bias
+     # 9.0,           # baro bias
+     0.0,           # baro bias
+     100.0, # reference altitude
+     1.0, 1.0, 1., # aruco position
+     1.0, 1.0,      # aruco velocity
+     # 0.0, 0.0,      # aruco velocity
+     1.0,           # aruco attitude
+     1.0]           # aruco angular vel
+     # 0.0]           # aruco angular vel
+P0_lms: [1., 1., 1.]
+
+## Additive Process Noise
+Qx: [0.000, 0.000, 0.000,       # pos
+     0.000, 0.000, 0.000,       # att
+     0.00001, 0.00001, 0.00001,       # vel
+     0.0001, 0.0001, 0.0001,       # accel bias
+     0.0001, 0.0001, 0.0001,    # gyro bias
+     # 0.000000,                    # baro bias
+     1.01,                    # baro bias
+     1.0,                       # reference altitude
+     0.000001, 0.000001, 0.000001,              # aruco position
+     1.1, 1.1,               # aruco velocity
+     # 0., 0.,               # aruco velocity
+     0.00000001,                       # aruco attitude
+     1.1]                       # aruco angular vel
+     # 0.]                       # aruco angular vel
+Qx_lms: [0.1, 0.1, 0.1]
+
+## Lambda (Partial Update)
+# 1.0 = use full update
+# 0.0 = do not update at all
+lambda: [1.0, 1.0, 1.0,       # pos
+         1.0, 1.0, 1.0,       # att
+         1.0, 1.0, 1.0,       # vel
+         0.1, 0.1, 0.1,       # accel bias
+         0.1, 0.1, 0.1,       # gyro bias
+         0.5,                 # baro bias
+         0.3,                 # reference altitude
+         1.0, 1.0, 1.0,        # aruco position
+         1.0, 1.0,            # aruco velocity
+         1.0,                 # aruco attitude
+         1.0]                 # aruco angular vel
+lambda_lms: [0.1, 0.1, 0.1]
+
+# Constant Parameeters
+p_b2g: [0, 0, 0] # position from body frame to gps frame
+
+# Camera Params
+cam_K: [417.448099, 0.0, 298.002664, # Planck cam
+         0.0, 419.52719, 255.051452,
+         0.0, 0.0, 1.0]
+p_b2c: [0., 0., 0.] # position from body frame to camera frame
+q_b2c: [0.7071, 0, 0, 0.7071] # quaternion rotation from body frame to camera frame
+
+# Initial State
+manual_ref_lla: false # Use manual ref_lla or use first lla from gps
+ref_lla: [40.267320, -111.635629, 1387.0]
+ref_heading: 0.0 # reference heading for inertial frame (from north)
+
+x0: [0, 0, 0,       # pos
+     1, 0, 0, 0]    # att
+
+## Sensor Noise
+accel_noise_stdev: 0.5
+gyro_noise_stdev: 0.02
+position_noise_stdev: 0.01 # Mocap
+attitude_noise_stdev: 0.01 # Mocap
+baro_pressure_noise_stdev: 10.0
+range_noise_stdev: 0.1
+aruco_pos_stdev: 0.1
+aruco_yaw_stdev: 0.01
+
+manual_gps_noise: false # choose noise params for GPS or use the values reported from the message topic
+gps_horizontal_stdev: 0.021
+gps_vertical_stdev: 0.04
+gps_speed_stdev: 0.2

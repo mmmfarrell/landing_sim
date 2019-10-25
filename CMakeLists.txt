@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(landing_sim)
 
-set(CMAKE_CXX_STANDARD 14)
+# set(CMAKE_CXX_STANDARD 14)
 
 find_package(Eigen3 REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(OpenCV REQUIRED)
 
 add_subdirectory(lib/geometry)
@@ -43,3 +44,17 @@ add_executable(test_utils
   src/test_measurements.cpp
   src/test_estimator_utils.cpp)
 target_link_libraries(test_utils gtest gtest_main pthread estimator_utils)
+
+add_library(ekf
+  src/ekf/state.cpp
+  src/ekf/dynamics.cpp
+  src/ekf/ekf.cpp
+  src/ekf/meas.cpp
+  src/ekf/log.cpp
+)
+target_include_directories(ekf PUBLIC include)
+target_link_libraries(ekf ${YAML_CPP_LIBRARIES} stdc++fs)
+
+add_executable(new_estimator src/new_estimator_example.cpp src/ekf/ekf_sim.cpp)
+target_link_libraries(new_estimator ${OpenCV_LIBS} multirotor_sim
+  estimator_utils ekf)
