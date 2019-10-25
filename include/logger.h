@@ -1,10 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include <deque>
 #include <fstream>
 #include <unistd.h>
-#include <iostream>
 #include <Eigen/Dense>
 
 using namespace std;
