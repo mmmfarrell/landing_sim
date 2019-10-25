@@ -1034,7 +1034,8 @@ void EKF::arucoUpdate(const meas::Aruco &z)
   }
 
   // Update goal attitude (janky) TODO fixme
-  quat::Quatd q_a2g = quat::Quatd(M_PI, 0., M_PI / 2.);
+  // quat::Quatd q_a2g = quat::Quatd(M_PI, 0., M_PI / 2.);
+  quat::Quatd q_a2g = quat::Quatd(0., 0., 0.);
   quat::Quatd q_I2g_meas = x().q * q_b2c_ * z.q_c2a * q_a2g;
   const double yaw_meas = q_I2g_meas.euler()(2);
   Vector1d r_yaw(yaw_meas - x().gatt);
@@ -1061,11 +1062,12 @@ void EKF::initGoal(const meas::Aruco& z)
   x().gp(2) = 0.;
 
   // Janky way to get ArUco yaw
-  quat::Quatd q_a2g = quat::Quatd(M_PI, 0., M_PI / 2.);
+  // quat::Quatd q_a2g = quat::Quatd(M_PI, 0., M_PI / 2.);
+  quat::Quatd q_a2g = quat::Quatd(0., 0., 0.);
   quat::Quatd q_I2g_meas = x().q * q_b2c_ * z.q_c2a * q_a2g;
   const double yaw_meas = q_I2g_meas.euler()(2);
-  // x().gatt = yaw_meas;
-  x().gatt = 0.;
+  x().gatt = yaw_meas;
+  // x().gatt = 0.;
 
   // P should already be initialized
   goal_initialized_ = true;
