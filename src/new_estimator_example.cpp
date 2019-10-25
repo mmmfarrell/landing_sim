@@ -52,6 +52,20 @@ int main()
     const Eigen::Vector2d goal_theta_omega = veh.x_.segment<2>(UnicycleVehicle::xATT);
     log.logVectors(p_g_v, v_g_I, goal_theta_omega);
 
+    // Landmarks truth
+    const int maxlandmarks = 10;
+    Eigen::Matrix<double, 3 * maxlandmarks, 1> landmarks;
+    for (unsigned int i = 0; i < maxlandmarks; i++)
+    {
+      const int veh_lms_idx = i;
+      const int lms_vec_idx = 3 * i;
+      //const int lms_rho_idx = 3 * i + 2;
+      
+      landmarks.block<3, 1>(lms_vec_idx, 0) = veh.landmarks_body_.block<1, 3>(veh_lms_idx, 0).transpose();
+      //landmarks(lms_rho_idx) = 1. / (-sim.state().p(2) + veh.landmarks_body_(veh_lms_idx, 2));
+    }
+    log.logVectors(landmarks);
+
     // Estimated States
     ekf::State est_state = estimator.getEstimate();
     log.logVectors(est_state.p, est_state.q.arr_, est_state.q.euler(), est_state.v);
@@ -59,6 +73,7 @@ int main()
     log.logVectors(est_state.gp.head(2), est_state.gv);
     log.log(est_state.gatt);
     log.log(est_state.gw);
+    log.logVectors(est_state.lms);
 
     ekf::dxVec est_P = estimator.getCovariance();
     log.logVectors(est_P);

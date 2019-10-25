@@ -36,7 +36,7 @@ public:
 
   enum
   {
-     SIZE = 4
+     SIZE = 10
     //SIZE = 20
   };
 

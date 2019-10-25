@@ -11,8 +11,8 @@ np.set_printoptions(linewidth=150)
 plt.rc('text', usetex=True)
 plt.rc('font', family='serif')
 
-TRUTH = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1
-EST = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1
+TRUTH = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1 + 30
+EST = 3 + 4 + 3 + 3 + 3 + 3 + 2 + 2 + 1 + 1 + 30
 COV = 54
 LOG_WIDTH = 1 + TRUTH + EST + COV
 
@@ -27,13 +27,21 @@ print(data.shape)
 
 t = data[0,:]
 x = data[1 : 1 + TRUTH, : ]
+x_lms = np.reshape(x[25:, :], (10, 3, -1))
 xhat = data[1 + TRUTH : 1 + TRUTH + EST, :]
-phat = data[1 + TRUTH + EST: 1 + TRUTH + EST + COV, :]
+xhat_lms = np.reshape(xhat[25:, :], (10, 3, -1))
+phat = data[1 + TRUTH + EST : 1 + TRUTH + EST + COV, :]
 
 print('x')
 print(x.shape)
+print('xlms')
+print(x_lms.shape)
+print(x_lms[:, :, -1])
 print('xhat')
 print(xhat.shape)
+print('xhat_lms')
+print(xhat_lms.shape)
+print(xhat_lms[:, :, -1])
 print('phat')
 print(phat.shape)
 
@@ -161,6 +169,23 @@ for i in range(2):
     plt.plot(t, xhat[i+23,:], label=r"$\hat{x}$")
     plt.plot(t, xhat[i+23,:] + 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.plot(t, xhat[i+23,:] - 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+    plt.ylabel(ylabel[i])
+    if i == 0:
+        plt.legend()
+pw.addPlot("Goal Attitude", f)
+
+ylabel = [r'$x$', r'$y$', r'$z$']
+f = plt.figure(dpi=150)
+plt.plot()
+plt.suptitle("Landmarks")
+for i in range(3):
+    for lm in range(4):
+        plt.subplot(3, 4, lm+i*4+1)
+        plt.plot(t, x_lms[lm, i, :], label="x")
+        plt.plot(t, xhat_lms[lm, i, :], label=r"$\hat{x}$")
+        lm_idx = 24 + 3 * lm
+        plt.plot(t, xhat_lms[lm, i, :] + 2. * np.sqrt(phat[i+lm_idx, :]), '-k', alpha=0.3, label=r"$2\sigma$")
+        plt.plot(t, xhat_lms[lm, i, :] - 2. * np.sqrt(phat[i+lm_idx, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
     if i == 0:
         plt.legend()
