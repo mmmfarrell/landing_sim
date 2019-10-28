@@ -58,3 +58,7 @@ target_link_libraries(ekf ${YAML_CPP_LIBRARIES} stdc++fs)
 add_executable(new_estimator src/new_estimator_example.cpp src/ekf/ekf_sim.cpp)
 target_link_libraries(new_estimator ${OpenCV_LIBS} multirotor_sim
   estimator_utils ekf)
+
+add_executable(monte_carlo src/new_estimator_mc.cpp src/ekf/ekf_sim.cpp)
+target_link_libraries(monte_carlo ${OpenCV_LIBS} multirotor_sim
+  estimator_utils ekf)

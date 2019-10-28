@@ -17,7 +17,7 @@ landmarks_topic: "/image_features"
 start_time: 0
 duration: 1000
 
-stop_using_aruco: 10.
+stop_using_aruco: 5.
 
 ## Is_flying checks
 enable_arm_check: false # require armed before checking for is_flying
@@ -35,7 +35,7 @@ use_mocap: true
 use_gnss: false
 use_baro: false
 use_aruco: true
-use_lms: true
+use_lms: false
 use_alt: false
 use_zero_vel: false
 
