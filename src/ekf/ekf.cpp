@@ -23,6 +23,8 @@ EKF::~EKF()
 
 void EKF::load(const std::string &filename)
 {
+  get_yaml_node("stop_using_aruco", filename, stop_aruco_time_);
+
   // Constant Parameters
   get_yaml_node("max_landmarks", filename, max_landmarks_);
   if (max_landmarks_ > ErrorState::MAX_LMS)
@@ -993,7 +995,8 @@ void EKF::arucoUpdate(const meas::Aruco &z)
   H.block<3, 3>(0, E::DQ) = R_b2c * R_I2b * skew(goal_pos);
 
   /// TODO: Saturate r
-  if (use_aruco_)
+  // if (use_aruco_)
+  if (use_aruco_ && (z.t < stop_aruco_time_))
     measUpdate(r, z.R, H);
 
   if (enable_log_)
@@ -1015,7 +1018,10 @@ void EKF::arucoUpdate(const meas::Aruco &z)
   H_yaw(0, E::DGATT) = 1.;
 
   /// TODO: Saturate r
-  if (use_aruco_)
+  // if (!(z.t < stop_aruco_time_))
+    // std::cout << "Stop using aruco" << std::endl;
+
+  if (use_aruco_ && (z.t < stop_aruco_time_))
     measUpdate(r_yaw, z.yaw_R, H_yaw);
 }
 

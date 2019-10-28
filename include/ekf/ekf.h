@@ -208,6 +208,8 @@ public:
   // State buffer
   StateBuf xbuf_;
 
+  double stop_aruco_time_;
+
   // Measurement Buffers
   bool use_mocap_;
   bool use_baro_;
