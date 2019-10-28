@@ -362,6 +362,24 @@ void EKF_SIM::landmarksCallback(const double& t, const ImageFeat& z, const Matri
   // ekf_.landmarksCallback(t, lms_meas_);
 // }
 
+void EKF_SIM::altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
+{
+  if (start_time_ == 0)
+    return;
+
+  double time = t - start_time_;
+  ekf_.altCallback(time, z, R);
+}
+
+void EKF_SIM::gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R)
+{
+  if (start_time_ == 0)
+    return;
+
+  double time = t - start_time_;
+  ekf_.gnssCallback(time, z, R);
+}
+
 // void EKF_SIM::gnssCallback(const rosflight_msgs::GNSSConstPtr &msg)
 // {
   // Vector6d z;

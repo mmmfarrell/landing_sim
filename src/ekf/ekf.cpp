@@ -77,7 +77,7 @@ void EKF::load(const std::string &filename)
   get_yaml_node("use_mocap", filename, use_mocap_);
   get_yaml_node("use_gnss", filename, use_gnss_);
   get_yaml_node("use_baro", filename, use_baro_);
-  get_yaml_node("use_range", filename, use_range_);
+  get_yaml_node("use_alt", filename, use_alt_);
   get_yaml_node("use_zero_vel", filename, use_zero_vel_);
   get_yaml_node("use_aruco", filename, use_aruco_);
   get_yaml_node("use_lms", filename, use_lms_);
@@ -99,7 +99,7 @@ void EKF::load(const std::string &filename)
     Vector3d ref_lla;
     get_yaml_eigen("ref_lla", filename, ref_lla);
     std::cout << "Set ref lla: " << ref_lla.transpose() << std::endl;
-    ref_lla.head<2>() *= M_PI/180.0; // convert to rad
+    // ref_lla.head<2>() *= M_PI/180.0; // convert to rad
     xform::Xformd x_e2n = x_ecef2ned(lla2ecef(ref_lla));
     x_e2I_.t() = x_e2n.t();
     x_e2I_.q() = x_e2n.q() * q_n2I_;
@@ -413,14 +413,14 @@ void EKF::baroCallback(const double &t, const double &z, const double &R,
     baroUpdate(meas::Baro(t, z, R, temp));
 }
 
-void EKF::rangeCallback(const double& t, const double& z, const double& R)
+void EKF::altCallback(const double& t, const Vector1d& z, const Matrix1d& R)
 {
   if (enable_out_of_order_)
   {
     std::cout << "ERROR OUT OF ORDER RANGE NOT IMPLEMENTED" << std::endl;
   }
   else
-    rangeUpdate(meas::Range(t, z, R));
+    altUpdate(meas::Alt(t, z, R));
 }
 
 void EKF::gnssCallback(const double &t, const Vector6d &z, const Matrix6d &R)
@@ -832,57 +832,26 @@ void EKF::baroUpdate(const meas::Baro &z)
 
 }
 
-void EKF::rangeUpdate(const meas::Range &z)
+void EKF::altUpdate(const meas::Alt &z)
 {
-  // Assume that the earth is flat and that the range sensor is rigidly attached
-  // to the UAV, so distance is dependent on the attitude of the UAV.
-  // TODO this assumes that the laser is positioned at 0,0,0 in the body frame
-  // of the UAV
-  // TODO this also only updates if the UAV is pretty close to level and the
-  // measurement model jacobian assumes that the measurement is not dependent
-  // on roll or pitch at all
-  using Vector1d = Eigen::Matrix<double, 1, 1>;
-
-  const double altitude = -x().p(2);
-  const double roll = x().q.roll();
-  const double pitch = x().q.pitch();
-
-  // const double level_threshold = 2. * M_PI / 180.; // 1 degree
-
-  // Only update if UAV is close to level
-  // if ((abs(roll) > level_threshold) || (abs(pitch) > level_threshold))
-    // return;
-
-  const Vector1d zhat(altitude / cos(roll) / cos(pitch)); // TODO roll/ pitch of drone
-  Vector1d r = z.z - zhat; // residual
-
-  // std::cout << "Laser Update: " << std::endl;
-  // std::cout << "Altitude meas: " << z.z(0) << std::endl;
-  // std::cout << "Altitude est: " << altitude << std::endl;
+  const Vector1d zhat(-x().p(2));
+  Vector1d r = z.z - zhat;
 
   typedef ErrorState E;
 
   Matrix<double, 1, E::NDX> H;
   H.setZero();
-  H(0, E::DP + 2) = -1.;
+  H(0, E::DP + 2) = -1;
 
-  // Vector1d r_saturated
-  double r_sat = 0.1;
-  if (abs(r(0)) > r_sat)
-  {
-    double r_sign = (r(0) > 0) - (r(0) < 0);
-    r(0) = r_sat * r_sign;
-  }
-
-  // TODO: Saturate r
-  if (use_range_)
+  /// TODO: Saturate r
+  if (use_alt_)
     measUpdate(r, z.R, H);
 
-  if (enable_log_)
-  {
-    logs_[LOG_RANGE_RES]->log(z.t);
-    logs_[LOG_RANGE_RES]->logVectors(r, z.z, zhat);
-  }
+  // if (enable_log_)
+  // {
+    // logs_[LOG_RANGE_RES]->log(z.t);
+    // logs_[LOG_RANGE_RES]->logVectors(r, z.z, zhat);
+  // }
 
 }
 

@@ -25,8 +25,8 @@ std::string Base::Type() const
     case BARO:
         return "Baro";
         break;
-    case RANGE:
-        return "Range";
+    case ALT:
+        return "Alt";
         break;
     case MOCAP:
         return "Mocap";
@@ -61,15 +61,17 @@ Baro::Baro(double _t, const double &_z, const double &_R, const double& _temp)
     z(0) = _z;
     R(0) = _R;
     temp = _temp;
-    type = RANGE;
+    type = BARO;
 }
 
-Range::Range(double _t, const double &_z, const double &_R)
+Alt::Alt(double _t, const Vector1d &_z, const Matrix1d &_R)
 {
     t = _t;
-    z(0) = _z;
-    R(0) = _R;
-    type = RANGE;
+    // z(0) = _z;
+    // R(0) = _R;
+    z = _z;
+    R = _R;
+    type = ALT;
 }
 
 Gnss::Gnss(double _t, const Vector6d& _z, const Matrix6d& _R) :

@@ -63,7 +63,8 @@ public:
     void arucoCallback(const double& t, const xform::Xformd& x_c2a_meas, const Matrix6d& aruco_R);
     void landmarksCallback(const double& t, const ImageFeat& z, const Matrix2d& R_pix);
 
-    void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R) {}
+    void altCallback(const double& t, const Vector1d& z, const Matrix1d& R);
+    void gnssCallback(const double& t, const Vector6d& z, const Matrix6d& R);
 
 // #ifdef UBLOX
   // void gnssCallbackUblox(const ublox::PosVelEcefConstPtr& msg);

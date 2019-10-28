@@ -30,11 +30,11 @@ enable_log: true
 enable_partial_update: true
 enable_out_of_order: false # TODO this isnt fully implemented
 use_mocap: true
-use_gnss: true
+use_gnss: false
 use_baro: true
 use_aruco: true
 use_lms: true
-use_range: false
+use_alt: false
 use_zero_vel: false
 
 R_zero_vel: [0.001, 0.001, 0.001, # vel
@@ -53,11 +53,11 @@ P0: [10.0, 10.0, 10.0, # pos
      0.0,           # baro bias
      0.0, # reference altitude
      1.0, 1.0, 0., # aruco position
-     # 1.0, 1.0,      # aruco velocity
-     0.0, 0.0,      # aruco velocity
+     1.0, 1.0,      # aruco velocity
+     # 0.0, 0.0,      # aruco velocity
      1.0,           # aruco attitude
-     # 1.0]           # aruco angular vel
-     0.0]           # aruco angular vel
+     1.0]           # aruco angular vel
+     # 0.0]           # aruco angular vel
 P0_lms: [1., 1., 1.]
 
 ## Additive Process Noise
@@ -71,11 +71,11 @@ Qx: [0.000, 0.000, 0.000,       # pos
      # 1.0,                       # reference altitude
      0.0,                       # reference altitude
      0.000001, 0.000001, 0,              # aruco position
-     # 1.1, 1.1,               # aruco velocity
-     0., 0.,               # aruco velocity
+     1.1, 1.1,               # aruco velocity
+     # 0., 0.,               # aruco velocity
      0.00000001,                       # aruco attitude
-     # 1.1]                       # aruco angular vel
-     0.]                       # aruco angular vel
+     1.1]                       # aruco angular vel
+     # 0.]                       # aruco angular vel
 Qx_lms: [0.1, 0.1, 0.1]
 
 ## Lambda (Partial Update)
@@ -105,8 +105,9 @@ p_b2c: [0., 0., 0.] # position from body frame to camera frame
 q_b2c: [0.7071, 0, 0, 0.7071] # quaternion rotation from body frame to camera frame
 
 # Initial State
-manual_ref_lla: false # Use manual ref_lla or use first lla from gps
-ref_lla: [40.267320, -111.635629, 1387.0]
+manual_ref_lla: true # Use manual ref_lla or use first lla from gps
+# ref_lla: [40.267320, -111.635629, 1387.0]
+ref_lla: [0.702443501891, -1.9486196478, 1387.998309] # (rad, rad, m)
 ref_heading: 0.0 # reference heading for inertial frame (from north)
 
 x0: [0, 0, 0,       # pos

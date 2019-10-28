@@ -11,6 +11,9 @@
 namespace meas
 {
 
+using Vector1d = Eigen::Matrix<double, 1, 1>;
+using Matrix1d = Eigen::Matrix<double, 1, 1>;
+
 struct Base
 {
     Base();
@@ -21,7 +24,7 @@ struct Base
         GNSS,
         IMU,
         BARO,
-        RANGE,
+        ALT,
         MOCAP,
         ARUCO,
         ZERO_VEL
@@ -67,12 +70,14 @@ struct Baro : public Base
     double temp;
 };
 
-struct Range : public Base
+struct Alt : public Base
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    Range(double _t, const double& _z, const double& _R);
-    Eigen::Matrix<double, 1, 1> z;
-    Eigen::Matrix<double, 1, 1> R;
+    Alt(double _t, const Vector1d& _z, const Matrix1d& _R);
+    // Eigen::Matrix<double, 1, 1> z;
+    // Eigen::Matrix<double, 1, 1> R;
+    Vector1d z;
+    Matrix1d R;
 };
 
 struct Mocap : public Base

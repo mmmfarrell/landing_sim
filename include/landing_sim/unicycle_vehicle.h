@@ -159,6 +159,11 @@ public:
       x_(xVEL + 0) += time_step * vel_walk_std_ * normal_(rng_);
       x_(xVEL + 1) += time_step * vel_walk_std_ * normal_(rng_);
       x_(xOMEGA) += time_step * omega_walk_std_ * normal_(rng_);
+
+      while (x_(xATT) > M_PI)
+        x_(xATT) -= 2 * M_PI;
+      while (x_(xATT) <= -M_PI)
+        x_(xATT) += 2 * M_PI;
     }
   }
 
