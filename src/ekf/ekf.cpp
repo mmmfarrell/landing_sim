@@ -706,9 +706,10 @@ void EKF::landmarkUpdate(const int& idx, const Vector2d& pix)
 
   H.setZero();
   H.block<1, 3>(0, E::DQ) = dpx_dq;
-  H.block<1, 2>(0, E::DGP) = dpx_dp.head(2);
-  H(0, E::DGP + 2) = -dpx_dp(2);
-  H(0, E::DP + 2) = -dpx_dp(2);
+  // H.block<1, 2>(0, E::DGP) = dpx_dp.head(2);
+  // H(0, E::DGP + 2) = -dpx_dp(2);
+  // H(0, E::DP + 2) = -dpx_dp(2);
+  H.block<1, 3>(0, E::DGP) = dpx_dp;
 
   // const double dpy_dphi =
       // (fy * RdRdPhip(1) / p_i_c_c(2)) -
@@ -730,9 +731,10 @@ void EKF::landmarkUpdate(const int& idx, const Vector2d& pix)
        (p_i_c_c(2) * p_i_c_c(2)));
 
   H.block<1, 3>(1, E::DQ) = dpy_dq;
-  H.block<1, 2>(1, E::DGP) = dpy_dp.head(2);
-  H(1, E::DGP + 2) = -dpy_dp(2);
-  H(1, E::DP + 2) = -dpy_dp(2);
+  // H.block<1, 2>(1, E::DGP) = dpy_dp.head(2);
+  // H(1, E::DGP + 2) = -dpy_dp(2);
+  // H(1, E::DP + 2) = -dpy_dp(2);
+  H.block<1, 3>(1, E::DGP) = dpy_dp;
 
   // d / d theta_g
   const Eigen::Matrix2d d_R_d_theta_g_2d = dR2DdTheta(theta_g);
@@ -989,9 +991,10 @@ void EKF::arucoUpdate(const meas::Aruco &z)
   typedef ErrorState E;
   Matrix<double, 3, E::NDX> H;
   H.setZero();
-  H.block<3, 1>(0, E::DP + 2) = -(R_b2c * R_I2b).rightCols(1);
-  H.block<3, 2>(0, E::DGP) = (R_b2c * R_I2b).leftCols(2);
-  H.block<3, 1>(0, E::DGP + 2) = -(R_b2c * R_I2b).rightCols(1);
+  // H.block<3, 1>(0, E::DP + 2) = -(R_b2c * R_I2b).rightCols(1);
+  // H.block<3, 2>(0, E::DGP) = (R_b2c * R_I2b).leftCols(2);
+  // H.block<3, 1>(0, E::DGP + 2) = -(R_b2c * R_I2b).rightCols(1);
+  H.block<3, 3>(0, E::DGP) = R_b2c * R_I2b;
   H.block<3, 3>(0, E::DQ) = R_b2c * R_I2b * skew(goal_pos);
 
   /// TODO: Saturate r

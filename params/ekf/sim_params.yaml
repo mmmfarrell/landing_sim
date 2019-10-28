@@ -1,8 +1,8 @@
-tmax: 20.0 # Simulation total time, time step is determined by IMU rate
+tmax: 60.0 # Simulation total time, time step is determined by IMU rate
 #tmax: 0.2 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
-seed: 15 # 0 initializes seed with time
+seed: 0 # 0 initializes seed with time
 
 # Path type:
 #   0 : waypoints
@@ -226,7 +226,7 @@ mocap_update_rate: 10
 #mocap_update_rate: 100
 attitude_noise_stdev: 0.001
 #attitude_noise_stdev: 0.001
-position_noise_stdev: 0.001
+position_noise_stdev: 0.01
 mocap_time_offset: 0
 mocap_transmission_noise: 0
 mocap_transmission_time: 0
