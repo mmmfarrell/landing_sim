@@ -1,4 +1,4 @@
-tmax: 60.0 # Simulation total time, time step is determined by IMU rate
+tmax: 20.0 # Simulation total time, time step is determined by IMU rate
 #tmax: 0.2 # Simulation total time, time step is determined by IMU rate
 dt: 0.004
 log_filename: ""
@@ -172,13 +172,13 @@ aruco_enabled: True
 aruco_pixel_stdev: 1.
 aruco_depth_stdev: 0.5
 landmarks_enabled: True
-# landmarks_pixel_stdev: 1.
-landmarks_pixel_stdev: 0.
+landmarks_pixel_stdev: 2.
+# landmarks_pixel_stdev: 0.
 #sc_pixel_noise_stdev: 0.001
 #sc_depth_noise_stdev: 0.001
 q_b_sc: [0.7071, 0, 0, 0.7071] # Align the camera image with the body frame
-# p_b_sc: [1.1, -1.1, 0.4 ]
-p_b_sc: [0., 0., 0.]
+p_b_sc: [0.25, -0.2, 0.4 ]
+# p_b_sc: [0., 0., 0.]
 
 ## Camera
 num_features: 50

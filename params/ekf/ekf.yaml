@@ -100,7 +100,8 @@ p_b2g: [0, 0, 0] # position from body frame to gps frame
 cam_K: [410., 0.0, 320., # Planck cam
          0.0, 420., 240.,
          0.0, 0.0, 1.0]
-p_b2c: [0., 0., 0.] # position from body frame to camera frame
+# p_b2c: [0., 0., 0.] # position from body frame to camera frame
+p_b2c: [0.25, -0.2, 0.4] # position from body frame to camera frame
 q_b2c: [0.7071, 0, 0, 0.7071] # quaternion rotation from body frame to camera frame
 
 # Initial State
