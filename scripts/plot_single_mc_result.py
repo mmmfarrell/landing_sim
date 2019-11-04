@@ -16,8 +16,9 @@ EST = 3 + 4 + 3 + 3 + 3 + 3 + 3 + 2 + 1 + 1 + 30
 COV = 54
 LOG_WIDTH = 1 + TRUTH + EST + COV
 
-run = 1
-filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/with_landmarks_" + str(run) + ".bin"
+run = 3
+#  filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/with_landmarks_" + str(run) + ".bin"
+filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/no_landmarks_" + str(run) + ".bin"
 data = np.reshape(np.fromfile(filename, dtype=np.float64), (-1, LOG_WIDTH)).T
 
 # check for NAns
@@ -140,8 +141,13 @@ for i in range(3):
     plt.plot(t, xhat[i+19,:] + 2. * np.sqrt(phat[i+17, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.plot(t, xhat[i+19,:] - 2. * np.sqrt(phat[i+17, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
-    if i == 0:
-        plt.legend()
+    if i == 2:
+        plt.ylim((4.4, 5.2))
+    #  if i == 0:
+        #  plt.legend()
+plt.xlabel("Time (s)")
+#  f.savefig('plots/with_lms_gp.png')
+f.savefig('plots/no_lms_gp.png')
 pw.addPlot("Goal Position", f)
 
 ylabel = [r'$v_x$', r'$v_y$']
@@ -155,8 +161,11 @@ for i in range(2):
     plt.plot(t, xhat[i+22,:] + 2. * np.sqrt(phat[i+20, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.plot(t, xhat[i+22,:] - 2. * np.sqrt(phat[i+20, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
-    if i == 0:
-        plt.legend()
+    #  if i == 0:
+        #  plt.legend()
+plt.xlabel("Time (s)")
+#  f.savefig('plots/with_lms_gv.png')
+f.savefig('plots/no_lms_gv.png')
 pw.addPlot("Goal Velocity", f)
 
 ylabel = [r'$\theta$', r'$\omega$']
@@ -170,8 +179,11 @@ for i in range(2):
     plt.plot(t, xhat[i+24,:] + 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.plot(t, xhat[i+24,:] - 2. * np.sqrt(phat[i+22, :]), '-k', alpha=0.3, label=r"$2\sigma$")
     plt.ylabel(ylabel[i])
-    if i == 0:
-        plt.legend()
+    #  if i == 0:
+        #  plt.legend()
+plt.xlabel("Time (s)")
+#  f.savefig('plots/with_lms_gatt.png')
+f.savefig('plots/no_lms_gatt.png')
 pw.addPlot("Goal Attitude", f)
 
 ylabel = [r'$x$', r'$y$', r'$z$']
@@ -186,9 +198,13 @@ for lm in range(4):
         lm_idx = 24 + 3 * lm
         plt.plot(t, xhat_lms[lm, i, :] + 2. * np.sqrt(phat[i+lm_idx, :]), '-k', alpha=0.3, label=r"$2\sigma$")
         plt.plot(t, xhat_lms[lm, i, :] - 2. * np.sqrt(phat[i+lm_idx, :]), '-k', alpha=0.3, label=r"$2\sigma$")
-    plt.ylabel(ylabel[i])
-    if i == 0:
-        plt.legend()
+        if (lm == 0):
+            plt.ylabel(ylabel[i])
+            #  if i == 0:
+                #  plt.legend()
+    plt.xlabel("Time (s)")
+#  f.savefig('plots/with_lms_lms.png')
+f.savefig('plots/no_lms_lms.png')
 pw.addPlot("Landmarks", f)
 
 pw.show()

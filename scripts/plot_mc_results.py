@@ -26,8 +26,8 @@ all_goal_att_err = []
 NUM_RUNS = 100
 
 for run in range(NUM_RUNS):
-    filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/with_landmarks_" + str(run) + ".bin"
-    #  filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/no_landmarks_" + str(run) + ".bin"
+    #  filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/with_landmarks_" + str(run) + ".bin"
+    filename = "/home/mmmfarrell/magicc/landing_sim/mc_results/no_landmarks_" + str(run) + ".bin"
     #  data = np.reshape(np.fromfile("/tmp/landing_sim.bin", dtype=np.float64), (-1, LOG_WIDTH)).T
     data = np.reshape(np.fromfile(filename, dtype=np.float64), (-1, LOG_WIDTH)).T
 
@@ -52,21 +52,21 @@ for run in range(NUM_RUNS):
 
 pw = plotWindow()
 
-ylabel = [r'$p_x$', r'$p_y$']
+ylabel = [r'$xy_err$', r'$p_y$']
 f = plt.figure(dpi=150)
 plt.plot()
-for i in range(1):
-    #  if i == 0:
-        #  plt.legend()
-    plt.suptitle("Goal Position")
-    plt.subplot(2, 1, i+1)
-    for run in range(NUM_RUNS):
-        t = all_t[run]
-        goal_xy_err = all_goal_xy_err[run]
-        #  plt.plot(t, goal_xy_err[i,:], label="x")
-        plt.plot(t, goal_xy_err[:], label="x")
-        #  plt.plot(t, xhat[i,:], label=r"$\hat{x}$")
-        #  plt.ylabel(ylabel[i])
+plt.suptitle("Goal Position $xy$")
+for run in range(NUM_RUNS):
+    t = all_t[run]
+    goal_xy_err = all_goal_xy_err[run]
+    #  plt.plot(t, goal_xy_err[i,:], label="x")
+    plt.plot(t, goal_xy_err[:], label="x")
+    #  plt.plot(t, xhat[i,:], label=r"$\hat{x}$")
+    #  plt.ylabel(ylabel[i])
+plt.xlabel("Time (s)")
+plt.ylabel('Error (m)')
+#  f.savefig('plots/mc_with_lms_xy_err.png')
+f.savefig('plots/mc_no_lms_xy_err.png')
 pw.addPlot("Goal Position", f)
 
 pw.show()
