@@ -152,11 +152,11 @@ raw_gnss_enabled: false
 
 ## IMU
 imu_update_rate: 250
-accel_init_stdev: 0.01
+accel_init_stdev: 0.00
 accel_noise_stdev: 0.2
 accel_bias_walk: 0.05
 #accel_bias_walk: 0.0
-gyro_init_stdev: 0.01
+gyro_init_stdev: 0.0
 gyro_noise_stdev: 0.1
 gyro_bias_walk: 0.01
 #gyro_bias_walk: 0.0
@@ -224,9 +224,10 @@ p_b_m: [0.0, 0.0, 0.0]
 q_b_m: [1.0, 0.0, 0.0, 0.0]
 mocap_update_rate: 10
 #mocap_update_rate: 100
-attitude_noise_stdev: 0.001
+# attitude_noise_stdev: 0.001
+attitude_noise_stdev: 0.01
 #attitude_noise_stdev: 0.001
-position_noise_stdev: 0.01
+position_noise_stdev: 0.05
 mocap_time_offset: 0
 mocap_transmission_noise: 0
 mocap_transmission_time: 0
