@@ -225,7 +225,8 @@ q_b_m: [1.0, 0.0, 0.0, 0.0]
 mocap_update_rate: 10
 #mocap_update_rate: 100
 # attitude_noise_stdev: 0.001
-attitude_noise_stdev: 0.01
+# attitude_noise_stdev: 0.01
+attitude_noise_stdev: 0.1
 #attitude_noise_stdev: 0.001
 position_noise_stdev: 0.05
 mocap_time_offset: 0

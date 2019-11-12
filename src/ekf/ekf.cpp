@@ -692,7 +692,14 @@ void EKF::landmarkUpdate(const int& idx, const Vector2d& pix)
   // const double dpx_dpsi =
       // (fx * RdRdPsip(0) / p_i_c_c(2)) -
       // (fx * RdRdPsip(2) * p_i_c_c(0) / p_i_c_c(2) / p_i_c_c(2));
-  const Eigen::Matrix3d blah = -R_b2c * R_I2b * skew(p_i_v_v);
+
+  // This is how it is for the paper plots
+  // const Eigen::Matrix3d blah = -R_b2c * R_I2b * skew(p_i_v_v);
+
+  // const Eigen::Matrix3d blah = R_b2c * R_I2b * skew(p_i_v_v);
+  const Eigen::Matrix3d blah = R_b2c * skew(R_I2b * p_i_v_v);
+  // std::cout << "inside: " << skew( R_b2c * R_I2b * p_i_v_v) << std::endl;
+  // std::cout << "outside: " << R_b2c * R_I2b * skew(p_i_v_v) << std::endl;
   const Eigen::Vector3d blah1 = e1.transpose() * blah;
   const Eigen::Vector3d blah3 = e3.transpose() * blah;
   const Eigen::Vector3d dpx_dq =
@@ -742,9 +749,12 @@ void EKF::landmarkUpdate(const int& idx, const Vector2d& pix)
   Eigen::Matrix3d d_R_d_theta_g;
   d_R_d_theta_g.setZero();
   d_R_d_theta_g.topLeftCorner(2, 2) = d_R_d_theta_g_2d;
-  const Vector3d d_theta_p_i_v_v = d_R_d_theta_g.transpose() * p_i_g_g;
 
-  const Eigen::Vector3d RRdRdThetaP = R_b2c * R_I2b * d_theta_p_i_v_v;
+  // const Vector3d d_theta_p_i_v_v = d_R_d_theta_g.transpose() * p_i_g_g;
+  // const Eigen::Vector3d RRdRdThetaP = R_b2c * R_I2b * d_theta_p_i_v_v;
+  const Eigen::Vector3d zero_one(0., 0., 1.);
+  const Eigen::Vector3d RRdRdThetaP = R_b2c * R_I2b * R_I2g.transpose() * skew(zero_one) * p_i_g_g;
+
   const double dpx_dtheta_g =
       (fx * RRdRdThetaP(0) / p_i_c_c(2)) -
       (fx * RRdRdThetaP(2) * p_i_c_c(0) / p_i_c_c(2) / p_i_c_c(2));

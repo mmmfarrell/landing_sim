@@ -35,7 +35,7 @@ use_mocap: true
 use_gnss: false
 use_baro: false
 use_aruco: true
-use_lms: false
+use_lms: true
 use_alt: false
 use_zero_vel: false
 
